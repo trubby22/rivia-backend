@@ -1,0 +1,23 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.5.10'
+}
+
+group 'org.example'
+
+repositories {
+    mavenCentral()
+}
+
+task buildZip(type: Zip) {
+    from compileKotlin
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.1'
+    implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
+}
