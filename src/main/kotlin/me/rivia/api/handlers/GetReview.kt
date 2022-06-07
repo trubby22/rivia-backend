@@ -40,13 +40,14 @@ class GetReview {
             .build()
 
         // allows us to map the class with the fields stored in the table
-        val mappedTable: DynamoDbTable<MeetingDB> =
-            enhancedClient.table("Meeting", TableSchema.fromBean(MeetingDB::class.java))
+        // important differentiaton between meeting and main.meeting
+        val mappedTable: DynamoDbTable<main.Meeting> =
+            enhancedClient.table("Meeting", TableSchema.fromBean(main.Meeting::class.java))
 
         val meetingIDKey: Key = Key.builder()
-            .partitionValue(input!!.meeting_id)
+            .partitionValue("0")
             .build()
-        val result: MeetingDB? = mappedTable.getItem { r: GetItemEnhancedRequest.Builder -> r.key(meetingIDKey)
+        val result: main.Meeting? = mappedTable.getItem { r: GetItemEnhancedRequest.Builder -> r.key(meetingIDKey)
         }
 
         val mappedTable2: DynamoDbTable<Participant>
@@ -57,7 +58,7 @@ class GetReview {
 
         val participantList : MutableList<Participant> = mutableListOf()
         // response type is 0 for the moment
-        for (user_id in result!!.participants) {
+        for (user_id in result!!.participants!!) {
             val userIDKey: Key = Key.builder()
                 .partitionValue(user_id)
                 .build()
@@ -75,7 +76,7 @@ class GetReview {
         val qList : MutableList<PresetQuestion> = mutableListOf()
         var i = 0;
         // asssigns 1,2,3,4... to list of questions
-        for (preset_q_text in result!!.preset_qs) {
+        for (preset_q_text in result!!.preset_qs!!) {
             qList.add(PresetQuestion(i.toString(), preset_q_text))
             i++
         }

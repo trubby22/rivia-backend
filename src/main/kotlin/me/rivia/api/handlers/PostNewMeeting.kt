@@ -1,7 +1,7 @@
 package me.rivia.api.handlers
 
 import com.amazonaws.services.lambda.runtime.Context
-import main.MeetingDB
+import main.Meeting
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
