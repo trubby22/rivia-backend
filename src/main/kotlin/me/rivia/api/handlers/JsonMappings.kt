@@ -1,16 +1,24 @@
 package me.rivia.api.handlers
 
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
+
 typealias Uid = String
 
-data class MeetingPainPoint(val point_id: Uid?, val point_text: String?) {
+class PresetQuestion(preset_q_id: Uid?, val preset_q_text: String?) {
+    var preset_q_id = preset_q_id
+        @DynamoDbPartitionKey get
+        @DynamoDbPartitionKey set
+
     constructor() : this(null, null)
 }
-data class Participant(val participant_id: Uid?, val name: String?, val surname: String?, val email: String?) {
-    constructor() : this(null, null, null, null)
+class Participant(participant_id: Uid?, val name: String?, val surname: String?, val email: String?) {
+    var participant_id = participant_id
+        @DynamoDbPartitionKey get
+        @DynamoDbPartitionKey set
 }
-data class Meeting(val title: String?, val start: Int?, val end: Int?) {
-    constructor() : this(null, null, null)
+class Meeting(val title: String?, val start: Int?, val end: Int?) {
+        constructor() : this(null, null, null)
 }
-class Response(val participant: Participant?, val quality: Float?, val points: Array<String>?, val not_needed: Array<Participant>?, val not_prepared: Array<Participant>?) {
+class Response(val participant: Participant?, val quality: Float?, val preset_qs: Array<String>?, val not_needed: Array<Participant>?, val not_prepared: Array<Participant>?) {
     constructor() : this(null, null, null, null, null)
 }
