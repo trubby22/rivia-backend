@@ -1,0 +1,25 @@
+stages: 
+  build
+  test
+  deploy
+
+before_script:
+  - GRADLE_USER_HOME="$(pwd)/.gradle"
+  - export GRADLE_USER_HOME
+  - AWS_FUNCITONS=
+
+build:
+  image: gradle:alpine
+  stage: build
+  script: gradle build
+
+test:
+  image: gradle:alpine
+  stage: test
+  script: gradle check
+
+deploy:
+  image: amazon/aws-cli:latest
+  stage: deploy
+  script:
+    - for fun in $AWS_FUNCITONS; do aws lambda update-function-code --function-name $fun --zip-file fileb://build/libs/rivia-backend.jar; done
