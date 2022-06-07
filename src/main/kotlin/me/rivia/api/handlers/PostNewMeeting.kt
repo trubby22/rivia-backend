@@ -8,7 +8,9 @@ class PostNewMeeting {
             constructor() : this(null, null)
         }
 
-        class MeetingData(val meeting: Meeting?, val participants: Array<Uid>?)
+        class MeetingData(val meeting: Meeting?, val participants: Array<Uid>?) {
+            constructor() : this(null, null)
+        }
     }
 
     fun handle(input: ApiContext?, context: Context?) {

@@ -14,7 +14,7 @@ class GetReview {
             val participants: Array<Participant>?,
             val points: Array<MeetingPainPoint>?
         ) {
-            val response_type = 1
+            val response_type: Int? = 1
         }
     }
 

@@ -11,7 +11,7 @@ class GetDashboard {
         class IdMeeting(val meeting_id: Uid?, val meeting: Meeting?)
 
         class HttpResponse(meetings: Array<IdMeeting>?) {
-            val response_type = 4
+            val response_type: Int? = 4
         }
     }
 

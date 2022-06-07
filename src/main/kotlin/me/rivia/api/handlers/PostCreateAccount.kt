@@ -9,7 +9,9 @@ class PostCreateAccount {
             val surname: String?,
             val email: String?,
             val password: String?
-        )
+        ) {
+            constructor() : this(null, null, null, null)
+        }
     }
 
     fun handle(input: AccountData?, context: Context?) {

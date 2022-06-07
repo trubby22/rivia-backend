@@ -9,7 +9,7 @@ class GetNewMeeting {
         }
 
         class HttpResponse(val meetings: Array<Participant>?) {
-            val response_type = 3
+            val response_type: Int? = 3
         }
     }
 

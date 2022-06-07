@@ -9,7 +9,7 @@ class GetSummary {
         }
 
         class HttpResponse(val meeting: Meeting?, val responses: Array<Response>?) {
-            val response_type = 2
+            val response_type: Int? = 2
         }
     }
 

@@ -4,7 +4,9 @@ import com.amazonaws.services.lambda.runtime.Context
 
 class PostLogin {
     companion object {
-        class LoginData(val email: String?, val password: String?)
+        class LoginData(val email: String?, val password: String?) {
+            constructor() : this(null, null)
+        }
     }
 
     fun handle(input: LoginData?, context: Context?) {
