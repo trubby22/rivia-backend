@@ -1,4 +1,4 @@
-package me.rivia.api
+package me.rivia.api.handlers
 
 typealias Uid = String
 
