@@ -10,7 +10,7 @@ class GetDashboard {
 
         class IdMeeting(val meeting_id: Uid?, val meeting: Meeting?)
 
-        class HttpResponse(meetings: Array<IdMeeting>?) {
+        class HttpResponse(meetings: ArrayList<IdMeeting>?) {
             val response_type: Int? = 4
         }
     }

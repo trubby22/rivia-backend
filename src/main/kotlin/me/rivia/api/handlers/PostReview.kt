@@ -14,18 +14,19 @@ class PostReview {
         }
 
         class Review(
-            val user_id: String?,
             val quality: Float?,
-            val points: Array<Uid>?,
-            val not_needed: Array<Uid>?,
-            val not_prepared: Array<Uid>?,
+            val points: ArrayList<Uid>?,
+            val not_needed: ArrayList<Uid>?,
+            val not_prepared: ArrayList<Uid>?,
             val feedback: String?
         ) {
-            constructor() : this(null, null, null, null, null, null)
+            constructor() : this( null, null, null, null, null)
         }
     }
 
     fun handle(input: ApiContext?, context: Context?) {
+//        val rev : Review = Review(0.toFloat(),arrayListOf("1"), arrayListOf("1"), arrayListOf("1"), "0");
+//        val input = ApiContext("0", 0, rev)
         val client: AmazonDynamoDB = AmazonDynamoDBClientBuilder
             .standard()
             .withRegion(Regions.EU_WEST_2)
@@ -35,7 +36,8 @@ class PostReview {
         val review : Review? = input!!.data;
         val item = Item()
             .withPrimaryKey("ReviewID", input.meeting_id)
-            .withString("UserID", review?.user_id)
+            .withNumber("Cookie", input.cookie)
+            .withString("UserID", "0")
             .withNumber("Quality", review?.quality)
             .withList("NotNeeded", review?.not_needed)
             .withList("NotPrepared", review?.not_prepared)

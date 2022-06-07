@@ -19,6 +19,6 @@ class Participant(participant_id: Uid?, val name: String?, val surname: String?,
 class Meeting(val title: String?, val start: Int?, val end: Int?) {
         constructor() : this(null, null, null)
 }
-class Response(val participant: Participant?, val quality: Float?, val preset_qs: Array<String>?, val not_needed: Array<Participant>?, val not_prepared: Array<Participant>?) {
+class Response(val participant: Participant?, val quality: Float?, val preset_qs: ArrayList<String>?, val not_needed: ArrayList<Participant>?, val not_prepared: ArrayList<Participant>?) {
     constructor() : this(null, null, null, null, null)
 }

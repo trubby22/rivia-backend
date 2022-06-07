@@ -15,7 +15,7 @@ import software.amazon.awssdk.regions.Region.EU_WEST_2
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 class GetReview {
-
+    // get data to display the review
     companion object {
         data class ApiContext(val meeting_id: Uid?, val cookie: Int?) {
             constructor() : this(null, null)
