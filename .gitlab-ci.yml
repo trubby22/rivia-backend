@@ -21,5 +21,4 @@ test:
 deploy:
   image: amazon/aws-cli:latest
   stage: deploy
-  script:
-    - for fun in $AWS_FUNCITONS; do aws lambda update-function-code --function-name $fun --zip-file fileb://build/libs/rivia-backend.jar; done
+  script: for fun in $AWS_FUNCITONS; do aws lambda update-function-code --function-name $fun --zip-file fileb://build/libs/rivia-backend.jar; done
