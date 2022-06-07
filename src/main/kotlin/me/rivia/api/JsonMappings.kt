@@ -1,9 +1,11 @@
 package me.rivia.api
 
-data class MeetingPainPoint(val point_id: String?, val point_text: String?) {
+typealias Uid = String
+
+data class MeetingPainPoint(val point_id: Uid?, val point_text: String?) {
     constructor() : this(null, null)
 }
-data class Participant(val participant_id: String?, val name: String?, val surname: String?, val email: String?) {
+data class Participant(val participant_id: Uid?, val name: String?, val surname: String?, val email: String?) {
     constructor() : this(null, null, null, null)
 }
 data class Meeting(val title: String?, val start: Int?, val end: Int?) {
