@@ -9,14 +9,14 @@ before_script:
   - AWS_FUNCITONS=
 
 build:
-  image: gradle:alpine
+  image: gradle:7.4.2-jdk11-alpine
   stage: build
-  script: gradle build
+  script: gradle build -Dorg.gradle.java.home=$JAVA_HOME
 
 test:
-  image: gradle:alpine
+  image: gradle:7.4.2-jdk11-alpine
   stage: test
-  script: gradle check
+  script: gradle check -Dorg.gradle.java.home=$JAVA_HOME
 
 deploy:
   image: amazon/aws-cli:latest
