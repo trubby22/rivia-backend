@@ -8,12 +8,12 @@ class GetNewMeeting {
             constructor() : this(null)
         }
 
-        class HttpResponse(val meetings: Array<Participant>) {
+        class HttpResponse(val meetings: Array<Participant>?) {
             val response_type = 3
         }
     }
 
-    fun handle(input: ApiContext, context: Context): HttpResponse {
+    fun handle(input: ApiContext?, context: Context?): HttpResponse {
         TODO("Fill in with database fetch")
     }
 }

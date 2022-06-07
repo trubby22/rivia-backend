@@ -8,14 +8,14 @@ class GetDashboard {
             constructor() : this(null)
         }
 
-        class IdMeeting(val meeting_id: Uid, val meeting: Meeting)
+        class IdMeeting(val meeting_id: Uid?, val meeting: Meeting?)
 
-        class HttpResponse(meetings: Array<IdMeeting>) {
+        class HttpResponse(meetings: Array<IdMeeting>?) {
             val response_type = 4
         }
     }
 
-    fun handle(input: ApiContext, context: Context): HttpResponse {
+    fun handle(input: ApiContext?, context: Context?): HttpResponse {
         TODO("Fill in with database fetch")
     }
 }

@@ -12,7 +12,7 @@ class PostCreateAccount {
         )
     }
 
-    fun handle(input: AccountData, context: Context) {
+    fun handle(input: AccountData?, context: Context?) {
         TODO("Fill in with database fetch")
     }
 }

@@ -19,7 +19,7 @@ class PostReview {
         }
     }
 
-    fun handle(input: ApiContext, context: Context) {
+    fun handle(input: ApiContext?, context: Context?) {
         TODO("Fill in with database fetch")
     }
 }

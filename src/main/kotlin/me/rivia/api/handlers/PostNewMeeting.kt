@@ -11,7 +11,7 @@ class PostNewMeeting {
         class MeetingData(val meeting: Meeting?, val participants: Array<Uid>?)
     }
 
-    fun handle(input: ApiContext, context: Context) {
+    fun handle(input: ApiContext?, context: Context?) {
         TODO("Fill in with database fetch")
     }
 }

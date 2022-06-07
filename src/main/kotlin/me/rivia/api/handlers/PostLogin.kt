@@ -7,7 +7,7 @@ class PostLogin {
         class LoginData(val email: String?, val password: String?)
     }
 
-    fun handle(input: LoginData, context: Context) {
+    fun handle(input: LoginData?, context: Context?) {
         TODO("Fill in with database fetch")
     }
 }
