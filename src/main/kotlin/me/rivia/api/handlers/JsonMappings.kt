@@ -4,17 +4,11 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 
 typealias Uid = String
 
-class PresetQuestion(preset_q_id: Uid?, val preset_q_text: String?) {
-    var preset_q_id = preset_q_id
-        @DynamoDbPartitionKey get
-        @DynamoDbPartitionKey set
-
+class PresetQuestion(var preset_q_id: Uid?, var preset_q_text: String?) {
     constructor() : this(null, null)
 }
-class Participant(participant_id: Uid?, val name: String?, val surname: String?, val email: String?) {
-    var participant_id = participant_id
-        @DynamoDbPartitionKey get
-        @DynamoDbPartitionKey set
+class Participant(var participant_id: Uid?, var name: String?, var surname: String?, var email: String?) {
+    constructor(): this(null, null, null, null)
 }
 class Meeting(val title: String?, val start: Int?, val end: Int?) {
         constructor() : this(null, null, null)

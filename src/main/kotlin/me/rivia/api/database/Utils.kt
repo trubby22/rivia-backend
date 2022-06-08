@@ -2,6 +2,7 @@ package me.rivia.api.database
 
 import me.rivia.api.handlers.Meeting
 import me.rivia.api.handlers.Participant
+import me.rivia.api.handlers.PresetQuestion
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
@@ -60,9 +61,14 @@ inline fun getMeeting(meetingEntry : Map<String, AttributeValue>) = Meeting(
     )
 
 inline fun getParticipant(participantEntry : Map<String, AttributeValue>) = Participant(
-    participant_id = participantEntry.get("UserID")?.s() ?: throw FieldError("User", "UserID"),
-    name = participantEntry["name"]?.s() ?: throw FieldError("User", "name"),
-    surname = participantEntry["surname"]?.s() ?: throw FieldError("User", "surname"),
-    email = participantEntry["email"]?.s() ?: throw FieldError("User", "email")
+    participantEntry.get("UserID")?.s() ?: throw FieldError("User", "UserID"),
+    participantEntry["name"]?.s() ?: throw FieldError("User", "name"),
+    participantEntry["surname"]?.s() ?: throw FieldError("User", "surname"),
+    participantEntry["email"]?.s() ?: throw FieldError("User", "email")
+)
+
+inline fun getPresetQ(presetQEntry: Map<String, AttributeValue>) = PresetQuestion(
+    presetQEntry["PresetQID"]?.s() ?: throw FieldError("PresetQs", "PresetQID"),
+    presetQEntry["text"]?.s() ?: throw FieldError("PresetQs", "text")
 )
 
