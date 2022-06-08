@@ -12,10 +12,10 @@ import com.amazonaws.services.lambda.runtime.Context
 class PostCreateAccount {
     companion object {
         class AccountData(
-            val name: String?,
-            val surname: String?,
-            val email: String?,
-            val password: String?
+            var name: String?,
+            var surname: String?,
+            var email: String?,
+            var password: String?
         ) {
             constructor() : this(null, null, null, null)
         }

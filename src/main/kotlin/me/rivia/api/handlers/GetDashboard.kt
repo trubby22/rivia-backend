@@ -4,11 +4,11 @@ import com.amazonaws.services.lambda.runtime.Context
 
 class GetDashboard {
     companion object {
-        class ApiContext(val cookie: Int?) {
+        class ApiContext(var cookie: Int?) {
             constructor() : this(null)
         }
 
-        class IdMeeting(val meeting_id: Uid?, val meeting: Meeting?)
+        class IdMeeting(var meeting_id: Uid?, var meeting: Meeting?)
 
         class HttpResponse(meetings: ArrayList<IdMeeting>?) {
             val response_type: Int? = 4

@@ -15,11 +15,11 @@ import java.util.function.Consumer
 
 class PostNewMeeting {
     companion object {
-        class ApiContext(cookie: Int?, val data: MeetingData?) {
+        class ApiContext(var cookie: Int?, var data: MeetingData?) {
             constructor() : this(null, null)
         }
 
-        class MeetingData(val meeting: Meeting?, val participants: ArrayList<Uid>?) {
+        class MeetingData(var meeting: Meeting?, var participants: ArrayList<Uid>?) {
             constructor() : this(null, null)
         }
     }

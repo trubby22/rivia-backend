@@ -9,7 +9,7 @@ import com.amazonaws.services.lambda.runtime.Context
 
 class PostReview {
     companion object {
-        class ApiContext(val meeting_id: Uid?, val cookie: Int?, val data: Review?) {
+        class ApiContext(var meeting_id: Uid?, var cookie: Int?, var data: Review?) {
             constructor() : this(null, null, null)
         }
 
