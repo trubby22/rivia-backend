@@ -2,6 +2,7 @@ package me.rivia.api.database
 
 import me.rivia.api.handlers.Meeting
 import me.rivia.api.handlers.Participant
+import me.rivia.api.handlers.PostCreateAccount
 import me.rivia.api.handlers.PresetQuestion
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -10,10 +11,24 @@ import software.amazon.awssdk.services.dynamodb.model.BatchGetItemRequest
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest
 import software.amazon.awssdk.services.dynamodb.model.KeysAndAttributes
 import java.util.LinkedList
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
+import com.amazonaws.services.dynamodbv2.document.DynamoDB
+import com.amazonaws.services.dynamodbv2.document.Item
+import com.amazonaws.services.lambda.runtime.Context
+import java.util.UUID
+
 
 val dbClient : DynamoDbClient = DynamoDbClient.builder()
     .region(Region.EU_WEST_2)
     .build()
+
+val client: AmazonDynamoDB = AmazonDynamoDBClientBuilder
+    .standard()
+    .withRegion(Regions.EU_WEST_2)
+    .build()
+val db = DynamoDB(client)
 
 inline fun getEntry(
     tableName: String,
@@ -53,6 +68,7 @@ inline fun getEntries(
 }
 
 class FieldError(tableName: String, field: String) : Error("'$field' field of the '$tableName' table not present")
+class PutError(tableName : String) : Error("Failed to put item into'$tableName")
 
 inline fun getMeeting(meetingEntry : Map<String, AttributeValue>) = Meeting(
         meetingEntry["title"]?.s() ?: throw FieldError("Meeting", "title"),
@@ -71,4 +87,21 @@ inline fun getPresetQ(presetQEntry: Map<String, AttributeValue>) = PresetQuestio
     presetQEntry["PresetQID"]?.s() ?: throw FieldError("PresetQs", "PresetQID"),
     presetQEntry["text"]?.s() ?: throw FieldError("PresetQs", "text")
 )
+
+inline fun putAccount(accountData : PostCreateAccount.Companion.AccountData) {
+    // should this be already hashed
+    val table = db.getTable("User")
+    // can change this to use enhanced database
+    val item = Item()
+        .withString("UserID", UUID.randomUUID().toString())
+        .withString("name", accountData.name)
+        .withString("surname", accountData.surname)
+        .withString("email", accountData.email)
+        .withString("password", accountData.password)
+    val outcome = table.putItem(item) ?: throw PutError("User")
+}
+
+//inline fun putParticipant()
+
+//inline fun putPresetQ()
 
