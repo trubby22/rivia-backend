@@ -31,6 +31,8 @@ class PostReview : RequestHandler<PostReview.Companion.ApiContext?, Unit> {
             presetQs = review?.preset_qs?.toSet(),
             quality = review?.quality,
         )
+//        TODO: Check whether the participant-meeting pair already exists in
+//         the review database
         val success: Boolean = putEntry(Table.REVIEW, outputReview)
         if (!success) {
             println("did not manage to create new item in database")
