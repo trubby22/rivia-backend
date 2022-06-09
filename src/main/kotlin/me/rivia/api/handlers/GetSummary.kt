@@ -30,7 +30,7 @@ class GetSummary {
                 meetingEntry.reviews!!
             ), Table.REVIEW
         )
-        if (reviewEntries.size != meetingEntry.participants?.size) {
+        if (reviewEntries.size != meetingEntry.reviews?.size) {
             throw Error("some reviewIds not present")
         }
 
@@ -70,7 +70,7 @@ class GetSummary {
                     )
         }.toMap()
         if (participantIds.size != allParticipantIds.size) {
-            throw Error("some presetQIds not present")
+            throw Error("some participantIds not present")
         }
 
         return HttpResponse(

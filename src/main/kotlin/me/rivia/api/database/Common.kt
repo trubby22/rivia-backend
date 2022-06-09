@@ -4,18 +4,21 @@ import me.rivia.api.handlers.Uid
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import kotlin.reflect.full.*
 import kotlin.reflect.KClass
 import java.util.*
 
-val dbClient: DynamoDbClient = DynamoDbClient.builder()
-    .region(Region.EU_WEST_2)
-    .build()
+val httpClient = UrlConnectionHttpClient.builder().build()
 
-val dbEnhancedClient: DynamoDbEnhancedClient =
-    DynamoDbEnhancedClient.builder().dynamoDbClient(dbClient).build()
+val dbClient: DynamoDbClient =
+    DynamoDbClient.builder()
+        .region(Region.EU_WEST_2).httpClient(httpClient)
+        .build()
+
+val dbEnhancedClient: DynamoDbEnhancedClient = DynamoDbEnhancedClient.builder().dynamoDbClient(dbClient).build()
 
 interface DbEntry {
     fun primaryKeyName(): String

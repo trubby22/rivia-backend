@@ -2,11 +2,9 @@ package me.rivia.api.handlers
 
 import com.amazonaws.services.lambda.runtime.Context
 import me.rivia.api.database.*
-import java.lang.reflect.Field
 import me.rivia.api.database.PresetQ as DbPresetQ
 import me.rivia.api.database.Meeting as DbMeeting
 import me.rivia.api.database.User as DbUser
-import me.rivia.api.database.Session as DbSession
 
 class GetReview {
     companion object {
@@ -22,7 +20,6 @@ class GetReview {
     }
 
     fun handle(input: ApiContext?, context: Context?): HttpResponse? {
-
         val meetingEntry = getEntry<DbMeeting>(
             Table.MEETING,
             input?.meeting_id ?: throw Error("Meeting id not present")
