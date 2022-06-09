@@ -1,8 +1,5 @@
 package me.rivia.api.handlers
 
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
-
 typealias Uid = String
 
 data class PresetQuestion(var preset_q_id: Uid?, var preset_q_text: String?) {
@@ -22,7 +19,7 @@ data class Meeting(var title: String?, var start_time: Int?, var end_time: Int?)
     constructor() : this(null, null, null)
 }
 
-class Response(
+data class Review(
     var participant: Participant?,
     var quality: Float?,
     var preset_qs: ArrayList<String>?,

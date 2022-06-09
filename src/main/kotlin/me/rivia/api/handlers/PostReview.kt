@@ -1,49 +1,43 @@
 package me.rivia.api.handlers
 
-import com.amazonaws.regions.Regions
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
-import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.lambda.runtime.Context
+import com.amazonaws.services.lambda.runtime.RequestHandler
+import me.rivia.api.database.Table
+import me.rivia.api.database.putEntry
+import me.rivia.api.database.Review as DatabaseReview
 
-class PostReview {
+class PostReview : RequestHandler<PostReview.Companion.ApiContext?, Unit> {
     companion object {
-        class ApiContext(var meeting_id: Uid?, var cookie: Int?, var data: Review?) {
-            constructor() : this(null, null, null)
-        }
-
-        class Review(
-            val quality: Float?,
-            val points: ArrayList<Uid>?,
-            val not_needed: ArrayList<Uid>?,
-            val not_prepared: ArrayList<Uid>?,
-            val feedback: String?
+        class ApiContext(
+            var meeting_id: Uid?,
+            var cookie: Int?,
+            var data: Review?
         ) {
-            constructor() : this( null, null, null, null, null)
+            constructor() : this(null, null, null)
         }
     }
 
-    fun handle(input: ApiContext?, context: Context?) {
-        val client: AmazonDynamoDB = AmazonDynamoDBClientBuilder
-            .standard()
-            .withRegion(Regions.EU_WEST_2)
-            .build()
-        val db = DynamoDB(client)
-        val table = db.getTable("Review");
-        val review : Review? = input!!.data;
-        val item = Item()
-            .withPrimaryKey("ReviewID", input.meeting_id)
-            .withNumber("Cookie", input.cookie)
-            .withString("UserID", "0")
-            .withNumber("Quality", review?.quality)
-            .withList("NotNeeded", review?.not_needed)
-            .withList("NotPrepared", review?.not_prepared)
-            .withList("PresetQ", review?.points)
-            .withString("Feedback", review?.feedback)
-        val outcome = table.putItem(item);
-        if (outcome == null) {
+    override fun handleRequest(input: ApiContext?, context: Context?) {
+        val review: Review? = input?.data
+        val participant: Participant? = review?.participant
+        val outputReview: DatabaseReview = DatabaseReview(
+            reviewId = generateReviewId(),
+            user = participant?.participant_id,
+            notNeeded = review?.not_needed?.map { it.participant_id!! }
+                ?.toSet(),
+            notPrepared = review?.not_prepared?.map { it.participant_id!! }
+                ?.toSet(),
+            presetQs = review?.preset_qs?.toSet(),
+            quality = review?.quality,
+        )
+        val success: Boolean = putEntry(Table.REVIEW, outputReview)
+        if (!success) {
             println("did not manage to create new item in database")
         }
+    }
+
+    private fun generateReviewId(): String {
+        TODO("Not yet implemented")
     }
 }

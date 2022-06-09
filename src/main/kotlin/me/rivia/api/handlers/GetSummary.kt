@@ -6,16 +6,16 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 
-class GetSummary : RequestHandler<GetSummary.ApiContext, List<Response>> {
+class GetSummary : RequestHandler<GetSummary.ApiContext, List<Review>> {
     class ApiContext(var meeting_id: Uid? = null, var cookie: Int? = null)
     override fun handleRequest(
         input: ApiContext?,
         context: Context?
-    ): List<Response> {
+    ): List<Review> {
         val enhancedClient: DynamoDbEnhancedClient =
             DynamoDbEnhancedClient.create()
-        val table: DynamoDbTable<Response> = enhancedClient
-            .table("Review", TableSchema.fromBean(Response::class.java))
+        val table: DynamoDbTable<Review> = enhancedClient
+            .table("Review", TableSchema.fromBean(Review::class.java))
 
         return table.scan().items().toList()
     }

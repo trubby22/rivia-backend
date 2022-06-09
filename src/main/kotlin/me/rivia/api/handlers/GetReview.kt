@@ -29,7 +29,8 @@ class GetReview {
 
         val participantEntries = getEntries<DbUser>(
             Table.USER,
-            meetingEntry.participants?.asIterable() ?: throw FieldError("Meeting", "participants")
+            meetingEntry.participants?.asIterable()
+                ?: throw FieldError("Meeting", "participants")
         )
         if (participantEntries.size != meetingEntry.participants?.size) {
             throw Error("some userIds not present")
@@ -39,7 +40,11 @@ class GetReview {
             Table.PRESETQUESTIONS,
         )
         return HttpResponse(
-            Meeting(meetingEntry.title, meetingEntry.startTime, meetingEntry.endTime),
+            Meeting(
+                meetingEntry.title,
+                meetingEntry.startTime,
+                meetingEntry.endTime
+            ),
             participantEntries.asSequence()
                 .map { participantEntry ->
                     Participant(
@@ -51,7 +56,12 @@ class GetReview {
                 }.toList()
                 .toTypedArray(),
             presetQEntries.asSequence()
-                .map { presetQEntry -> PresetQuestion(presetQEntry.presetQId, presetQEntry.text) }
+                .map { presetQEntry ->
+                    PresetQuestion(
+                        presetQEntry.presetQId,
+                        presetQEntry.text
+                    )
+                }
                 .toList()
                 .toTypedArray()
         )
