@@ -2,21 +2,12 @@ package me.rivia.api.database
 
 import me.rivia.api.handlers.Meeting
 import me.rivia.api.handlers.Participant
-import me.rivia.api.handlers.PostCreateAccount
 import me.rivia.api.handlers.PresetQuestion
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.BatchGetItemRequest
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest
 import software.amazon.awssdk.services.dynamodb.model.KeysAndAttributes
 import java.util.LinkedList
-import java.util.UUID
-
-
-private val dbClient : DynamoDbClient = DynamoDbClient.builder()
-    .region(Region.EU_WEST_2)
-    .build()
 
 fun getEntry(
     tableName: String,
@@ -36,7 +27,6 @@ fun getEntry(
 //
 //}
 
-private const val SINGLE_BATCH_LIMIT = 100
 private inline fun fetchSingleBatch(
     tableName: String,
     primaryKeyMaps: Collection<Map<String, AttributeValue>>,
