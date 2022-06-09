@@ -3,6 +3,7 @@ package me.rivia.api.handlers
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import me.rivia.api.database.Table
+import me.rivia.api.database.generateId
 import me.rivia.api.database.putEntry
 
 import  me.rivia.api.database.Meeting as DatabaseMeeting
@@ -22,16 +23,12 @@ class PostNewMeeting {
         val meetingData: MeetingData? = input?.data
         val meeting: Meeting? = meetingData?.meeting
         val databaseMeeting: DatabaseMeeting = DatabaseMeeting(
-            meetingId = generateMeetingId(),
+            meetingId = generateId(),
             title = meeting?.title,
             startTime = meeting?.start_time,
             endTime = meeting?.end_time,
-            participants = meetingData?.participants?.toSet(),
+            participants = meetingData?.participants,
         )
         putEntry(Table.MEETING, databaseMeeting)
-    }
-
-    private fun generateMeetingId(): String {
-        TODO("Not yet implemented")
     }
 }

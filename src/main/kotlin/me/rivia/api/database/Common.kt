@@ -8,6 +8,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import kotlin.reflect.full.*
 import kotlin.reflect.KClass
+import java.util.*
 
 val dbClient: DynamoDbClient = DynamoDbClient.builder()
     .region(Region.EU_WEST_2)
@@ -50,9 +51,9 @@ class Meeting(
     @get:DynamoDbPartitionKey
     var meetingId: Uid? = null,
     var title: String? = null,
-    var participants: Set<String>? = null,
-    var reviews: Set<String>? = null,
-    var reviewedBy: Set<String>? = null,
+    var participants: List<Uid>? = null,
+    var reviews: List<Review>? = null,
+    var reviewedBy: List<Uid>? = null,
     var startTime: Int? = null,
     var endTime: Int? = null,
 ) : DbEntry {
@@ -72,11 +73,11 @@ data class PresetQ(
 @DynamoDbBean
 class Review(
     @get:DynamoDbPartitionKey
-    var reviewId: Uid? = null,
-    var user: Uid? = null,
-    var notNeeded: Set<Uid>? = null,
-    var notPrepared: Set<Uid>? = null,
-    var presetQs: Set<Uid>? = null,
+    var reviewId: String? = null,
+    var user: String? = null,
+    var notNeeded: List<Uid>? = null,
+    var notPrepared: List<Uid>? = null,
+    var presetQs: List<String>? = null,
     var quality: Float? = null
 ) : DbEntry {
     override fun primaryKeyName(): String = "reviewId"
@@ -114,7 +115,10 @@ inline fun <reified T : Any> fieldNullCheck(value: T, errorMessage: String): T {
 inline fun <reified T : Any> entryNullCheck(value: T, table: Table): T =
     fieldNullCheck(value, "entry from '$table' has a nulled component")
 
-inline fun <reified T : Any, C : Iterable<T>> entriesNullCheck(values: C, table: Table): C {
+inline fun <reified T : Any, C : Iterable<T>> entriesNullCheck(
+    values: C,
+    table: Table
+): C {
     for (value in values) {
         entryNullCheck(value, table)
     }
@@ -123,3 +127,7 @@ inline fun <reified T : Any, C : Iterable<T>> entriesNullCheck(values: C, table:
 
 class FieldError(tableName: Table, field: String) :
     Error("'$field' field of the '$tableName' table not present")
+
+fun generateId(): String {
+    return UUID.randomUUID().toString()
+}
