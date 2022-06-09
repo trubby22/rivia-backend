@@ -31,6 +31,7 @@ data class Login(
 
 }
 
+@DynamoDbBean
 class Meeting(
     @get:DynamoDbPartitionKey
     var meetingId: String? = null,
@@ -43,6 +44,7 @@ class Meeting(
     override fun primaryKeyName(): String = "meetingId"
 }
 
+@DynamoDbBean
 data class PresetQ(
     @get:DynamoDbPartitionKey
     var presetQId: String? = null,
@@ -51,7 +53,8 @@ data class PresetQ(
     override fun primaryKeyName(): String = "presetQId"
 }
 
-data class Review(
+@DynamoDbBean
+class Review(
     @get:DynamoDbPartitionKey
     var reviewId: String? = null,
     var user: String? = null,
@@ -63,12 +66,14 @@ data class Review(
     override fun primaryKeyName(): String = "reviewId"
 }
 
+@DynamoDbBean
 data class Session(
     @get:DynamoDbPartitionKey
     var cookie: String? = null,
     var user: String? = null
 )
 
+@DynamoDbBean
 data class User(
     @get:DynamoDbPartitionKey
     var userId: String? = null,
@@ -76,3 +81,6 @@ data class User(
     var name: String? = null,
     var surname: String? = null,
 )
+
+class FieldError(tableName: String, field: String) :
+    Error("'$field' field of the '$tableName' table not present")

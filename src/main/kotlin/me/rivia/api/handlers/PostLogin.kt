@@ -13,6 +13,6 @@ class PostLogin {
     }
 
     fun handle(input: LoginData?, context: Context?) {
-        println(getEntry("Login","Email", input?.email ?: throw Error("No email")) )
+        TODO("Write")
     }
 }

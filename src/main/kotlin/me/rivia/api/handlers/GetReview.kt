@@ -1,12 +1,15 @@
 package me.rivia.api.handlers
 
 import com.amazonaws.services.lambda.runtime.Context
-import me.rivia.api.database.*
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
+import me.rivia.api.database.getEntry
+import me.rivia.api.database.getEntries
+import me.rivia.api.database.getAllEntries
+import me.rivia.api.database.FieldError
+import me.rivia.api.database.PresetQ as DbPresetQ
+import me.rivia.api.database.Meeting as DbMeeting
+import me.rivia.api.database.User as DbUser
 
 class GetReview {
-    // get data to display the review
     companion object {
         data class ApiContext(var meeting_id: Uid?, var cookie: String?) {
             constructor() : this(null, null)
@@ -19,45 +22,41 @@ class GetReview {
         ) {
             val response_type: Int? = 1
         }
-
-        @DynamoDbBean
-        class Session(@get:DynamoDbPartitionKey var cookie: String? = null, var user: String? = null) : DbEntry {
-            override fun primaryKeyName(): String = "cookie"
-
-        }
     }
 
     fun handle(input: ApiContext?, context: Context?): HttpResponse? {
-//        val meetingEntry = getEntry(
-//            "Meeting",
-//            "MeetingID",
-//            input?.meeting_id ?: throw Error("Meeting id not present")
-//        ) ?: return null
-//        val participantEntries = getEntries(
-//            "User",
-//            "UserID",
-//            meetingEntry["participants"]?.ss()
-//                ?: throw FieldError("Meeting", "participants")
-//        )
-//        val organization = getEntry(
-//            "Organisation",
-//            "OrganisationID",
-//            meetingEntry["organisation"]?.s()
-//                ?: throw FieldError("Meeting", "organisation")
-//        ) ?: throw Error("OrganisationID not present")
-//        val presetQEntries = getEntries(
-//            "PresetQs",
-//            "PresetQID",
-//            organization["presetQs"]?.ss() ?: throw FieldError("Organisation", "presetQs")
-//        )
-//        return HttpResponse(getMeeting(meetingEntry),
-//            participantEntries.asSequence()
-//                .map { participantEntry -> getParticipant(participantEntry) }.toList()
-//                .toTypedArray(),
-//            presetQEntries.asSequence().map { presetQEntry -> getPresetQ(presetQEntry) }.toList()
-//                .toTypedArray()
-//        )
-        putEntry("Session", Session("0", "1"))
-        return null
+        val meetingEntry = getEntry<DbMeeting>(
+            "Meeting",
+            input?.meeting_id ?: throw Error("Meeting id not present")
+        ) ?: return null
+
+        val participantEntries = getEntries<DbUser>(
+            "User",
+            meetingEntry.participants?.asIterable() ?: throw FieldError("Meeting", "participants")
+        )
+        if (participantEntries.size != meetingEntry.participants?.size) {
+            throw Error("some userIds not present")
+        }
+
+        val presetQEntries = getAllEntries<DbPresetQ>(
+            "PresetQs",
+        )
+        return HttpResponse(
+            Meeting(meetingEntry.title, meetingEntry.startTime, meetingEntry.endTime),
+            participantEntries.asSequence()
+                .map { participantEntry ->
+                    Participant(
+                        participantEntry.userId,
+                        participantEntry.name,
+                        participantEntry.surname,
+                        participantEntry.email
+                    )
+                }.toList()
+                .toTypedArray(),
+            presetQEntries.asSequence()
+                .map { presetQEntry -> PresetQuestion(presetQEntry.presetQId, presetQEntry.text) }
+                .toList()
+                .toTypedArray()
+        )
     }
 }

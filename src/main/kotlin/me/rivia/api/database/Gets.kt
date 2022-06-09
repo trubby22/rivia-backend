@@ -8,19 +8,11 @@ import software.amazon.awssdk.enhanced.dynamodb.model.ReadBatch
 inline fun <reified EntryType> getEntry(
     tableName: String,
     keyValue: String,
-): EntryType {
+): EntryType? {
     val table: DynamoDbTable<EntryType> = dbEnhancedClient
         .table(tableName, TableSchema.fromClass(EntryType::class.java))
     return table.getItem(Key.builder().partitionValue(keyValue).build())
 }
-
-//fun getEntryIndex(
-//    tableName: String,
-//    indexName: String,
-//    indexValue: String
-//): Map<String, AttributeValue>? {
-//
-//}
 
 inline fun <reified EntryType> fetchSingleBatch(
     tableName: String,
