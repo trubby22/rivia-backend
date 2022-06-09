@@ -19,7 +19,6 @@ build:
       - build
       - .gradle
 
-
 test:
   image: gradle:7.4.2-jdk11-alpine
   stage: test
@@ -34,9 +33,7 @@ test:
 deploy:
   image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-base:latest
   stage: deploy
-  script: for fun in $AWS_FUNCITONS; do aws lambda update-function-code
-  --function-name $fun --zip-file fileb://build/distributions/rivia-backend
-  .zip; done
+  script: for fun in $AWS_FUNCITONS; do aws lambda update-function-code --function-name $fun --zip-file fileb://build/distributions/rivia-backend.zip; done
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
