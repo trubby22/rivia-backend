@@ -14,7 +14,7 @@ class PostReview {
         }
     }
 
-    fun handler(input: ApiContext?, context: Context?) {
+    fun handle(input: ApiContext?, context: Context?) {
         val review: Review? = input?.data
         val participant: Participant? = review?.participant
         val outputReview: DatabaseReview = DatabaseReview(

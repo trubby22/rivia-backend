@@ -18,7 +18,7 @@ class PostNewMeeting {
         }
     }
 
-    fun handler(input: ApiContext?, context: Context?) {
+    fun handle(input: ApiContext?, context: Context?) {
         val meetingData: MeetingData? = input?.data
         val meeting: Meeting? = meetingData?.meeting
         val databaseMeeting: DatabaseMeeting = DatabaseMeeting(

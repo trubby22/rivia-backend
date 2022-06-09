@@ -28,7 +28,7 @@ class GetNewMeeting {
         }
     }
 
-    fun handler(
+    fun handle(
         input: ApiContext?,
         context: Context?
     ): HttpResponse {

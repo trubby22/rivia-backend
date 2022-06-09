@@ -11,7 +11,7 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 class GetDashboard {
     class ApiContext(var cookie: Int? = null)
 
-    fun handler(input: ApiContext?, context: Context?): List<Meeting> {
+    fun handle(input: ApiContext?, context: Context?): List<Meeting> {
         return getAllEntries(Table.MEETING)
     }
 }
