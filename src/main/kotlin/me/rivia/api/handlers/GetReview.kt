@@ -20,10 +20,12 @@ class GetReview : HandlerInit() {
     }
 
     fun handle(input: ApiContext?, context: Context?): HttpResponse? {
-        val meetingEntry = entryNullCheck(getEntry<DbMeeting>(
-            Table.MEETING,
-            input?.meeting_id ?: throw Error("Meeting id not present")
-        ) ?: return null, Table.MEETING)
+        val meetingEntry = entryNullCheck(
+            getEntry<DbMeeting>(
+                Table.MEETING,
+                input?.meeting_id ?: throw Error("Meeting id not present")
+            ) ?: return null, Table.MEETING
+        )
 
         if (meetingEntry.reviewedBy!!.contains(
                 getUser(input.session) ?: return null
@@ -32,17 +34,21 @@ class GetReview : HandlerInit() {
             return null
         }
 
-        val participantEntries = entriesNullCheck(getEntries<DbUser>(
-            Table.USER,
-            meetingEntry.participants!!
-        ), Table.USER)
+        val participantEntries = entriesNullCheck(
+            getEntries<DbUser>(
+                Table.USER,
+                meetingEntry.participants!!
+            ), Table.USER
+        )
         if (participantEntries.size != meetingEntry.participants?.size) {
             throw Error("some userIds not present")
         }
 
-        val presetQEntries = entriesNullCheck(getAllEntries<DbPresetQ>(
-            Table.PRESETQS,
-        ), Table.PRESETQS)
+        val presetQEntries = entriesNullCheck(
+            getAllEntries<DbPresetQ>(
+                Table.PRESETQS,
+            ), Table.PRESETQS
+        )
         return HttpResponse(
             Meeting(
                 meetingEntry.title,
