@@ -52,7 +52,7 @@ class Meeting(
     var meetingId: Uid? = null,
     var title: String? = null,
     var participants: List<Uid>? = null,
-    var reviews: List<Review>? = null,
+    var reviews: List<Uid>? = null,
     var reviewedBy: List<Uid>? = null,
     var startTime: Int? = null,
     var endTime: Int? = null,
@@ -73,11 +73,11 @@ data class PresetQ(
 @DynamoDbBean
 class Review(
     @get:DynamoDbPartitionKey
-    var reviewId: String? = null,
-    var user: String? = null,
+    var reviewId: Uid? = null,
+    var user: Uid? = null,
     var notNeeded: List<Uid>? = null,
     var notPrepared: List<Uid>? = null,
-    var presetQs: List<String>? = null,
+    var presetQs: List<Uid>? = null,
     var quality: Float? = null
 ) : DbEntry {
     override fun primaryKeyName(): String = "reviewId"

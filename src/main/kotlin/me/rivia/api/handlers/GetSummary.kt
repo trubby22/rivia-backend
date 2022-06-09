@@ -27,7 +27,7 @@ class GetSummary {
         val reviewEntries = entriesNullCheck(
             getEntries<DbReview>(
                 Table.REVIEW,
-                meetingEntry.reviews!!.asIterable()
+                meetingEntry.reviews!!
             ), Table.REVIEW
         )
         if (reviewEntries.size != meetingEntry.participants?.size) {

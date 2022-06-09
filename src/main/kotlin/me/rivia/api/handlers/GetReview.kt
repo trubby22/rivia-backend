@@ -37,7 +37,7 @@ class GetReview {
 
         val participantEntries = getEntries<DbUser>(
             Table.USER,
-            meetingEntry.participants?.asIterable() ?: throw FieldError(
+            meetingEntry.participants ?: throw FieldError(
                 Table.MEETING,
                 "participants"
             )

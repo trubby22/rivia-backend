@@ -34,8 +34,11 @@ inline fun <reified EntryType> fetchSingleBatch(
 
 inline fun <reified EntryType> getEntries(
     table: Table,
-    keys: Iterable<String>,
+    keys: Collection<String>,
 ): List<EntryType> {
+    if (keys.isEmpty()) {
+        return listOf()
+    }
     val currentBatchKeys: MutableList<String> = mutableListOf()
     val results: MutableList<EntryType> = mutableListOf()
     for (key in keys) {
