@@ -22,6 +22,7 @@ class GetReview {
     }
 
     fun handle(input: ApiContext?, context: Context?): HttpResponse? {
+
         val meetingEntry = getEntry<DbMeeting>(
             Table.MEETING,
             input?.meeting_id ?: throw Error("Meeting id not present")

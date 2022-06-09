@@ -1,5 +1,6 @@
 package me.rivia.api.database
 
+import me.rivia.api.handlers.Uid
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
@@ -39,7 +40,7 @@ data class Login(
     var email: String? = null,
     var password: String? = null,
     var salt: String? = null,
-    var user: String? = null
+    var user: Uid? = null
 ) : DbEntry {
     override fun primaryKeyName(): String = "email"
 }
@@ -47,7 +48,7 @@ data class Login(
 @DynamoDbBean
 class Meeting(
     @get:DynamoDbPartitionKey
-    var meetingId: String? = null,
+    var meetingId: Uid? = null,
     var title: String? = null,
     var participants: Set<String>? = null,
     var reviews: Set<String>? = null,
@@ -56,12 +57,13 @@ class Meeting(
     var endTime: Int? = null,
 ) : DbEntry {
     override fun primaryKeyName(): String = "meetingId"
+
 }
 
 @DynamoDbBean
 data class PresetQ(
     @get:DynamoDbPartitionKey
-    var presetQId: String? = null,
+    var presetQId: Uid? = null,
     var text: String? = null
 ) : DbEntry {
     override fun primaryKeyName(): String = "presetQId"
@@ -70,11 +72,11 @@ data class PresetQ(
 @DynamoDbBean
 class Review(
     @get:DynamoDbPartitionKey
-    var reviewId: String? = null,
-    var user: String? = null,
-    var notNeeded: Set<String>? = null,
-    var notPrepared: Set<String>? = null,
-    var presetQs: Set<String>? = null,
+    var reviewId: Uid? = null,
+    var user: Uid? = null,
+    var notNeeded: Set<Uid>? = null,
+    var notPrepared: Set<Uid>? = null,
+    var presetQs: Set<Uid>? = null,
     var quality: Float? = null
 ) : DbEntry {
     override fun primaryKeyName(): String = "reviewId"
@@ -83,8 +85,8 @@ class Review(
 @DynamoDbBean
 data class Session(
     @get:DynamoDbPartitionKey
-    var cookie: String? = null,
-    var user: String? = null
+    var cookie: Uid? = null,
+    var user: Uid? = null
 ) : DbEntry {
     override fun primaryKeyName(): String = "cookie"
 }
@@ -92,7 +94,7 @@ data class Session(
 @DynamoDbBean
 data class User(
     @get:DynamoDbPartitionKey
-    var userId: String? = null,
+    var userId: Uid? = null,
     var email: String? = null,
     var name: String? = null,
     var surname: String? = null,
@@ -111,6 +113,13 @@ inline fun <reified T : Any> fieldNullCheck(value: T, errorMessage: String): T {
 
 inline fun <reified T : Any> entryNullCheck(value: T, table: Table): T =
     fieldNullCheck(value, "entry from '$table' has a nulled component")
+
+inline fun <reified T : Any, C : Iterable<T>> entriesNullCheck(values: C, table: Table): C {
+    for (value in values) {
+        entryNullCheck(value, table)
+    }
+    return values
+}
 
 class FieldError(tableName: Table, field: String) :
     Error("'$field' field of the '$tableName' table not present")

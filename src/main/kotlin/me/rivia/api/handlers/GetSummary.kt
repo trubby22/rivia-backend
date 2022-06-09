@@ -1,10 +1,7 @@
 package me.rivia.api.handlers
 
 import com.amazonaws.services.lambda.runtime.Context
-import me.rivia.api.database.getEntry
-import me.rivia.api.database.getEntries
-import me.rivia.api.database.FieldError
-import me.rivia.api.database.Table
+import me.rivia.api.database.*
 import me.rivia.api.database.PresetQ as DbPresetQ
 import me.rivia.api.database.Meeting as DbMeeting
 import me.rivia.api.database.Review as DbReview
@@ -20,64 +17,77 @@ class GetSummary {
     }
 
     fun handle(input: ApiContext?, context: Context?): HttpResponse? {
-        val meetingEntry = getEntry<DbMeeting>(
-            Table.MEETING,
-            input?.meeting_id ?: throw Error("Meeting id not present")
-        ) ?: return null
-        val reviewEntries = getEntries<DbReview>(
-            Table.REVIEW,
-            meetingEntry.reviews?.asIterable()!!
+        val meetingEntry = entryNullCheck(
+            getEntry<DbMeeting>(
+                Table.MEETING,
+                input?.meeting_id ?: throw Error("Meeting id not present")
+            ) ?: return null, Table.MEETING
+        )
+
+        val reviewEntries = entriesNullCheck(
+            getEntries<DbReview>(
+                Table.REVIEW,
+                meetingEntry.reviews!!.asIterable()
+            ), Table.REVIEW
         )
         if (reviewEntries.size != meetingEntry.participants?.size) {
             throw Error("some reviewIds not present")
         }
 
+        // All the presetQIds we're gonna need
         val allPresetQIds = reviewEntries.asSequence().map { reviewEntry ->
-            reviewEntry.presetQs?.asSequence() ?: throw FieldError(Table.REVIEW, "presetQs")
+            reviewEntry.presetQs!!.asSequence()
         }.flatten().toSet()
-        val presetQIds = getEntries<DbPresetQ>(Table.PRESETQS, allPresetQIds).asSequence()
+        val presetQIds = entriesNullCheck(
+            getEntries<DbPresetQ>(Table.PRESETQS, allPresetQIds),
+            Table.PRESETQS
+        ).asSequence()
             .map { presetQEntry ->
-                (presetQEntry.presetQId ?: throw FieldError(
-                    Table.PRESETQS,
-                    "presetQId"
-                )) to (presetQEntry.text ?: throw FieldError(Table.PRESETQS, "text"))
+                presetQEntry.presetQId!! to presetQEntry.text!!
             }.toMap()
+        if (presetQIds.size != allPresetQIds.size) {
+            throw Error("some presetQIds not present")
+        }
 
-        val allParticipantsIds = reviewEntries.asSequence().map { reviewEntry ->
-            sequenceOf(reviewEntry.user ?: throw FieldError(Table.REVIEW, "user")) +
-                    (reviewEntry.notNeeded?.asSequence() ?: throw FieldError(
-                        Table.REVIEW,
-                        "notNeeded"
-                    )) +
-                    (reviewEntry.notPrepared?.asSequence() ?: throw FieldError(
-                        Table.REVIEW,
-                        "notPrepared"
-                    ))
+        // All the participantIds we're gonna need
+        val allParticipantIds = reviewEntries.asSequence().map { reviewEntry ->
+            sequenceOf(reviewEntry.user!!) +
+                    reviewEntry.notNeeded!!.asSequence() +
+                    reviewEntry.notPrepared!!.asSequence()
         }.flatten().toSet()
-        val participantIds = getEntries<DbUser>(
-            Table.USER,
-            allParticipantsIds
-        ).map { participantEntry -> Participant(participantEntry.userId ?: throw FieldError(Table.REVIEW), ) }
+        val participantIds = entriesNullCheck(
+            getEntries<DbUser>(
+                Table.USER,
+                allParticipantIds
+            ), Table.USER
+        ).map { participantEntry ->
+            participantEntry.userId!! to
+                    Participant(
+                        participantEntry.userId!!,
+                        participantEntry.name!!,
+                        participantEntry.surname!!,
+                        participantEntry.email!!
+                    )
+        }.toMap()
+        if (participantIds.size != allParticipantIds.size) {
+            throw Error("some presetQIds not present")
+        }
 
         return HttpResponse(
             Meeting(
-                meetingEntry.title ?: throw FieldError(Table.MEETING, "title"),
-                meetingEntry.startTime ?: throw FieldError(Table.MEETING, "startTime"),
-                meetingEntry.endTime ?: throw FieldError(Table.MEETING, "endTime")
+                meetingEntry.title!!,
+                meetingEntry.startTime!!,
+                meetingEntry.endTime!!
             ),
             reviewEntries.map { reviewEntry ->
                 Review(
-                    reviewEntry.user ?: throw FieldError(Table.REVIEW, "user"),
-                    reviewEntry.quality ?: throw FieldError(Table.REVIEW, "quality"),
-                    reviewEntry.reviewId ?: throw FieldError(Table.REVIEW, "reviewId"),
-                    (reviewEntry.presetQs ?: throw FieldError(
-                        Table.REVIEW,
-                        "presetQs"
-                    )).asSequence(),
-                    null,
-                    null,
+                    participantIds[reviewEntry.user!!]!!,
+                    reviewEntry.quality!!,
+                    reviewEntry.presetQs!!.map {presetQId -> presetQIds[presetQId]!!},
+                    reviewEntry.notNeeded!!.map {participantId -> participantIds[participantId]!!},
+                    reviewEntry.notPrepared!!.map {participantId -> participantIds[participantId]!!},
                 )
-            }.toTypedArray()
+            }
         )
     }
 }
