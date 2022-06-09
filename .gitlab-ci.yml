@@ -1,4 +1,4 @@
-stages: 
+stages:
   - build
   - test
   - deploy
@@ -11,7 +11,7 @@ before_script:
 build:
   image: gradle:7.4.2-jdk11-alpine
   stage: build
-  script: gradle build -Dorg.gradle.java.home=$JAVA_HOME
+  script: gradle buildZip -Dorg.gradle.java.home=$JAVA_HOME
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -31,11 +31,12 @@ test:
       - build
       - .gradle
 
-
 deploy:
   image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-base:latest
   stage: deploy
-  script: for fun in $AWS_FUNCITONS; do aws lambda update-function-code --function-name $fun --zip-file fileb://build/libs/rivia-backend.jar; done
+  script: for fun in $AWS_FUNCITONS; do aws lambda update-function-code
+  --function-name $fun --zip-file fileb://build/distributions/rivia-backend
+  .zip; done
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
