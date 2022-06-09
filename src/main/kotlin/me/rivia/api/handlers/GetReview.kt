@@ -2,13 +2,15 @@ package me.rivia.api.handlers
 
 import com.amazonaws.services.lambda.runtime.Context
 import me.rivia.api.database.*
+import java.lang.reflect.Field
 import me.rivia.api.database.PresetQ as DbPresetQ
 import me.rivia.api.database.Meeting as DbMeeting
 import me.rivia.api.database.User as DbUser
+import me.rivia.api.database.Session as DbSession
 
 class GetReview {
     companion object {
-        data class ApiContext(var meeting_id: Uid?, var cookie: String?) {
+        data class ApiContext(var meeting_id: Uid?, var session: String?) {
             constructor() : this(null, null)
         }
 
@@ -16,9 +18,7 @@ class GetReview {
             val meeting: Meeting?,
             val participants: Array<Participant>?,
             val preset_qs: Array<PresetQuestion>?
-        ) {
-            val response_type: Int? = 1
-        }
+        )
     }
 
     fun handle(input: ApiContext?, context: Context?): HttpResponse? {
@@ -26,6 +26,21 @@ class GetReview {
             Table.MEETING,
             input?.meeting_id ?: throw Error("Meeting id not present")
         ) ?: return null
+
+        val sessionEntry = getEntry<DbSession>(
+            Table.SESSION,
+            input?.session ?: throw Error("Session not present")
+        ) ?: return null
+
+        if (meetingEntry.reviewedBy?.contains(
+                sessionEntry.user ?: throw FieldError(
+                    Table.SESSION,
+                    "user"
+                )
+            ) ?: throw FieldError(Table.MEETING, "reviewedBy")
+        ) {
+            return null
+        }
 
         val participantEntries = getEntries<DbUser>(
             Table.USER,
@@ -37,7 +52,7 @@ class GetReview {
         }
 
         val presetQEntries = getAllEntries<DbPresetQ>(
-            Table.PRESETQUESTIONS,
+            Table.PRESETQS,
         )
         return HttpResponse(
             Meeting(

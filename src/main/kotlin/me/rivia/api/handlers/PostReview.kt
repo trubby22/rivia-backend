@@ -9,11 +9,7 @@ import me.rivia.api.database.Review as DatabaseReview
 
 class PostReview : RequestHandler<PostReview.Companion.ApiContext?, Unit> {
     companion object {
-        class ApiContext(
-            var meeting_id: Uid?,
-            var cookie: Int?,
-            var data: Review?
-        ) {
+        class ApiContext(var meeting_id: Uid?, var session: Int?, var data: Review?) {
             constructor() : this(null, null, null)
         }
     }

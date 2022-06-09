@@ -17,16 +17,16 @@ interface DbEntry {
     fun primaryKeyName(): String
 }
 
-enum class Table {
-    LOGIN,
-    MEETING,
-    PRESETQUESTIONS,
-    REVIEW,
-    SESSION,
-    USER;
+enum class Table(val tableName: String) {
+    LOGIN("Login"),
+    MEETING("Meeting"),
+    PRESETQS("PresetQs"),
+    REVIEW("Review"),
+    SESSION("Session"),
+    USER("User");
 
     override fun toString(): String {
-        return super.toString().lowercase().replaceFirstChar { it.uppercase() }
+        return tableName
     }
 }
 
@@ -40,7 +40,6 @@ data class Login(
     var user: String? = null
 ) : DbEntry {
     override fun primaryKeyName(): String = "email"
-
 }
 
 @DynamoDbBean
@@ -50,6 +49,7 @@ class Meeting(
     var title: String? = null,
     var participants: Set<String>? = null,
     var reviews: Set<String>? = null,
+    var reviewedBy: Set<String>? = null,
     var startTime: Int? = null,
     var endTime: Int? = null,
 ) : DbEntry {
@@ -83,7 +83,9 @@ data class Session(
     @get:DynamoDbPartitionKey
     var cookie: String? = null,
     var user: String? = null
-)
+) : DbEntry {
+    override fun primaryKeyName(): String = "cookie"
+}
 
 @DynamoDbBean
 data class User(
@@ -92,7 +94,9 @@ data class User(
     var email: String? = null,
     var name: String? = null,
     var surname: String? = null,
-)
+) : DbEntry {
+    override fun primaryKeyName(): String = "userId"
+}
 
-class FieldError(tableName: String, field: String) :
+class FieldError(tableName: Table, field: String) :
     Error("'$field' field of the '$tableName' table not present")
