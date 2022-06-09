@@ -6,7 +6,7 @@ import me.rivia.api.database.*
 class GetReview {
     // get data to display the review
     companion object {
-        class ApiContext(var meeting_id: Uid?, var cookie: String?) {
+        data class ApiContext(var meeting_id: Uid?, var cookie: String?) {
             constructor() : this(null, null)
         }
 
@@ -20,7 +20,6 @@ class GetReview {
     }
 
     fun handle(input: ApiContext?, context: Context?): HttpResponse? {
-        // Fetching the necessary data
         val meetingEntry = getEntry(
             "Meeting",
             "MeetingID",
