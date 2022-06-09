@@ -17,8 +17,7 @@ import me.rivia.api.database.getEntry
 import kotlin.system.exitProcess
 import me.rivia.api.database.User as BackendUser
 
-class GetNewMeeting :
-    RequestHandler<GetNewMeeting.Companion.ApiContext?, GetNewMeeting.Companion.HttpResponse> {
+class GetNewMeeting {
     companion object {
         class ApiContext(var cookie: String?) {
             constructor() : this(null)
@@ -29,7 +28,7 @@ class GetNewMeeting :
         }
     }
 
-    override fun handleRequest(
+    fun handler(
         input: ApiContext?,
         context: Context?
     ): HttpResponse {

@@ -8,10 +8,10 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 
-class GetDashboard: RequestHandler<GetDashboard.ApiContext, List<Meeting>> {
+class GetDashboard {
     class ApiContext(var cookie: Int? = null)
 
-    override fun handleRequest(input: ApiContext?, context: Context?): List<Meeting> {
+    fun handler(input: ApiContext?, context: Context?): List<Meeting> {
         return getAllEntries(Table.MEETING)
     }
 }

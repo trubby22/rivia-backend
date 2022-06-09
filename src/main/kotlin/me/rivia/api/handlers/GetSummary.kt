@@ -83,9 +83,9 @@ class GetSummary {
                 Review(
                     participantIds[reviewEntry.user!!]!!,
                     reviewEntry.quality!!,
-                    reviewEntry.presetQs!!.map {presetQId -> presetQIds[presetQId]!!},
-                    reviewEntry.notNeeded!!.map {participantId -> participantIds[participantId]!!},
-                    reviewEntry.notPrepared!!.map {participantId -> participantIds[participantId]!!},
+                    reviewEntry.presetQs!!.map { presetQId -> presetQIds[presetQId]!! },
+                    reviewEntry.notNeeded!!.map { participantId -> participantIds[participantId]!! },
+                    reviewEntry.notPrepared!!.map { participantId -> participantIds[participantId]!! },
                 )
             }
         )

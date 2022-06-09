@@ -7,14 +7,14 @@ import me.rivia.api.database.Table
 import me.rivia.api.database.putEntry
 import me.rivia.api.database.Review as DatabaseReview
 
-class PostReview : RequestHandler<PostReview.Companion.ApiContext?, Unit> {
+class PostReview {
     companion object {
         class ApiContext(var meeting_id: Uid?, var session: Int?, var data: Review?) {
             constructor() : this(null, null, null)
         }
     }
 
-    override fun handleRequest(input: ApiContext?, context: Context?) {
+    fun handler(input: ApiContext?, context: Context?) {
         val review: Review? = input?.data
         val participant: Participant? = review?.participant
         val outputReview: DatabaseReview = DatabaseReview(
