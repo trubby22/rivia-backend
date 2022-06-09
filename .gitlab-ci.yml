@@ -6,7 +6,7 @@ stages:
 before_script:
   - GRADLE_USER_HOME="$(pwd)/.gradle"
   - export GRADLE_USER_HOME
-  - AWS_FUNCTIONS="get-review get-new-meeting get-dashboard get-summary
+  - AWS_FUNCTIONS="get-review get-new-meeting get-dashboard get-summary"
   - post-review post-new-meeting post-login post-create-account"
 
 build:
@@ -16,14 +16,12 @@ build:
   artifacts:
     untracked: true
 
-
 test:
   image: gradle:7.4.2-jdk11-alpine
   stage: test
   script: gradle check -Dorg.gradle.java.home=$JAVA_HOME
   dependencies:
     - build
-
 
 deploy:
   image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-base:latest
