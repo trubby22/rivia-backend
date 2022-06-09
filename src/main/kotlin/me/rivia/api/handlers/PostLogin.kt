@@ -1,6 +1,7 @@
 package me.rivia.api.handlers
 
 import com.amazonaws.services.lambda.runtime.Context
+import me.rivia.api.database.Table
 import me.rivia.api.database.getEntry
 
 class PostLogin {

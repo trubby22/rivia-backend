@@ -1,10 +1,7 @@
 package me.rivia.api.handlers
 
 import com.amazonaws.services.lambda.runtime.Context
-import me.rivia.api.database.getEntry
-import me.rivia.api.database.getEntries
-import me.rivia.api.database.getAllEntries
-import me.rivia.api.database.FieldError
+import me.rivia.api.database.*
 import me.rivia.api.database.PresetQ as DbPresetQ
 import me.rivia.api.database.Meeting as DbMeeting
 import me.rivia.api.database.User as DbUser
@@ -26,12 +23,12 @@ class GetReview {
 
     fun handle(input: ApiContext?, context: Context?): HttpResponse? {
         val meetingEntry = getEntry<DbMeeting>(
-            "Meeting",
+            Table.MEETING,
             input?.meeting_id ?: throw Error("Meeting id not present")
         ) ?: return null
 
         val participantEntries = getEntries<DbUser>(
-            "User",
+            Table.USER,
             meetingEntry.participants?.asIterable() ?: throw FieldError("Meeting", "participants")
         )
         if (participantEntries.size != meetingEntry.participants?.size) {
@@ -39,7 +36,7 @@ class GetReview {
         }
 
         val presetQEntries = getAllEntries<DbPresetQ>(
-            "PresetQs",
+            Table.PRESETQUESTIONS,
         )
         return HttpResponse(
             Meeting(meetingEntry.title, meetingEntry.startTime, meetingEntry.endTime),

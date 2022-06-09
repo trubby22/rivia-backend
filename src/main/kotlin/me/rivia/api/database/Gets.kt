@@ -6,25 +6,25 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.enhanced.dynamodb.model.ReadBatch
 
 inline fun <reified EntryType> getEntry(
-    tableName: String,
+    table: Table,
     keyValue: String,
 ): EntryType? {
-    val table: DynamoDbTable<EntryType> = dbEnhancedClient
-        .table(tableName, TableSchema.fromClass(EntryType::class.java))
-    return table.getItem(Key.builder().partitionValue(keyValue).build())
+    val dynamoTable: DynamoDbTable<EntryType> = dbEnhancedClient
+        .table(table.toString(), TableSchema.fromClass(EntryType::class.java))
+    return dynamoTable.getItem(Key.builder().partitionValue(keyValue).build())
 }
 
 inline fun <reified EntryType> fetchSingleBatch(
-    tableName: String,
+    table: Table,
     keys: List<String>,
 ): List<EntryType> {
-    val table: DynamoDbTable<EntryType> = dbEnhancedClient
-        .table(tableName, TableSchema.fromClass(EntryType::class.java))
+    val dynamoTable: DynamoDbTable<EntryType> = dbEnhancedClient
+        .table(table.toString(), TableSchema.fromClass(EntryType::class.java))
     return dbEnhancedClient.batchGetItem { r ->
         r.addReadBatch(
             ReadBatch
                 .builder(EntryType::class.java)
-                .mappedTableResource(table)
+                .mappedTableResource(dynamoTable)
                 .apply {
                     repeat(keys.size) { index ->
                         this.addGetItem(
@@ -35,11 +35,11 @@ inline fun <reified EntryType> fetchSingleBatch(
                 }
                 .build()
         )
-    }.resultsForTable(table).toList()
+    }.resultsForTable(dynamoTable).toList()
 }
 
 inline fun <reified EntryType> getEntries(
-    tableName: String,
+    table: Table,
     keys: Iterable<String>,
 ): ArrayList<EntryType> {
     val currentBatchKeys: MutableList<String> = mutableListOf()
@@ -47,19 +47,19 @@ inline fun <reified EntryType> getEntries(
     for (key in keys) {
         currentBatchKeys.add(key)
         if (currentBatchKeys.size > SINGLE_BATCH_LIMIT) {
-            results.addAll(fetchSingleBatch(tableName, currentBatchKeys))
+            results.addAll(fetchSingleBatch(table, currentBatchKeys))
         }
     }
-    results.addAll(fetchSingleBatch(tableName, currentBatchKeys))
+    results.addAll(fetchSingleBatch(table, currentBatchKeys))
     return ArrayList(results)
 }
 
 inline fun <reified EntryType> getAllEntries(
-    tableName: String
+    table: Table,
 ): ArrayList<EntryType> {
-    val table: DynamoDbTable<EntryType> = dbEnhancedClient
-        .table(tableName, TableSchema.fromClass(EntryType::class.java))
-    return ArrayList(table.scan().items().toList())
+    val dynamoTable: DynamoDbTable<EntryType> = dbEnhancedClient
+        .table(table.toString(), TableSchema.fromClass(EntryType::class.java))
+    return ArrayList(dynamoTable.scan().items().toList())
 }
 
 class PutError(tableName: String) :
