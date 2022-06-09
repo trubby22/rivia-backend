@@ -27,16 +27,8 @@ class GetReview {
             input?.meeting_id ?: throw Error("Meeting id not present")
         ) ?: return null
 
-        val sessionEntry = getEntry<DbSession>(
-            Table.SESSION,
-            input?.session ?: throw Error("Session not present")
-        ) ?: return null
-
         if (meetingEntry.reviewedBy?.contains(
-                sessionEntry.user ?: throw FieldError(
-                    Table.SESSION,
-                    "user"
-                )
+                getUser(input.session)?: return null
             ) ?: throw FieldError(Table.MEETING, "reviewedBy")
         ) {
             return null
@@ -44,8 +36,7 @@ class GetReview {
 
         val participantEntries = getEntries<DbUser>(
             Table.USER,
-            meetingEntry.participants?.asIterable()
-                ?: throw FieldError("Meeting", "participants")
+            meetingEntry.participants?.asIterable() ?: throw FieldError(Table.MEETING, "participants")
         )
         if (participantEntries.size != meetingEntry.participants?.size) {
             throw Error("some userIds not present")
