@@ -1,21 +1,20 @@
 package me.rivia.api.handlers
 
 import com.amazonaws.services.lambda.runtime.Context
+import com.amazonaws.services.lambda.runtime.RequestHandler
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 
-class GetDashboard {
-    companion object {
-        class ApiContext(var cookie: Int?) {
-            constructor() : this(null)
-        }
+class GetDashboard: RequestHandler<GetDashboard.ApiContext, List<Meeting>> {
+    class ApiContext(var cookie: Int? = null)
 
-        class IdMeeting(var meeting_id: Uid?, var meeting: Meeting?)
+    val enhancedClient: DynamoDbEnhancedClient =
+        DynamoDbEnhancedClient.create()
+    override fun handleRequest(input: ApiContext?, context: Context?): List<Meeting> {
+        val table: DynamoDbTable<Meeting> = enhancedClient
+            .table("Meeting", TableSchema.fromBean(Meeting::class.java))
 
-        class HttpResponse(meetings: ArrayList<IdMeeting>?) {
-            val response_type: Int? = 4
-        }
-    }
-
-    fun handle(input: ApiContext?, context: Context?): HttpResponse {
-        TODO("Fill in with database fetch")
+        return table.scan().items().toList()
     }
 }

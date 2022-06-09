@@ -30,12 +30,22 @@ data class Meeting(
     var endTime: Int? = null,
 )
 
-class Response(
-    val participant: Participant?,
-    val quality: Float?,
-    val preset_qs: ArrayList<String>?,
-    val not_needed: ArrayList<Participant>?,
-    val not_prepared: ArrayList<Participant>?
-) {
-    constructor() : this(null, null, null, null, null)
-}
+//@DynamoDbBean
+//data class HttpResponse(
+//    @get:DynamoDbPartitionKey
+//    var meeting: Meeting? = null,
+//    var responses: List<Response>? = null,
+//    var response_type: Int? = 2,
+//)
+
+@DynamoDbBean
+data class Response(
+    @get:DynamoDbPartitionKey
+    var reviewId: String? = null,
+    var userId: String? = null,
+    var feedback: String? = null,
+    var notNeeded: List<String>? = null,
+    var notPrepared: List<String>? = null,
+    var presetQ: List<String>? = null,
+    var quality: Float? = null,
+)
