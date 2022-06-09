@@ -44,6 +44,7 @@ enum class Table(val tableName: String) {
 
 const val SINGLE_BATCH_LIMIT = 100
 
+@DynamoDbBean
 data class Login(
     @get:DynamoDbPartitionKey
     var email: String? = null,

@@ -20,7 +20,7 @@ import me.rivia.api.database.User as BackendUser
 
 class GetNewMeeting : HandlerInit() {
     companion object {
-        class ApiContext(var session: String?) {
+        class ApiContext(var session: Uid?) {
             constructor() : this(null)
         }
 

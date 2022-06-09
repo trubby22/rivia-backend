@@ -8,9 +8,11 @@ import me.rivia.api.database.putEntry
 
 import  me.rivia.api.database.Meeting as DbMeeting
 
+// Meeting
+
 class PostNewMeeting : HandlerInit() {
     companion object {
-        class ApiContext(var session: Int?, var data: MeetingData?) {
+        class ApiContext(var session: Uid?, var data: MeetingData?) {
             constructor() : this(null, null)
         }
 

@@ -8,7 +8,7 @@ import me.rivia.api.database.getAllEntries
 
 class GetDashboard : HandlerInit() {
     companion object {
-        class ApiContext(var session: String?) {
+        class ApiContext(var session: Uid?) {
             constructor() : this(null)
         }
 

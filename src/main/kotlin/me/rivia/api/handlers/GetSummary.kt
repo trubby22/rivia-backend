@@ -9,7 +9,7 @@ import me.rivia.api.database.User as DbUser
 
 class GetSummary : HandlerInit() {
     companion object {
-        class ApiContext(var meeting_id: Uid?, var session: String?) {
+        class ApiContext(var meeting_id: Uid?, var session: Uid?) {
             constructor() : this(null, null)
         }
 
