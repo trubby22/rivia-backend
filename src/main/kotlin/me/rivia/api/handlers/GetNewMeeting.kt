@@ -10,48 +10,38 @@ import aws.sdk.kotlin.services.dynamodb.DynamoDbClient
 import aws.sdk.kotlin.services.dynamodb.model.AttributeValue
 import aws.sdk.kotlin.services.dynamodb.model.GetItemRequest
 import com.amazonaws.services.dynamodbv2.document.Item
+import com.amazonaws.services.lambda.runtime.RequestHandler
+import me.rivia.api.database.Table
+import me.rivia.api.database.getAllEntries
+import me.rivia.api.database.getEntry
 import kotlin.system.exitProcess
+import me.rivia.api.database.User as BackendUser
 
-class GetNewMeeting {
+class GetNewMeeting :
+    RequestHandler<GetNewMeeting.Companion.ApiContext?, GetNewMeeting.Companion.HttpResponse> {
     companion object {
         class ApiContext(var cookie: String?) {
             constructor() : this(null)
         }
 
-        class HttpResponse(var meetings: Array<Participant>?) {
+        class HttpResponse(var participants: List<Participant>?) {
             val response_type: Int? = 3
         }
     }
 
-    fun handle(input: ApiContext?, context: Context?): HttpResponse {
-        runBlocking {
-            val tableNameVal: String = "User"
-            val keyName: String = "UserID"
-            val keyVal: String? = input!!.cookie;
-            if (keyVal != null) {
-                getSpecificItem(tableNameVal, keyName, keyVal)
-            };
+    override fun handleRequest(
+        input: ApiContext?,
+        context: Context?
+    ): HttpResponse {
+        val users: List<BackendUser> = getAllEntries<BackendUser>(Table.USER)
+        val participants = users.map {
+            Participant(
+                participant_id = it.userId,
+                name = it.name,
+                surname = it.surname,
+                email = it.email,
+            )
         }
-        return HttpResponse(null)
-    }
-
-    suspend fun getSpecificItem(tableNameVal: String, keyName: String, keyVal: String) {
-
-        val keyToGet = mutableMapOf<String, AttributeValue>()
-        keyToGet[keyName] = AttributeValue.S(keyVal)
-
-        val request = GetItemRequest {
-            key = keyToGet
-            tableName = tableNameVal
-        }
-
-        DynamoDbClient { region = "eu-west-2" }.use { ddb ->
-            val returnedItem = ddb.getItem(request)
-            val numbersMap = returnedItem.item
-            numbersMap?.forEach { key1 ->
-                println(key1.key)
-                println(key1.value)
-            }
-        }
+        return HttpResponse(participants)
     }
 }
