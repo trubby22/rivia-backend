@@ -8,7 +8,7 @@ import me.rivia.api.database.putEntry
 
 import  me.rivia.api.database.Meeting as DbMeeting
 
-class PostNewMeeting {
+class PostNewMeeting : HandlerInit() {
     companion object {
         class ApiContext(var session: Int?, var data: MeetingData?) {
             constructor() : this(null, null)
@@ -29,6 +29,6 @@ class PostNewMeeting {
             endTime = meeting?.end_time,
             participants = meetingData?.participants,
         )
-        putEntry(Table.MEETING, databaseMeeting)
+        putEntry(Table.MEETING, databaseMeeting) // check if the uid was ok; if not then remake it
     }
 }

@@ -4,7 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context
 import me.rivia.api.database.Table
 import me.rivia.api.database.getEntry
 
-class PostLogin {
+class PostLogin : HandlerInit() {
     companion object {
         class LoginData(var email: String?, var password: String?) {
             constructor() : this(null, null)

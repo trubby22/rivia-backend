@@ -10,7 +10,7 @@ inline fun <reified EntryType : DbEntry> putEntry(
     table: Table,
     entry: EntryType
 ): Boolean {
-    val dynamoTable = dbEnhancedClient.table(
+    val dynamoTable = dbEnhancedClient!!.table(
         table.toString(), TableSchema.fromClass
             (EntryType::class.java)
     )

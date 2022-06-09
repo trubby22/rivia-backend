@@ -3,7 +3,7 @@ package me.rivia.api.handlers
 import com.amazonaws.services.lambda.runtime.Context
 
 
-class PostCreateAccount {
+class PostCreateAccount : HandlerInit() {
     companion object {
         class AccountData(
             var name: String?,

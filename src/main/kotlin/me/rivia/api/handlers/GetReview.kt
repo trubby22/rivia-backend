@@ -6,7 +6,7 @@ import me.rivia.api.database.PresetQ as DbPresetQ
 import me.rivia.api.database.Meeting as DbMeeting
 import me.rivia.api.database.User as DbUser
 
-class GetReview {
+class GetReview : HandlerInit() {
     companion object {
         data class ApiContext(var meeting_id: Uid?, var session: String?) {
             constructor() : this(null, null)

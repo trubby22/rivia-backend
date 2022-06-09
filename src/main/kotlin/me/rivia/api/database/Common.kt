@@ -13,12 +13,17 @@ import java.util.*
 
 val httpClient = UrlConnectionHttpClient.builder().build()
 
-val dbClient: DynamoDbClient =
-    DynamoDbClient.builder()
+var dbClient: DynamoDbClient? = null
+
+var dbEnhancedClient: DynamoDbEnhancedClient? = null
+
+fun initDb() {
+    dbClient = DynamoDbClient.builder()
         .region(Region.EU_WEST_2).httpClient(httpClient)
         .build()
-
-val dbEnhancedClient: DynamoDbEnhancedClient = DynamoDbEnhancedClient.builder().dynamoDbClient(dbClient).build()
+    dbEnhancedClient = DynamoDbEnhancedClient.builder().dynamoDbClient(dbClient).build()
+    dbClient!!.describeLimits()
+}
 
 interface DbEntry {
     fun primaryKeyName(): String

@@ -10,7 +10,7 @@ inline fun <reified EntryType> getEntry(
     keyValue: String,
 ): EntryType? {
     val dynamoTable: DynamoDbTable<EntryType> =
-        dbEnhancedClient.table(table.toString(), TableSchema.fromClass(EntryType::class.java))
+        dbEnhancedClient!!.table(table.toString(), TableSchema.fromClass(EntryType::class.java))
     return dynamoTable.getItem(Key.builder().partitionValue(keyValue).build())
 }
 
@@ -19,8 +19,8 @@ inline fun <reified EntryType> fetchSingleBatch(
     keys: List<String>,
 ): List<EntryType> {
     val dynamoTable: DynamoDbTable<EntryType> =
-        dbEnhancedClient.table(table.toString(), TableSchema.fromClass(EntryType::class.java))
-    return dbEnhancedClient.batchGetItem { r ->
+        dbEnhancedClient!!.table(table.toString(), TableSchema.fromClass(EntryType::class.java))
+    return dbEnhancedClient!!.batchGetItem { r ->
         r.addReadBatch(ReadBatch.builder(EntryType::class.java).mappedTableResource(dynamoTable)
             .apply {
                 repeat(keys.size) { index ->
@@ -61,7 +61,7 @@ inline fun <reified EntryType> getAllEntries(
     table: Table,
 ): List<EntryType> {
     val dynamoTable: DynamoDbTable<EntryType> =
-        dbEnhancedClient.table(table.toString(), TableSchema.fromClass(EntryType::class.java))
+        dbEnhancedClient!!.table(table.toString(), TableSchema.fromClass(EntryType::class.java))
     return dynamoTable.scan().items().toList()
 }
 

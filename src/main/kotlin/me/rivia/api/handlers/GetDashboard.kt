@@ -1,8 +1,11 @@
 package me.rivia.api.handlers
 
 import com.amazonaws.services.lambda.runtime.Context
+import me.rivia.api.database.Table
+import me.rivia.api.database.Meeting as DbMeeting
+import me.rivia.api.database.getAllEntries
 
-class GetDashboard {
+class GetDashboard : HandlerInit() {
     companion object {
         class ApiContext(var session: String?) {
             constructor() : this(null)
@@ -14,8 +17,9 @@ class GetDashboard {
     }
 
     fun handle(input: ApiContext?, context: Context?): HttpResponse {
-        val inputMeetings: List<BackendMeeting> =
-            getAllEntries<BackendMeeting>(Table.MEETING)
+        val inputMeetings =
+            getAllEntries<DbMeeting>(Table.MEETING) // wrap in null check
+        E
         val meetings: List<IdMeeting> = inputMeetings.map {
             IdMeeting(
                 meeting_id = it.meetingId,
