@@ -20,14 +20,59 @@ interface DbEntry {
 
 const val SINGLE_BATCH_LIMIT = 100
 
-@DynamoDbBean
-data class Meeting(
+data class Login(
+    @get:DynamoDbPartitionKey
+    var email: String? = null,
+    var password: String? = null,
+    var salt: String? = null,
+    var user: String? = null
+) : DbEntry {
+    override fun primaryKeyName(): String = "email"
+
+}
+
+class Meeting(
     @get:DynamoDbPartitionKey
     var meetingId: String? = null,
     var title: String? = null,
-    var organisation: String? = null,
     var participants: Set<String>? = null,
     var reviews: Set<String>? = null,
     var startTime: Int? = null,
     var endTime: Int? = null,
+) : DbEntry {
+    override fun primaryKeyName(): String = "meetingId"
+}
+
+data class PresetQ(
+    @get:DynamoDbPartitionKey
+    var presetQId: String? = null,
+    var text: String? = null
+) : DbEntry {
+    override fun primaryKeyName(): String = "presetQId"
+}
+
+data class Review(
+    @get:DynamoDbPartitionKey
+    var reviewId: String? = null,
+    var user: String? = null,
+    var notNeeded: Set<String>? = null,
+    var notPrepared: Set<String>? = null,
+    var presetQs: Set<String>? = null,
+    var quality: Float? = null
+) : DbEntry {
+    override fun primaryKeyName(): String = "reviewId"
+}
+
+data class Session(
+    @get:DynamoDbPartitionKey
+    var cookie: String? = null,
+    var user: String? = null
+)
+
+data class User(
+    @get:DynamoDbPartitionKey
+    var userId: String? = null,
+    var email: String? = null,
+    var name: String? = null,
+    var surname: String? = null,
 )
