@@ -17,7 +17,7 @@ task buildZip(type: Zip) {
 }
 
 dependencies {
-    implementation 'org.jetbrains.kotlin:kotlin-reflect:$kotlin_version'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.6.21'
     implementation platform('com.amazonaws:aws-java-sdk-bom:1.12.234')
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.1'

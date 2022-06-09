@@ -26,7 +26,7 @@ class GetSummary {
         ) ?: return null
         val reviewEntries = getEntries<DbReview>(
             Table.REVIEW,
-            meetingEntry.reviews?.asIterable() ?: throw FieldError(Table.MEETING, "reviews")
+            meetingEntry.reviews?.asIterable()!!
         )
         if (reviewEntries.size != meetingEntry.participants?.size) {
             throw Error("some reviewIds not present")

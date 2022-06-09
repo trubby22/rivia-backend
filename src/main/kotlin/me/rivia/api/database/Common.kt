@@ -5,6 +5,8 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import kotlin.reflect.full.*
+import kotlin.reflect.KClass
 
 val dbClient: DynamoDbClient = DynamoDbClient.builder()
     .region(Region.EU_WEST_2)
@@ -98,14 +100,17 @@ data class User(
     override fun primaryKeyName(): String = "userId"
 }
 
-import kotlin.reflect.full
-
-inline fun <reified T> fieldNullCheck(value: T, errorMessage: String): T {
-    for (member in T::class) {
-        val name = member
+inline fun <reified T : Any> fieldNullCheck(value: T, errorMessage: String): T {
+    for (member in (value::class as KClass<T>).declaredMemberProperties) {
+        if (member.get(value) == null) {
+            throw Error(errorMessage)
+        }
     }
     return value
 }
+
+inline fun <reified T : Any> entryNullCheck(value: T, table: Table): T =
+    fieldNullCheck(value, "entry from '$table' has a nulled component")
 
 class FieldError(tableName: Table, field: String) :
     Error("'$field' field of the '$tableName' table not present")
