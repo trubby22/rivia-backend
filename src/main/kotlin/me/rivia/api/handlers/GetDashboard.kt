@@ -10,9 +10,29 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import me.rivia.api.database.Meeting as BackendMeeting
 
 class GetDashboard {
-    class ApiContext(var cookie: Int? = null)
+    companion object {
+        class ApiContext(var cookie: Int?) {
+            constructor() : this(null)
+        }
 
-    fun handle(input: ApiContext?, context: Context?): List<BackendMeeting> {
-        return getAllEntries<BackendMeeting>(Table.MEETING)
+        class IdMeeting(var meeting_id: Uid?, var meeting: Meeting?)
+
+        class HttpResponse(meetings: List<IdMeeting>?)
+    }
+
+    fun handle(input: ApiContext?, context: Context?): HttpResponse {
+        val inputMeetings: List<BackendMeeting> =
+            getAllEntries<BackendMeeting>(Table.MEETING)
+        val meetings: List<IdMeeting> = inputMeetings.map {
+            IdMeeting(
+                meeting_id = it.meetingId,
+                meeting = Meeting(
+                    title = it.title,
+                    start_time = it.startTime,
+                    end_time = it.endTime,
+                )
+            )
+        }
+        return HttpResponse(meetings)
     }
 }
