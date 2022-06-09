@@ -19,12 +19,12 @@ data class Meeting(var title: String?, var start_time: Int?, var end_time: Int?)
     constructor() : this(null, null, null)
 }
 
-data class Review(
+class Review(
     var participant: Participant?,
     var quality: Float?,
-    var preset_qs: ArrayList<String>?,
-    var not_needed: ArrayList<Participant>?,
-    var not_prepared: ArrayList<Participant>?
+    var preset_qs: List<String>?,
+    var not_needed: List<Participant>?,
+    var not_prepared: List<Participant>?
 ) {
     constructor() : this(null, null, null, null, null)
 }

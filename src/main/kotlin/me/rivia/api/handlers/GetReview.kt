@@ -16,8 +16,8 @@ class GetReview {
 
         class HttpResponse(
             val meeting: Meeting?,
-            val participants: Array<Participant>?,
-            val preset_qs: Array<PresetQuestion>?
+            val participants: List<Participant>?,
+            val preset_qs: List<PresetQuestion>?
         )
     }
 
@@ -28,7 +28,7 @@ class GetReview {
         ) ?: return null
 
         if (meetingEntry.reviewedBy?.contains(
-                getUser(input.session)?: return null
+                getUser(input.session) ?: return null
             ) ?: throw FieldError(Table.MEETING, "reviewedBy")
         ) {
             return null
@@ -36,7 +36,10 @@ class GetReview {
 
         val participantEntries = getEntries<DbUser>(
             Table.USER,
-            meetingEntry.participants?.asIterable() ?: throw FieldError(Table.MEETING, "participants")
+            meetingEntry.participants?.asIterable() ?: throw FieldError(
+                Table.MEETING,
+                "participants"
+            )
         )
         if (participantEntries.size != meetingEntry.participants?.size) {
             throw Error("some userIds not present")
@@ -47,29 +50,28 @@ class GetReview {
         )
         return HttpResponse(
             Meeting(
-                meetingEntry.title,
-                meetingEntry.startTime,
-                meetingEntry.endTime
+                meetingEntry.title ?: throw FieldError(Table.MEETING, "title"),
+                meetingEntry.startTime ?: throw FieldError(Table.MEETING, "startTime"),
+                meetingEntry.endTime ?: throw FieldError(Table.MEETING, "endTime")
             ),
-            participantEntries.asSequence()
+            participantEntries
                 .map { participantEntry ->
                     Participant(
-                        participantEntry.userId,
-                        participantEntry.name,
-                        participantEntry.surname,
-                        participantEntry.email
+                        participantEntry.userId ?: throw FieldError(Table.USER, "userId"),
+                        participantEntry.name ?: throw FieldError(Table.USER, "name"),
+                        participantEntry.surname ?: throw FieldError(Table.USER, "surname"),
+                        participantEntry.email ?: throw FieldError(Table.USER, "email"),
                     )
-                }.toList()
-                .toTypedArray(),
-            presetQEntries.asSequence()
+                },
+            presetQEntries
                 .map { presetQEntry ->
                     PresetQuestion(
-                        presetQEntry.presetQId,
-                        presetQEntry.text
+                        presetQEntry.presetQId ?: throw FieldError(
+                            Table.PRESETQS,
+                            "presetQId"
+                        ), presetQEntry.text ?: throw FieldError(Table.PRESETQS, "text")
                     )
                 }
-                .toList()
-                .toTypedArray()
         )
     }
 }

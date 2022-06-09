@@ -98,5 +98,14 @@ data class User(
     override fun primaryKeyName(): String = "userId"
 }
 
+import kotlin.reflect.full
+
+inline fun <reified T> fieldNullCheck(value: T, errorMessage: String): T {
+    for (member in T::class) {
+        val name = member
+    }
+    return value
+}
+
 class FieldError(tableName: Table, field: String) :
     Error("'$field' field of the '$tableName' table not present")

@@ -35,7 +35,7 @@ inline fun <reified EntryType> fetchSingleBatch(
 inline fun <reified EntryType> getEntries(
     table: Table,
     keys: Iterable<String>,
-): ArrayList<EntryType> {
+): List<EntryType> {
     val currentBatchKeys: MutableList<String> = mutableListOf()
     val results: MutableList<EntryType> = mutableListOf()
     for (key in keys) {
@@ -45,7 +45,7 @@ inline fun <reified EntryType> getEntries(
         }
     }
     results.addAll(fetchSingleBatch(table, currentBatchKeys))
-    return ArrayList(results)
+    return results
 }
 
 inline fun getUser(
@@ -56,10 +56,10 @@ inline fun getUser(
 
 inline fun <reified EntryType> getAllEntries(
     table: Table,
-): ArrayList<EntryType> {
+): List<EntryType> {
     val dynamoTable: DynamoDbTable<EntryType> =
         dbEnhancedClient.table(table.toString(), TableSchema.fromClass(EntryType::class.java))
-    return ArrayList(dynamoTable.scan().items().toList())
+    return dynamoTable.scan().items().toList()
 }
 
 class PutError(tableName: String) : Error("Failed to put item into'$tableName")

@@ -14,10 +14,7 @@ class PostNewMeeting : RequestHandler<PostNewMeeting.Companion.ApiContext?,
             constructor() : this(null, null)
         }
 
-        class MeetingData(
-            var meeting: Meeting?,
-            var participants: ArrayList<Uid>?
-        ) {
+        class MeetingData(var meeting: Meeting?, var participants: List<Uid>?) {
             constructor() : this(null, null)
         }
     }
