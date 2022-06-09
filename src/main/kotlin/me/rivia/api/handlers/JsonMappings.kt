@@ -5,47 +5,29 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 
 typealias Uid = String
 
-class PresetQuestion(var preset_q_id: Uid?, var preset_q_text: String?) {
+data class PresetQuestion(var preset_q_id: Uid?, var preset_q_text: String?) {
     constructor() : this(null, null)
 }
 
-@DynamoDbBean
 data class Participant(
-    @get: DynamoDbPartitionKey
-    var participant_id: Uid? = null,
-    var name: String? = null,
-    var surname: String? = null,
-    var email: String? = null,
-)
+    var participant_id: Uid?,
+    var name: String?,
+    var surname: String?,
+    var email: String?
+) {
+    constructor() : this(null, null, null, null)
+}
 
-@DynamoDbBean
-data class Meeting(
-    @get:DynamoDbPartitionKey
-    var meetingId: String? = null,
-    var title: String? = null,
-    var organisation: String? = null,
-    var participants: Set<String>? = null,
-    var reviews: Set<String>? = null,
-    var startTime: Int? = null,
-    var endTime: Int? = null,
-)
+data class Meeting(var title: String?, var start_time: Int?, var end_time: Int?) {
+    constructor() : this(null, null, null)
+}
 
-//@DynamoDbBean
-//data class HttpResponse(
-//    @get:DynamoDbPartitionKey
-//    var meeting: Meeting? = null,
-//    var responses: List<Response>? = null,
-//    var response_type: Int? = 2,
-//)
-
-@DynamoDbBean
-data class Response(
-    @get:DynamoDbPartitionKey
-    var reviewId: String? = null,
-    var userId: String? = null,
-    var feedback: String? = null,
-    var notNeeded: List<String>? = null,
-    var notPrepared: List<String>? = null,
-    var presetQ: List<String>? = null,
-    var quality: Float? = null,
-)
+class Response(
+    var participant: Participant?,
+    var quality: Float?,
+    var preset_qs: ArrayList<String>?,
+    var not_needed: ArrayList<Participant>?,
+    var not_prepared: ArrayList<Participant>?
+) {
+    constructor() : this(null, null, null, null, null)
+}

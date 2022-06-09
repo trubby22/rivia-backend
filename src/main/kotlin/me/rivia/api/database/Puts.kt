@@ -1,17 +1,26 @@
 package me.rivia.api.database
 
 
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
-import software.amazon.awssdk.services.dynamodb.model.ReturnValue
+import software.amazon.awssdk.enhanced.dynamodb.Expression
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema
+import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
 
-fun putEntry(
+inline fun <reified EntryType : DbEntry> putEntry(
     tableName: String,
-    primaryKeyName: String,
-    attributes: Map<String, AttributeValue>
+    entry: EntryType
 ): Boolean {
-    val request = PutItemRequest.builder().tableName(tableName).item(attributes).returnValues(ReturnValue.ALL_NEW)
-        .conditionExpression("attribute_not_exists($primaryKeyName)").build()
-    return dbClient.putItem(request)
-
+    val table = dbEnhancedClient.table(tableName, TableSchema.fromClass(EntryType::class.java))
+    val noOverwriteExpression = Expression.builder().expression("attribute_not_exists(#primaryKey)")
+        .putExpressionName("#primaryKey", entry.primaryKeyName()).build();
+    val request =
+        PutItemEnhancedRequest.builder(EntryType::class.java).item(entry).conditionExpression(
+            noOverwriteExpression
+        ).build()
+    try {
+        table.putItem(request)
+    } catch (e: ConditionalCheckFailedException) {
+        return false
+    }
+    return true
 }

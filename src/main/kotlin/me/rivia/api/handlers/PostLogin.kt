@@ -9,11 +9,10 @@ class PostLogin {
             constructor() : this(null, null)
         }
 
-        class HttpResponse(val cookie: String, )
+        class HttpResponse(val cookie: String)
     }
 
-    fun handle(input: LoginData?, context: Context?) :  {
+    fun handle(input: LoginData?, context: Context?) {
         println(getEntry("Login","Email", input?.email ?: throw Error("No email")) )
-
     }
 }

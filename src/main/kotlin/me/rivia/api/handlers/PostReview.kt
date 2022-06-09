@@ -25,8 +25,6 @@ class PostReview {
     }
 
     fun handle(input: ApiContext?, context: Context?) {
-//        val rev : Review = Review(0.toFloat(),arrayListOf("1"), arrayListOf("1"), arrayListOf("1"), "0");
-//        val input = ApiContext("0", 0, rev)
         val client: AmazonDynamoDB = AmazonDynamoDBClientBuilder
             .standard()
             .withRegion(Regions.EU_WEST_2)
