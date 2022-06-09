@@ -8,9 +8,15 @@ typealias Uid = String
 class PresetQuestion(var preset_q_id: Uid?, var preset_q_text: String?) {
     constructor() : this(null, null)
 }
-class Participant(var participant_id: Uid?, var name: String?, var surname: String?, var email: String?) {
-    constructor(): this(null, null, null, null)
-}
+
+@DynamoDbBean
+data class Participant(
+    @get: DynamoDbPartitionKey
+    var participant_id: Uid? = null,
+    var name: String? = null,
+    var surname: String? = null,
+    var email: String? = null,
+)
 
 @DynamoDbBean
 data class Meeting(
