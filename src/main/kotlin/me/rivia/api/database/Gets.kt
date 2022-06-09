@@ -62,6 +62,14 @@ inline fun <reified EntryType> getEntries(
     return ArrayList(results)
 }
 
+inline fun <reified EntryType> getAllEntries(
+    tableName: String
+): ArrayList<EntryType> {
+    val table: DynamoDbTable<EntryType> = dbEnhancedClient
+        .table(tableName, TableSchema.fromClass(EntryType::class.java))
+    return ArrayList(table.scan().items().toList())
+}
+
 class PutError(tableName: String) :
     Error("Failed to put item into'$tableName")
 
