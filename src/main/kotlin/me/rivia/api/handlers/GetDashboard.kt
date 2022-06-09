@@ -11,15 +11,15 @@ class GetDashboard : HandlerInit() {
             constructor() : this(null)
         }
 
-        class IdMeeting(var meeting_id: Uid?, var meeting: Meeting?)
+        class IdMeeting(val meeting_id: Uid?, val meeting: Meeting?)
 
-        class HttpResponse(meetings: List<IdMeeting>?)
+        class HttpResponse(val meetings: List<IdMeeting>?)
     }
 
     fun handle(input: ApiContext?, context: Context?): HttpResponse {
         val inputMeetings =
-            getAllEntries<DbMeeting>(Table.MEETING) // wrap in null check
-        E
+            getAllEntries<DbMeeting>(Table.MEETING)
+
         val meetings: List<IdMeeting> = inputMeetings.map {
             IdMeeting(
                 meeting_id = it.meetingId,

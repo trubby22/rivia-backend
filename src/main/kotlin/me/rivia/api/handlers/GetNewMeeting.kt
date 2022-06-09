@@ -24,7 +24,7 @@ class GetNewMeeting : HandlerInit() {
             constructor() : this(null)
         }
 
-        class HttpResponse(var participants: List<Participant>?)
+        class HttpResponse(val participants: List<Participant>?)
     }
 
     fun handle(
