@@ -13,21 +13,28 @@ class GetSummary : HandlerInit() {
             constructor() : this(null, null)
         }
 
+        class Review(
+            val participant: Participant,
+            val quality: Float?,
+            val preset_qs: List<String>?,
+            val not_needed: List<Participant>?,
+            val not_prepared: List<Participant>?,
+            val feedback: String?
+        )
+
         class HttpResponse(var meeting: Meeting?, var responses: List<Review>?)
     }
 
     fun handle(input: ApiContext?, context: Context?): HttpResponse? {
         val meetingEntry = entryNullCheck(
             getEntry<DbMeeting>(
-                Table.MEETING,
-                input?.meeting_id ?: throw Error("Meeting id not present")
+                Table.MEETING, input?.meeting_id ?: throw Error("Meeting id not present")
             ) ?: return null, Table.MEETING
         )
 
         val reviewEntries = entriesNullCheck(
             getEntries<DbReview>(
-                Table.REVIEW,
-                meetingEntry.reviews!!
+                Table.REVIEW, meetingEntry.reviews!!
             ), Table.REVIEW
         )
         if (reviewEntries.size != meetingEntry.reviews?.size) {
@@ -39,55 +46,45 @@ class GetSummary : HandlerInit() {
             reviewEntry.presetQs!!.asSequence()
         }.flatten().toSet()
         val presetQIds = entriesNullCheck(
-            getEntries<DbPresetQ>(Table.PRESETQS, allPresetQIds),
-            Table.PRESETQS
-        ).asSequence()
-            .map { presetQEntry ->
-                presetQEntry.presetQId!! to presetQEntry.text!!
-            }.toMap()
+            getEntries<DbPresetQ>(Table.PRESETQS, allPresetQIds), Table.PRESETQS
+        ).asSequence().map { presetQEntry ->
+            presetQEntry.presetQId!! to presetQEntry.text!!
+        }.toMap()
         if (presetQIds.size != allPresetQIds.size) {
             throw Error("some presetQIds not present")
         }
 
         // All the participantIds we're gonna need
         val allParticipantIds = reviewEntries.asSequence().map { reviewEntry ->
-            sequenceOf(reviewEntry.user!!) +
-                    reviewEntry.notNeeded!!.asSequence() +
-                    reviewEntry.notPrepared!!.asSequence()
+            sequenceOf(reviewEntry.user!!) + reviewEntry.notNeeded!!.asSequence() + reviewEntry.notPrepared!!.asSequence()
         }.flatten().toSet()
         val participantIds = entriesNullCheck(
             getEntries<DbUser>(
-                Table.USER,
-                allParticipantIds
+                Table.USER, allParticipantIds
             ), Table.USER
         ).map { participantEntry ->
-            participantEntry.userId!! to
-                    Participant(
-                        participantEntry.userId!!,
-                        participantEntry.name!!,
-                        participantEntry.surname!!,
-                        participantEntry.email!!
-                    )
+            participantEntry.userId!! to Participant(
+                participantEntry.userId!!,
+                participantEntry.name!!,
+                participantEntry.surname!!,
+                participantEntry.email!!
+            )
         }.toMap()
         if (participantIds.size != allParticipantIds.size) {
             throw Error("some participantIds not present")
         }
 
-        return HttpResponse(
-            Meeting(
-                meetingEntry.title!!,
-                meetingEntry.startTime!!,
-                meetingEntry.endTime!!
-            ),
-            reviewEntries.map { reviewEntry ->
-                Review(
-                    participantIds[reviewEntry.user!!]!!,
-                    reviewEntry.quality!!,
-                    reviewEntry.presetQs!!.map { presetQId -> presetQIds[presetQId]!! },
-                    reviewEntry.notNeeded!!.map { participantId -> participantIds[participantId]!! },
-                    reviewEntry.notPrepared!!.map { participantId -> participantIds[participantId]!! },
-                )
-            }
-        )
+        return HttpResponse(Meeting(
+            meetingEntry.title!!, meetingEntry.startTime!!, meetingEntry.endTime!!
+        ), reviewEntries.map { reviewEntry ->
+            Review(
+                participantIds[reviewEntry.user!!]!!,
+                reviewEntry.quality!!,
+                reviewEntry.presetQs!!.map { presetQId -> presetQIds[presetQId]!! },
+                reviewEntry.notNeeded!!.map { participantId -> participantIds[participantId]!! },
+                reviewEntry.notPrepared!!.map { participantId -> participantIds[participantId]!! },
+                reviewEntry.feedback!!
+            )
+        })
     }
 }

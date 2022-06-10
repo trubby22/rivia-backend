@@ -1,5 +1,6 @@
 package me.rivia.api.database
 
+import aws.smithy.kotlin.runtime.util.encodeToHex
 import me.rivia.api.handlers.Uid
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
@@ -7,6 +8,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import java.security.MessageDigest
 import kotlin.reflect.full.*
 import kotlin.reflect.KClass
 import java.util.*
@@ -87,7 +89,8 @@ class Review(
     var notNeeded: List<Uid>? = null,
     var notPrepared: List<Uid>? = null,
     var presetQs: List<Uid>? = null,
-    var quality: Float? = null
+    var quality: Float? = null,
+    var feedback: String? = null,
 ) : DbEntry {
     override fun primaryKeyName(): String = "reviewId"
 }
@@ -140,3 +143,6 @@ class FieldError(tableName: Table, field: String) :
 fun generateId(): String {
     return UUID.randomUUID().toString()
 }
+
+fun hashPassword(password: String, salt: String): String =
+    MessageDigest.getInstance("SHA-256").digest((password + salt).toByteArray()).encodeToHex()

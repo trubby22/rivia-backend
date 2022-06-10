@@ -1,7 +1,6 @@
 package me.rivia.api.handlers
 
 import com.amazonaws.services.lambda.runtime.Context
-import com.amazonaws.services.lambda.runtime.RequestHandler
 import me.rivia.api.database.Table
 import me.rivia.api.database.generateId
 import me.rivia.api.database.putEntry
@@ -24,13 +23,15 @@ class PostNewMeeting : HandlerInit() {
     fun handle(input: ApiContext?, context: Context?) {
         val meetingData: MeetingData? = input?.data
         val meeting: Meeting? = meetingData?.meeting
-        val databaseMeeting: DbMeeting = DbMeeting(
-            meetingId = generateId(),
-            title = meeting?.title,
-            startTime = meeting?.start_time,
-            endTime = meeting?.end_time,
-            participants = meetingData?.participants,
-        )
-        putEntry(Table.MEETING, databaseMeeting) // check if the uid was ok; if not then remake it
+        lateinit var dbMeeting: DbMeeting
+        do {
+            dbMeeting = DbMeeting(
+                meetingId = generateId(),
+                title = meeting?.title,
+                startTime = meeting?.start_time,
+                endTime = meeting?.end_time,
+                participants = meetingData?.participants,
+            )
+        } while(!putEntry(Table.MEETING, dbMeeting))
     }
 }

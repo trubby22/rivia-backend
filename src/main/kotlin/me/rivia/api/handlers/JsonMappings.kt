@@ -20,11 +20,11 @@ data class Meeting(var title: String?, var start_time: Int?, var end_time: Int?)
 }
 
 class Review(
-    var participant: Participant?,
     var quality: Float?,
     var preset_qs: List<String>?,
     var not_needed: List<Participant>?,
-    var not_prepared: List<Participant>?
+    var not_prepared: List<Participant>?,
+    var feedback: String?
 ) {
     constructor() : this(null, null, null, null, null)
 }
