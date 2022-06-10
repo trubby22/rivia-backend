@@ -11,6 +11,9 @@ before_script:
 build:
   image: gradle:7.4.2-jdk11-alpine
   stage: build
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - when: manual
   script: gradle buildZip -Dorg.gradle.java.home=$JAVA_HOME
   artifacts:
     untracked: true
