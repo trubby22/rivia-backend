@@ -27,10 +27,12 @@ class PostNewMeeting : HandlerInit() {
         do {
             dbMeeting = DbMeeting(
                 meetingId = generateId(),
-                title = meeting?.title,
-                startTime = meeting?.start_time,
-                endTime = meeting?.end_time,
-                participants = meetingData?.participants,
+                title = meeting?.title ?: throw Error("field empty"),
+                startTime = meeting?.start_time ?: throw Error("field empty"),
+                endTime = meeting?.end_time ?: throw Error("field empty"),
+                participants = meetingData?.participants?: throw Error("field empty"),
+                reviews = listOf(),
+                reviewedBy = listOf()
             )
         } while(!putEntry(Table.MEETING, dbMeeting))
     }
