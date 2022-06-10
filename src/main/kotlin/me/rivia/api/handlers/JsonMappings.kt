@@ -2,15 +2,29 @@ package me.rivia.api.handlers
 
 typealias Uid = String
 
-data class MeetingPainPoint(val point_id: Uid?, val point_text: String?) {
+data class PresetQuestion(var preset_q_id: Uid?, var preset_q_text: String?) {
     constructor() : this(null, null)
 }
-data class Participant(val participant_id: Uid?, val name: String?, val surname: String?, val email: String?) {
+
+data class Participant(
+    var participant_id: Uid?,
+    var name: String?,
+    var surname: String?,
+    var email: String?
+) {
     constructor() : this(null, null, null, null)
 }
-data class Meeting(val title: String?, val start: Int?, val end: Int?) {
+
+data class Meeting(var title: String?, var start_time: Int?, var end_time: Int?) {
     constructor() : this(null, null, null)
 }
-class Response(val participant: Participant?, val quality: Float?, val points: Array<String>?, val not_needed: Array<Participant>?, val not_prepared: Array<Participant>?) {
+
+class Review(
+    var quality: Float?,
+    var preset_qs: List<String>?,
+    var not_needed: List<Participant>?,
+    var not_prepared: List<Participant>?,
+    var feedback: String?
+) {
     constructor() : this(null, null, null, null, null)
 }

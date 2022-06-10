@@ -1,30 +1,76 @@
 package me.rivia.api.handlers
 
 import com.amazonaws.services.lambda.runtime.Context
+import me.rivia.api.database.*
+import me.rivia.api.database.PresetQ as DbPresetQ
+import me.rivia.api.database.Meeting as DbMeeting
+import me.rivia.api.database.User as DbUser
 
-class GetReview {
-
+class GetReview : HandlerInit() {
     companion object {
-        data class ApiContext(val meeting_id: Uid?, val cookie: Int?) {
+        data class ApiContext(var meeting_id: Uid?, var session: Uid?) {
             constructor() : this(null, null)
         }
 
         class HttpResponse(
             val meeting: Meeting?,
-            val participants: Array<Participant>?,
-            val points: Array<MeetingPainPoint>?
-        ) {
-            val response_type: Int? = 1
-        }
+            val participants: List<Participant>?,
+            val preset_qs: List<PresetQuestion>?
+        )
     }
 
-    fun handle(input: ApiContext?, context: Context?): HttpResponse {
-        return HttpResponse(
-            Meeting("Meeting", 0, 1),
-            arrayOf(Participant("0000-0000-0000-0000", "John", "Doe", "example@gmail.com")),
-            arrayOf(
-                MeetingPainPoint("0000-0000-0000-0000", "Example pain point")
+    fun handle(input: ApiContext?, context: Context?): HttpResponse? {
+        val meetingEntry = entryNullCheck(
+            getEntry<DbMeeting>(
+                Table.MEETING,
+                input?.meeting_id ?: throw Error("Meeting id not present")
+            ) ?: return null, Table.MEETING
+        )
+
+        if (meetingEntry.reviewedBy!!.contains(
+                getUser(input.session) ?: return null
             )
+        ) {
+            return null
+        }
+
+        val participantEntries = entriesNullCheck(
+            getEntries<DbUser>(
+                Table.USER,
+                meetingEntry.participants!!
+            ), Table.USER
+        )
+        if (participantEntries.size != meetingEntry.participants?.size) {
+            throw Error("some userIds not present")
+        }
+
+        val presetQEntries = entriesNullCheck(
+            getAllEntries<DbPresetQ>(
+                Table.PRESETQS,
+            ), Table.PRESETQS
+        )
+        return HttpResponse(
+            Meeting(
+                meetingEntry.title,
+                meetingEntry.startTime,
+                meetingEntry.endTime
+            ),
+            participantEntries
+                .map { participantEntry ->
+                    Participant(
+                        participantEntry.userId,
+                        participantEntry.name,
+                        participantEntry.surname,
+                        participantEntry.email,
+                    )
+                },
+            presetQEntries
+                .map { presetQEntry ->
+                    PresetQuestion(
+                        presetQEntry.presetQId,
+                        presetQEntry.text,
+                    )
+                }
         )
     }
 }

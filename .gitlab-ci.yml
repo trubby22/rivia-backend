@@ -1,4 +1,4 @@
-stages: 
+stages:
   - build
   - test
   - deploy
@@ -6,39 +6,28 @@ stages:
 before_script:
   - GRADLE_USER_HOME="$(pwd)/.gradle"
   - export GRADLE_USER_HOME
-  - AWS_FUNCITONS="get-review get-new-meeting get-dashboard get-summary post-review post-new-meeting post-login post-create-account"
+  - AWS_FUNCTIONS="get-review get-new-meeting get-dashboard get-summary post-review post-new-meeting post-login post-create-account"
 
 build:
   image: gradle:7.4.2-jdk11-alpine
   stage: build
-  script: gradle build -Dorg.gradle.java.home=$JAVA_HOME
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-    paths:
-      - build
-      - .gradle
-
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - when: manual
+  script: gradle buildZip -Dorg.gradle.java.home=$JAVA_HOME
+  artifacts:
+    untracked: true
 
 test:
   image: gradle:7.4.2-jdk11-alpine
   stage: test
   script: gradle check -Dorg.gradle.java.home=$JAVA_HOME
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: pull
-    paths:
-      - build
-      - .gradle
-
+  dependencies:
+    - build
 
 deploy:
   image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-base:latest
   stage: deploy
-  script: for fun in $AWS_FUNCITONS; do aws lambda update-function-code --function-name $fun --zip-file fileb://build/libs/rivia-backend.jar; done
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: pull
-    paths:
-      - build
-      - .gradle
+  script: for fun in $AWS_FUNCTIONS; do aws lambda update-function-code --function-name $fun --zip-file fileb://build/distributions/rivia-backend.zip; done
+  dependencies:
+    - build
