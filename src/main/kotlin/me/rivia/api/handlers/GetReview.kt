@@ -67,7 +67,8 @@ class GetReview : HandlerInit() {
             presetQEntries
                 .map { presetQEntry ->
                     PresetQuestion(
-                        presetQEntry.presetQId, presetQEntry.text
+                        presetQEntry.presetQId,
+                        presetQEntry.text,
                     )
                 }
         )

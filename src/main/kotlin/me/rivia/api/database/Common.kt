@@ -137,8 +137,8 @@ inline fun <reified T : Any, C : Iterable<T>> entriesNullCheck(
     return values
 }
 
-class FieldError(tableName: Table, field: String) :
-    Error("'$field' field of the '$tableName' table not present")
+//class FieldError(tableName: Table, field: String) :
+//    Error("'$field' field of the '$tableName' table not present")
 
 fun generateId(): String {
     return UUID.randomUUID().toString()

@@ -5,8 +5,6 @@ import me.rivia.api.database.*
 import me.rivia.api.database.Login as DbLogin
 import me.rivia.api.database.Session as DbSession
 
-// Session
-
 class PostLogin : HandlerInit() {
     companion object {
         class LoginData(var email: String?, var password: String?) {
