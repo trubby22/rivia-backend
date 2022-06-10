@@ -69,7 +69,6 @@ class Meeting(
     var endTime: Int? = null,
 ) : DbEntry {
     override fun primaryKeyName(): String = "meetingId"
-
 }
 
 @DynamoDbBean

@@ -55,6 +55,6 @@ class PostCreateAccount : HandlerInit() {
                 user = loginEntry.user!!
             )
         } while (!putEntry(Table.SESSION, sessionEntry))
-        return HttpResponse(sessionEntry.cookie)
+        return HttpResponse("session=${sessionEntry.cookie}; Path=/")
     }
 }
