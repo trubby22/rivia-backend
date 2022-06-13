@@ -1,7 +1,6 @@
 package me.rivia.api.database
 
 import aws.smithy.kotlin.runtime.util.encodeToHex
-import me.rivia.api.handlers.Uid
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
@@ -26,6 +25,8 @@ fun initDb() {
     dbEnhancedClient = DynamoDbEnhancedClient.builder().dynamoDbClient(dbClient).build()
     dbClient!!.describeLimits()
 }
+
+typealias Uid = String
 
 interface DbEntry {
     fun primaryKeyName(): String
