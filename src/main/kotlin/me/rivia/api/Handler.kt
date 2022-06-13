@@ -8,14 +8,8 @@ import java.util.*
 
 class Handler : RequestHandler<Event, Any?> {
     companion object {
-        fun getPath(url: String): List<String> = URL(url).path.split('/')
+        fun getPath(url: String): List<String> = URL(url).path.split('/').drop(1)
 
-        fun getUser(cookie: String?): String? {
-            if (cookie == null) {
-                return null
-            }
-            TODO("Implement from a database")
-        }
     }
 
     private val pathMappings = Trie<String, MutableMap<HttpMethod, Pair<Boolean, SubHandler>>>()
@@ -35,31 +29,44 @@ class Handler : RequestHandler<Event, Any?> {
             methodMappings = EnumMap(HttpMethod::class.java)
             pathMappings[url] = methodMappings
         }
-        methodMappings[method] = (withoutSession to subHandler)
+        methodMappings[method] = (withoutUser to subHandler)
     }
 
     override fun handleRequest(event: Event?, context: Context?): Response {
-        if (event == null) {
-            throw Error("Event not present")
-        }
-        val path = getPath(
-            event.url ?: throw Error("Url field empty")
-        )
-        val (withoutSession, handler) = pathMappings[path]?.get(
-            HttpMethod.valueOf(
-                event.method ?: throw Error("Method field empty")
+        try {
+            if (event == null) {
+                throw Error("Event not present")
+            }
+
+            val pathRaw = getPath(
+                event.url ?: throw Error("Url field empty")
             )
-        ) ?: return Response(ResponseError.NOHANDLER, null)
-        val jsonData = event.jsonData ?: return Response(ResponseError.NODATA, null)
 
-        if (withoutSession) {
-            return handler.handleRequest(path, null, jsonData)
+            if (pathRaw[0] != "tenants") {
+                return Response(ResponseError.NOHANDLER)
+            }
+
+            val tenant = pathRaw[1]
+            val path = pathRaw.drop(2)
+
+            val (withoutUser, handler) = pathMappings[path]?.get(
+                HttpMethod.valueOf(
+                    event.method ?: throw Error("Method field empty")
+                )
+            ) ?: return Response(ResponseError.NOHANDLER)
+            val jsonData = event.jsonData ?: mapOf()
+
+            if (withoutUser) {
+                return handler.handleRequest(path, tenant, null, jsonData)
+            }
+            return handler.handleRequest(
+                path,
+                tenant,
+                event.user ?: return Response(ResponseError.NOUSER),
+                jsonData
+            )
+        } catch (e: Error) {
+            return Response(ResponseError.EXCEPTION)
         }
-
-        return handler.handleRequest(
-            path,
-            getUser(event.cookie) ?: return Response(ResponseError.NOSESSION, null),
-            event.jsonData ?: return Response(ResponseError.NODATA, null)
-        )
     }
 }

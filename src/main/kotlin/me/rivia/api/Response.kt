@@ -1,12 +1,14 @@
 package me.rivia.api
 
 enum class ResponseError(val id: Int) {
-    NONE(0),
-    NOHANDLER(1),
-    NOSESSION(2),
-    NODATA(3)
+    NONE(200),
+    NOUSER(402),
+    NOHANDLER(400),
+    EXCEPTION(500),
 }
 
-class Response(responseError: ResponseError, val jsonData: Any?) {
+class Response private constructor(responseError: ResponseError, val jsonData: Any?) {
     val errorCode = responseError.id
+    constructor(responseError: ResponseError) : this(responseError, null)
+    constructor(jsonData: Any?) : this(ResponseError.NONE, jsonData)
 }
