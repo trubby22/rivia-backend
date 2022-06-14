@@ -8,6 +8,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 
@@ -96,10 +97,16 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
     ): Boolean {
         val sameEntryExpression = table.tableSchema().attributeNames().map { attributeName ->
             Expression.builder()
-                .expression("#AttributeName$attributeName = :AttributeValue$attributeName")
-                .putExpressionName("#AttributeName$attributeName", attributeName)
+                .expression("#AttributeName$attributeName = :AttributeValue$attributeName".lowercase(
+                    Locale.getDefault()
+                ))
+                .putExpressionName("#AttributeName$attributeName".lowercase(
+                    Locale.getDefault()
+                ), attributeName)
                 .putExpressionValue(
-                    ":AttributeValue$attributeName",
+                    ":AttributeValue$attributeName".lowercase(
+                        Locale.getDefault()
+                    ),
                     table.tableSchema().attributeValue(oldEntry, attributeName)
                 ).build()
         }.reduce(Expression::and)
