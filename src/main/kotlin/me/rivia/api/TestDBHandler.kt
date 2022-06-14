@@ -1,30 +1,28 @@
 package me.rivia.api
 
 import com.amazonaws.services.lambda.runtime.Context
-import me.rivia.api.database.DynamoDatabase
-import me.rivia.api.database.Table
+import me.rivia.api.database.*
 import me.rivia.api.database.entry.Participant
-import me.rivia.api.database.updateEntry
+import me.rivia.api.database.entry.Tenant
 
 class TestDBHandler {
     val db = DynamoDatabase()
     fun test_db(input: Map<String, String>, context: Context): String {
 
 //        test_put_user();
-
-
-        test_update_user();
+//        test_update_user();
+        test_put_tenant();
         return "executed"
     }
 
-    // run when fakeUser does not exist in the database
+    // passes basic
     fun test_put_user() {
         val fakeUser: Participant = Participant("1", "Bob", "Uncle");
         val dummy : (Participant) -> Participant = {p : Participant -> p};
 //        db.updateEntry(Table.PARTICIPANTS, fakeUser, (dummy));
     }
 
-    // test once already exists in database
+    // passes basic
     fun test_update_user() {
         val fakeUser: Participant = Participant("1", "Bob", "Uncle");
         val fakeUser2: Participant = Participant("1", "Jane", "Aunt");
@@ -32,8 +30,10 @@ class TestDBHandler {
         db.updateEntry(Table.PARTICIPANTS, "1", (dummy));
     }
 
-    fun test_get_user() {
-        val fakeUser: Participant = Participant("1", "Bob", "Uncle");
+    fun test_put_tenant() {
+        val fakeTenant: Tenant = Tenant("1", "123", arrayListOf("2"), arrayListOf("3"));
+        val dummy : (Tenant) -> Tenant = {t : Tenant -> t};
+        db.putEntry(Table.TENANTS,fakeTenant);
 
     }
 

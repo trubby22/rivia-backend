@@ -10,7 +10,7 @@ import java.util.*
 
 class Handler(val database: Database) : RequestHandler<Event, Response> {
     companion object {
-        fun getPath(url: String): List<String> = URL(url).path.split('/').drop(1)
+        fun getPath(path: String): List<String> = path.split('/').drop(1)
 
     }
 
@@ -42,7 +42,7 @@ class Handler(val database: Database) : RequestHandler<Event, Response> {
             }
 
             val pathRaw = getPath(
-                event.url ?: throw Error("Url field empty")
+                event.path ?: throw Error("Path field empty")
             )
 
             if (pathRaw[0] != "tenants") {
