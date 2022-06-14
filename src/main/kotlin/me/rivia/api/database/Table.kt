@@ -1,12 +1,13 @@
-package me.rivia.api.database.impl
+package me.rivia.api.database
 
-internal enum class Table(val tableName: String) {
-    ORGANIZATIONS("Organizations"),
+enum class Table(val tableName: String) {
+    TENANTS("Tenants"),
     MEETINGS("Meetings"),
-    RESPONSEUSERS("ResponseUsers"),
     PARTICIPANTS("Participants"),
-    RESPONSEPARTICIPANTS("ResponseParticipants"),
     PRESETQS("PresetQs"),
+    TENANTMEETINGS("TenantMeetings"), // For validating if a meeting is in an organization
+    RESPONSETENANTUSERS("ResponseTenantUsers"),
+    RESPONSEPARTICIPANTS("ResponseParticipants"),
     RESPONSEPRESETQS("ResponsePresetQs");
 
     override fun toString(): String {

@@ -1,4 +1,18 @@
 package me.rivia.api.handlers
 
-class GetMeetings {
+import me.rivia.api.Response
+import me.rivia.api.database.Database
+
+class GetMeetings : SubHandler {
+    override fun handleRequest(
+        url: List<String>,
+        tenant: String,
+        user: String?,
+        jsonData: Map<String, Any?>,
+        database: Database
+    ): Response {
+        TODO("Not yet implemented")
+        // If implemented, check if the user is in that tenant (Microsoft Graph)
+        // Get the tenant and its meetings (Tenants, getEntry)
+    }
 }

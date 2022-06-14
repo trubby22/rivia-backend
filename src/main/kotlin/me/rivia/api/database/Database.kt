@@ -1,36 +1,41 @@
 package me.rivia.api.database
 
-import javax.xml.crypto.dsig.keyinfo.KeyValue
+import java.security.KeyStore.Entry
+import kotlin.reflect.KClass
 
 interface Database {
-    fun <EntryType> getEntry(
+    fun <EntryType : Any> getEntry(
         table: Table,
         keyValue: String,
-        clazz: Class<EntryType>
+        clazz: KClass<EntryType>
     ): EntryType?
 
-    fun <EntryType> getEntries(
+    fun <EntryType : Any> getEntries(
         table: Table,
         keys: Collection<String>,
-        clazz: Class<EntryType>
+        clazz: KClass<EntryType>
     ): List<EntryType>
+
+    fun <EntryType : Any> updateEntry(
+        table: Table,
+        default: EntryType,
+        update: (EntryType) -> EntryType,
+        clazz: KClass<EntryType>
+    ) : EntryType
 }
 
-inline fun <reified EntryType> Database.getEntry(
+inline fun <reified EntryType : Any> Database.getEntry(
     table: Table,
     keyValue: String
-): EntryType? = this.getEntry(table, keyValue, EntryType::class.java)
+): EntryType? = this.getEntry(table, keyValue, EntryType::class)
 
-inline fun <reified EntryType> Database.getEntries(
+inline fun <reified EntryType : Any> Database.getEntries(
     table: Table,
     keys: Collection<String>,
-): List<EntryType> = this.getEntries(table, keys, EntryType::class.java)
+): List<EntryType> = this.getEntries(table, keys, EntryType::class)
 
-class DynamoDb {
-    inline fun <EntryType> getEntry(
-        table: Table,
-        keyValue: String,
-    ): EntryType? {
-        return null
-    }
-}
+inline fun <reified EntryType : Any> Database.updateEntry(
+    table: Table,
+    default: EntryType,
+    noinline update: (EntryType) -> EntryType
+): EntryType = this.updateEntry(table, default, update, EntryType::class)

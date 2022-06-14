@@ -1,4 +1,3 @@
 package me.rivia.api.handlers.responses
 
-class PresetQ {
-}
+class PresetQ(val id: String, val text: String)

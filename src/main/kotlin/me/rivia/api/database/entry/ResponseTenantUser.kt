@@ -4,34 +4,32 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
 
 @DynamoDbBean
-internal class ResponseUser(@get:DynamoDbPartitionKey var tenantIduserIdMeetingId: String?) {
-    @get:DynamoDbPartitionKey
-    internal var tenantIduserIdMeetingId
-
+internal class ResponseTenantUser(@get:DynamoDbPartitionKey var tenantIduserIdMeetingId: String?) {
+    constructor() : this(null)
     constructor(tenantId: String, userId: String, meetingId: String) : this("$tenantId $userId $meetingId")
 }
 
-internal var ResponseUser.tenantId
-    get() = this.tenantIduserIdMeetingId.subSequence(0, this.tenantIduserIdMeetingId.indexOf(' ')).toString()
+internal var ResponseTenantUser.tenantId
+    get() = this.tenantIduserIdMeetingId?.subSequence(0, this.tenantIduserIdMeetingId!!.indexOf(' ')).toString()
     set(tenantId) {
         this.tenantIduserIdMeetingId = "$tenantId $userId $meetingId"
     }
 
-internal var ResponseUser.userId: String
+internal var ResponseTenantUser.userId: String?
     get() {
-        val firstSpace = this.tenantIduserIdMeetingId.indexOf(' ')
-        val secondSpace = this.tenantIduserIdMeetingId.indexOf(' ', firstSpace + 1)
-        return this.tenantIduserIdMeetingId.subSequence(firstSpace + 1, secondSpace).toString()
+        val firstSpace = this.tenantIduserIdMeetingId?.indexOf(' ') ?: return null
+        val secondSpace = this.tenantIduserIdMeetingId!!.indexOf(' ', firstSpace + 1)
+        return this.tenantIduserIdMeetingId!!.subSequence(firstSpace + 1, secondSpace).toString()
     }
     set(userId) {
         this.tenantIduserIdMeetingId = "$tenantId $userId $meetingId"
     }
 
-internal var ResponseUser.meetingId : String
+internal var ResponseTenantUser.meetingId : String?
     get() {
-        val firstSpace = this.tenantIduserIdMeetingId.indexOf(' ')
-        val secondSpace = this.tenantIduserIdMeetingId.indexOf(' ', firstSpace + 1)
-        return this.tenantIduserIdMeetingId.subSequence(secondSpace + 1, this.tenantIduserIdMeetingId.length).toString()
+        val firstSpace = this.tenantIduserIdMeetingId?.indexOf(' ') ?: return null
+        val secondSpace = this.tenantIduserIdMeetingId!!.indexOf(' ', firstSpace + 1)
+        return this.tenantIduserIdMeetingId!!.subSequence(secondSpace + 1, this.tenantIduserIdMeetingId!!.length).toString()
     }
     set(meetingId) {
         this.tenantIduserIdMeetingId = "$tenantId $userId $meetingId"

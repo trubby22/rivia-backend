@@ -2,11 +2,13 @@ package me.rivia.api
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
+import me.rivia.api.database.Database
+import me.rivia.api.database.DynamoDatabase
 import me.rivia.api.handlers.SubHandler
 import java.net.URL
 import java.util.*
 
-class Handler : RequestHandler<Event, Any?> {
+class Handler(val database: Database) : RequestHandler<Event, Response> {
     companion object {
         fun getPath(url: String): List<String> = URL(url).path.split('/').drop(1)
 
@@ -17,6 +19,7 @@ class Handler : RequestHandler<Event, Any?> {
     init {
 
     }
+    constructor() : this(DynamoDatabase())
 
     fun registerSubHandler(
         url: List<String?>,
@@ -57,13 +60,14 @@ class Handler : RequestHandler<Event, Any?> {
             val jsonData = event.jsonData ?: mapOf()
 
             if (withoutUser) {
-                return handler.handleRequest(path, tenant, null, jsonData)
+                return handler.handleRequest(path, tenant, null, jsonData, database)
             }
             return handler.handleRequest(
                 path,
                 tenant,
                 event.user ?: return Response(ResponseError.NOUSER),
-                jsonData
+                jsonData,
+                database
             )
         } catch (e: Error) {
             return Response(ResponseError.EXCEPTION)
