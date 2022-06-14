@@ -94,12 +94,14 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
         newEntry: EntryType,
         clazz: KClass<EntryType>
     ): Boolean {
-        val sameEntryExpression = table.tableSchema().attributeNames().map {
-            attributeName -> Expression.builder().expression("$attributeName = :AttributeValue$attributeName")
-            .putExpressionValue(
-                ":AttributeValue$attributeName",
-                table.tableSchema().attributeValue(oldEntry, attributeName)
-            ).build()
+        val sameEntryExpression = table.tableSchema().attributeNames().map { attributeName ->
+            Expression.builder()
+                .expression("#AttributeName$attributeName = :AttributeValue$attributeName")
+                .putExpressionName("#AttributeName$attributeName", attributeName)
+                .putExpressionValue(
+                    ":AttributeValue$attributeName",
+                    table.tableSchema().attributeValue(oldEntry, attributeName)
+                ).build()
         }.reduce(Expression::and)
 
         val request = PutItemEnhancedRequest.builder(clazz.java).item(newEntry)
@@ -113,7 +115,10 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
     }
 
     override fun <EntryType : Any> updateEntryWithDefault(
-        table: Table, default: () -> EntryType, update: (EntryType) -> EntryType, clazz: KClass<EntryType>
+        table: Table,
+        default: () -> EntryType,
+        update: (EntryType) -> EntryType,
+        clazz: KClass<EntryType>
     ): EntryType {
         val dynamoTable = dbEnhancedClient.table(
             table.toString(), TableSchema.fromClass(clazz.java)
@@ -143,7 +148,8 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
         lateinit var entry: EntryType
         lateinit var newEntry: EntryType
         do {
-            entry = dynamoTable.getItem(Key.builder().partitionValue(keyValue).build()) ?: return null
+            entry =
+                dynamoTable.getItem(Key.builder().partitionValue(keyValue).build()) ?: return null
             newEntry = update(entry)
         } while (!updateRequest(dynamoTable, entry, newEntry, clazz)
         )
@@ -154,6 +160,10 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
         table: Table,
         entry: EntryType,
         clazz: KClass<EntryType>
-    ): Boolean = putRequest(dbEnhancedClient.table(table.toString(), TableSchema.fromBean(clazz.java)), entry, clazz)
+    ): Boolean = putRequest(
+        dbEnhancedClient.table(table.toString(), TableSchema.fromBean(clazz.java)),
+        entry,
+        clazz
+    )
 }
 
