@@ -18,16 +18,16 @@ class PostTenant : SubHandler {
         // Extracting json data
         val refreshToken = jsonData["refreshToken"]
         if (refreshToken !is String?) {
-            return Response(ResponseError.WRONTENTRY)
+            return Response(ResponseError.WRONGENTRY)
         }
         val presetQTexts = jsonData["presetQs"]
         if (presetQTexts !is List<*>?) {
-            return Response(ResponseError.WRONTENTRY)
+            return Response(ResponseError.WRONGENTRY)
         }
         if (presetQTexts != null) {
             for (text in presetQTexts) {
                 if (text !is String) {
-                    return Response(ResponseError.WRONTENTRY)
+                    return Response(ResponseError.WRONGENTRY)
                 }
             }
         }

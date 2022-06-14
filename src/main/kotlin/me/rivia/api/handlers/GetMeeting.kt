@@ -12,7 +12,6 @@ class GetMeeting : SubHandler {
         database: Database
     ): Response {
         TODO("Not yet implemented")
-
         // If implemented, check if the user is in that tenant (Microsoft Graph)
         // Check if there is such a meeting in that tenant (TenantMeetings)
         // Get the meeting data (Meetings)

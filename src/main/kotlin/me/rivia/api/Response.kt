@@ -5,7 +5,8 @@ enum class ResponseError(val id: Int) {
     NOHANDLER(400),
     NOTENANT(401),
     NOUSER(402),
-    WRONTENTRY(404),
+    WRONGTENANTMEETING(404),
+    WRONGENTRY(406),
     EXCEPTION(500),
 }
 

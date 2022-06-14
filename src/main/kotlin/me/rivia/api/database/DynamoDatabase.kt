@@ -97,16 +97,10 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
     ): Boolean {
         val sameEntryExpression = table.tableSchema().attributeNames().map { attributeName ->
             Expression.builder()
-                .expression("#AttributeName$attributeName = :AttributeValue$attributeName".lowercase(
-                    Locale.getDefault()
-                ))
-                .putExpressionName("#AttributeName$attributeName".lowercase(
-                    Locale.getDefault()
-                ), attributeName)
+                .expression("#$attributeName = :$attributeName")
+                .putExpressionName("#$attributeName", attributeName)
                 .putExpressionValue(
-                    ":AttributeValue$attributeName".lowercase(
-                        Locale.getDefault()
-                    ),
+                    ":$attributeName",
                     table.tableSchema().attributeValue(oldEntry, attributeName)
                 ).build()
         }.reduce(Expression::and)
