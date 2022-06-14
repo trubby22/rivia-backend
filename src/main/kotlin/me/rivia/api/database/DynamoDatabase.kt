@@ -95,9 +95,9 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
         clazz: KClass<EntryType>
     ): Boolean {
         val sameEntryExpression = table.tableSchema().attributeNames().map {
-            attributeName -> Expression.builder().expression("#keyName = :keyValue")
-            .putExpressionName("#keyName", attributeName).putExpressionValue(
-                ":keyValue",
+            attributeName -> Expression.builder().expression("$attributeName = :$attributeName")
+            .putExpressionValue(
+                ":$attributeName",
                 table.tableSchema().attributeValue(oldEntry, attributeName)
             ).build()
         }.reduce(Expression::and)

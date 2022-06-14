@@ -5,6 +5,7 @@ import me.rivia.api.ResponseError
 import me.rivia.api.database.*
 import me.rivia.api.database.entry.PresetQ
 import me.rivia.api.database.entry.Tenant
+import me.rivia.api.handlers.responses.PresetQ as ResponsePresetQ
 
 class PostTenant : SubHandler {
     override fun handleRequest(
@@ -83,9 +84,7 @@ class PostTenant : SubHandler {
         val resultPresetQs =
             if (!defaultPresetQIds.isInitialized() || defaultPresetQIds.value !== tenantEntry.presetQIds) presetQs!!.value else defaultPresetQs.value
         return Response(resultPresetQs.map {
-            me.rivia.api.handlers.responses.PresetQ(
-                it.presetQId!!, it.text!!
-            )
+            ResponsePresetQ(it)
         })
     }
 }
