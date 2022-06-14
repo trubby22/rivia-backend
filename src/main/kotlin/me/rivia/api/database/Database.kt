@@ -10,18 +10,30 @@ interface Database {
         clazz: KClass<EntryType>
     ): EntryType?
 
-    fun <EntryType : Any> getEntries(
+    fun <EntryType : Any> getAllEntries(
         table: Table,
-        keys: Collection<String>,
         clazz: KClass<EntryType>
     ): List<EntryType>
 
-    fun <EntryType : Any> updateEntry(
+    fun <EntryType : Any> updateEntryWithDefault(
         table: Table,
-        default: EntryType,
+        default: () -> EntryType,
         update: (EntryType) -> EntryType,
         clazz: KClass<EntryType>
     ) : EntryType
+
+    fun <EntryType : Any> updateEntry(
+        table: Table,
+        keyValue: String,
+        update: (EntryType) -> EntryType,
+        clazz: KClass<EntryType>
+    ) : EntryType?
+
+    fun <EntryType : Any> putEntry(
+        table: Table,
+        entry: EntryType,
+        clazz: KClass<EntryType>
+    ) : Boolean
 }
 
 inline fun <reified EntryType : Any> Database.getEntry(
@@ -29,13 +41,23 @@ inline fun <reified EntryType : Any> Database.getEntry(
     keyValue: String
 ): EntryType? = this.getEntry(table, keyValue, EntryType::class)
 
-inline fun <reified EntryType : Any> Database.getEntries(
+inline fun <reified EntryType : Any> Database.getAllEntries(
     table: Table,
-    keys: Collection<String>,
-): List<EntryType> = this.getEntries(table, keys, EntryType::class)
+): List<EntryType> = this.getAllEntries(table, EntryType::class)
+
+inline fun <reified EntryType : Any> Database.putEntry(
+    table: Table,
+    entry: EntryType
+) : Boolean = this.putEntry(table, entry, EntryType::class)
+
+inline fun <reified EntryType : Any> Database.updateEntryWithDefault(
+    table: Table,
+    noinline default: () -> EntryType,
+    noinline update: (EntryType) -> EntryType
+): EntryType = this.updateEntryWithDefault(table, default, update, EntryType::class)
 
 inline fun <reified EntryType : Any> Database.updateEntry(
     table: Table,
-    default: EntryType,
+    keyValue: String,
     noinline update: (EntryType) -> EntryType
-): EntryType = this.updateEntry(table, default, update, EntryType::class)
+): EntryType? = this.updateEntry(table, keyValue, update, EntryType::class)

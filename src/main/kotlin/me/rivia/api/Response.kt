@@ -2,9 +2,10 @@ package me.rivia.api
 
 enum class ResponseError(val id: Int) {
     NONE(200),
+    NOHANDLER(400),
     NOTENANT(401),
     NOUSER(402),
-    NOHANDLER(400),
+    WRONTENTRY(404),
     EXCEPTION(500),
 }
 

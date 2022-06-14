@@ -3,7 +3,6 @@ package me.rivia.api.database
 import software.amazon.awssdk.enhanced.dynamodb.*
 import software.amazon.awssdk.enhanced.dynamodb.internal.EnhancedClientUtils.createKeyFromItem
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest
-import software.amazon.awssdk.enhanced.dynamodb.model.ReadBatch
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -14,8 +13,6 @@ import kotlin.reflect.full.declaredMemberProperties
 
 class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
     private companion object {
-        const val SINGLE_BATCH_LIMIT = 100
-
         /**
          * Gets the name of the partition key
          */
@@ -55,7 +52,7 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
     override fun <EntryType : Any> getEntry(
         table: Table, keyValue: String, clazz: KClass<EntryType>
     ): EntryType? {
-        val dynamoTable: DynamoDbTable<EntryType> =
+        val dynamoTable =
             dbEnhancedClient.table(table.toString(), TableSchema.fromClass(clazz.java))
         val entry =
             dynamoTable.getItem(Key.builder().partitionValue(keyValue).build()) ?: return null
@@ -63,44 +60,12 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
         return fieldNullCheck(entry, "entry from '$table' has a nulled component", clazz)
     }
 
-    /**
-     * Does a single batched get operation (up to SINGLE_BATCH_LIMIT entries) with the specified keys
-     * from the DynamoDB
-     */
-    private fun <EntryType : Any> fetchSingleBatch(
-        table: Table, keys: List<String>, clazz: KClass<EntryType>
+    override fun <EntryType : Any> getAllEntries(
+        table: Table,
+        clazz: KClass<EntryType>
     ): List<EntryType> {
-        val dynamoTable: DynamoDbTable<EntryType> =
-            dbEnhancedClient.table(table.toString(), TableSchema.fromClass(clazz.java))
-        return dbEnhancedClient.batchGetItem { r ->
-            r.addReadBatch(
-                ReadBatch.builder(clazz.java).mappedTableResource(dynamoTable).apply {
-                    repeat(keys.size) { index ->
-                        this.addGetItem(
-                            Key.builder().partitionValue(keys[index]).build()
-                        )
-                    }
-                }.build()
-            )
-        }.resultsForTable(dynamoTable).toList()
-    }
-
-    /**
-     * Gets the entries with the specified keys from the DynamoDB
-     */
-    override fun <EntryType : Any> getEntries(
-        table: Table, keys: Collection<String>, clazz: KClass<EntryType>
-    ): List<EntryType> {
-        val currentBatchKeys: MutableList<String> = mutableListOf()
-        val entries: MutableList<EntryType> = mutableListOf()
-        for (key in keys) {
-            currentBatchKeys.add(key)
-            if (currentBatchKeys.size > SINGLE_BATCH_LIMIT) {
-                entries.addAll(fetchSingleBatch(table, currentBatchKeys, clazz))
-            }
-        }
-        entries.addAll(fetchSingleBatch(table, currentBatchKeys, clazz))
-        // Check for null entries
+        val dynamoTable = dbEnhancedClient.table(table.toString(), TableSchema.fromBean(clazz.java))
+        val entries = dynamoTable.scan().items().toList()
         for (entry in entries) {
             fieldNullCheck(entry, "entry from '$table' has a nulled component", clazz)
         }
@@ -147,24 +112,48 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
         return true
     }
 
-    override fun <EntryType : Any> updateEntry(
-        table: Table, default: EntryType, update: (EntryType) -> EntryType, clazz: KClass<EntryType>
+    override fun <EntryType : Any> updateEntryWithDefault(
+        table: Table, default: () -> EntryType, update: (EntryType) -> EntryType, clazz: KClass<EntryType>
     ): EntryType {
-        val dynamoTable = dbEnhancedClient!!.table(
+        val dynamoTable = dbEnhancedClient.table(
             table.toString(), TableSchema.fromClass(clazz.java)
         )
+        lateinit var defaultEntry: EntryType
         var entry: EntryType?
         lateinit var newEntry: Lazy<EntryType>
         do {
-            entry = dynamoTable.getItem(default)
+            defaultEntry = default()
+            entry = dynamoTable.getItem(defaultEntry)
             newEntry = lazy { update(entry!!) }
         } while (!if (entry == null) {
-                putRequest(dynamoTable, default, clazz)
+                putRequest(dynamoTable, defaultEntry, clazz)
             } else {
                 updateRequest(dynamoTable, entry, newEntry.value, clazz)
             }
         )
-        return if (entry == null) default else newEntry.value
+        return if (entry == null) defaultEntry else newEntry.value
     }
+
+    override fun <EntryType : Any> updateEntry(
+        table: Table, keyValue: String, update: (EntryType) -> EntryType, clazz: KClass<EntryType>
+    ): EntryType? {
+        val dynamoTable = dbEnhancedClient.table(
+            table.toString(), TableSchema.fromClass(clazz.java)
+        )
+        lateinit var entry: EntryType
+        lateinit var newEntry: EntryType
+        do {
+            entry = dynamoTable.getItem(Key.builder().partitionValue(keyValue).build()) ?: return null
+            newEntry = update(entry)
+        } while (!updateRequest(dynamoTable, entry, newEntry, clazz)
+        )
+        return newEntry
+    }
+
+    override fun <EntryType : Any> putEntry(
+        table: Table,
+        entry: EntryType,
+        clazz: KClass<EntryType>
+    ): Boolean = putRequest(dbEnhancedClient.table(table.toString(), TableSchema.fromBean(clazz.java)), entry, clazz)
 }
 
