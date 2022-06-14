@@ -78,17 +78,14 @@ class PostTenant : SubHandler {
         }
         // tenantEntry.presetQIds will be either equal to presetQIds.value or defaultPresetQIds.value at this point
         assert(
-            (defaultPresetQIds.isInitialized() && tenantEntry.presetQIds === defaultPresetQIds.value)
-                    || (presetQIds != null && presetQIds.isInitialized() && tenantEntry.presetQIds === presetQIds.value)
+            (defaultPresetQIds.isInitialized() && tenantEntry.presetQIds === defaultPresetQIds.value) || (presetQIds != null && presetQIds.isInitialized() && tenantEntry.presetQIds === presetQIds.value)
         )
         val resultPresetQs =
             if (!defaultPresetQIds.isInitialized() || defaultPresetQIds.value !== tenantEntry.presetQIds) presetQs!!.value else defaultPresetQs.value
         return Response(resultPresetQs.map {
             me.rivia.api.handlers.responses.PresetQ(
-                it.presetQId!!,
-                it.text!!
+                it.presetQId!!, it.text!!
             )
         })
-    }
     }
 }
