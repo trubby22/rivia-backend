@@ -6,6 +6,7 @@ import me.rivia.api.database.Database
 import me.rivia.api.database.DynamoDatabase
 import me.rivia.api.handlers.GetMeeting
 import me.rivia.api.handlers.GetTenant
+import me.rivia.api.handlers.PostTenant
 import me.rivia.api.handlers.SubHandler
 import java.net.URL
 import java.util.*
@@ -20,6 +21,7 @@ class Handler(val database: Database) : RequestHandler<Event, Response> {
 
     init {
         registerSubHandler(listOf(), HttpMethod.GET, false, lazy {GetTenant()})
+        registerSubHandler(listOf(), HttpMethod.POST, true, lazy { PostTenant() })
         registerSubHandler(listOf("meetings", null), HttpMethod.GET, false, lazy { GetMeeting() })
     }
     constructor() : this(DynamoDatabase())
