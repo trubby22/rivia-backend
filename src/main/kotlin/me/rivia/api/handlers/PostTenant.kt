@@ -67,7 +67,7 @@ class PostTenant : SubHandler {
         } else {
             database.updateEntryWithDefault(Table.TENANTS, {
                 Tenant(
-                    generateUid(), refreshToken, defaultPresetQIds.value, listOf()
+                    tenant, refreshToken, defaultPresetQIds.value, listOf()
                 )
             }, { tenantEntry: Tenant ->
                 tenantEntry.refreshToken = refreshToken

@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import me.rivia.api.database.Database
 import me.rivia.api.database.DynamoDatabase
+import me.rivia.api.handlers.GetMeeting
 import me.rivia.api.handlers.GetTenant
 import me.rivia.api.handlers.SubHandler
 import java.net.URL
@@ -19,6 +20,7 @@ class Handler(val database: Database) : RequestHandler<Event, Response> {
 
     init {
         registerSubHandler(listOf(), HttpMethod.GET, false, lazy {GetTenant()})
+        registerSubHandler(listOf("meetings", null), HttpMethod.GET, false, lazy { GetMeeting() })
     }
     constructor() : this(DynamoDatabase())
 
@@ -74,7 +76,6 @@ class Handler(val database: Database) : RequestHandler<Event, Response> {
                 database
             )
         } catch (e: Error) {
-            throw e
             return Response(ResponseError.EXCEPTION)
         }
     }
