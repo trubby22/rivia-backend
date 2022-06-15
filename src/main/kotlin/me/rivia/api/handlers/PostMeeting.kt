@@ -34,39 +34,6 @@ class PostMeeting : SubHandler {
             return Response(ResponseError.WRONGENTRY)
         }
 
-
-
-//        val title = jsonData["title"]
-//        if (title !is String?) {
-//            return Response(ResponseError.WRONGENTRY)
-//        }
-//        val organizerId = jsonData["organizerId"]
-//        if (organizerId !is String?) {
-//            return Response(ResponseError.WRONGENTRY)
-//        }
-//        val startTime = jsonData["startTime"]
-//        if (startTime !is Int?) {
-//            return Response(ResponseError.WRONGENTRY)
-//        }
-//        val endTime = jsonData["endTime"]
-//        if (endTime !is Int?) {
-//            return Response(ResponseError.WRONGENTRY)
-//        }
-//        // should this be a map
-//        val qualities = jsonData["qualities"]
-//        if (qualities !is List<*>) {
-//            return Response(ResponseError.WRONGENTRY)
-//        }
-//        val responses = jsonData["responses"]
-//        if (responses !is Int) {
-//            return Response(ResponseError.WRONGENTRY)
-//        }
-//        val participants = jsonData["participants"]
-//        if (participants !is List<*>?) {
-//            return Response(ResponseError.WRONGENTRY)
-//        }
-
-
         TODO("Not yet implemented")
         // If implemented, check if the user is in that tenant (Microsoft Graph)
         // Add a meeting and return the new id (Meetings)
