@@ -1,6 +1,7 @@
 package me.rivia.api.handlers
 
 import me.rivia.api.Response
+import me.rivia.api.ResponseError
 import me.rivia.api.database.Database
 
 class PostReview : SubHandler {
@@ -11,6 +12,36 @@ class PostReview : SubHandler {
         jsonData: Map<String, Any?>,
         database: Database
     ): Response {
+        val needed = jsonData["needed"]
+        if (needed !is String?) {
+            return Response(ResponseError.WRONGENTRY)
+        }
+        val notNeeded = jsonData["notNeeded"]
+        if (notNeeded !is String?) {
+            return Response(ResponseError.WRONGENTRY)
+        }
+        val prepared = jsonData["prepared"]
+        if (prepared !is String?) {
+            return Response(ResponseError.WRONGENTRY)
+        }
+        val notPrepared = jsonData["notPrepared"]
+        if (notPrepared !is String?) {
+            return Response(ResponseError.WRONGENTRY)
+        }
+        // should this be a map
+        val presetQs = jsonData["presetQs"]
+        if (presetQs !is Map<*, *>) {
+            return Response(ResponseError.WRONGENTRY)
+        }
+        val quality = jsonData["quality"]
+        if (quality !is Float) {
+            return Response(ResponseError.WRONGENTRY)
+        }
+        val feedback = jsonData["feedback"]
+        if (feedback !is String?) {
+            return Response(ResponseError.WRONGENTRY)
+        }
+
         TODO("Not yet implemented")
         // If implemented, check if the user is in that tenant (Microsoft Graph)
         // Check if there hasn't been a response from this participant yet (ResponseTenantUsers)
