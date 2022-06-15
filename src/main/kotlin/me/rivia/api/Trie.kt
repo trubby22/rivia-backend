@@ -19,6 +19,7 @@ class Trie<N : Any, L> {
     private fun setRecursive(key: ListIterator<N?>, value: L) {
         if (!key.hasNext()) {
             data = value
+            return
         }
         val entry = key.next()
         if (entry != null) {

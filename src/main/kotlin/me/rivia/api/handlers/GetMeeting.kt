@@ -22,7 +22,7 @@ class GetMeeting : SubHandler {
         jsonData: Map<String, Any?>,
         database: Database
     ): Response {
-//        TODO("Not yet implemented")
+        TODO("Not yet implemented")
         // If implemented, check if the user is in that tenant (Microsoft Graph)
         // Check if there is such a meeting in that tenant (TenantMeetings)
         // Get the meeting data (Meetings)
@@ -47,9 +47,9 @@ class GetMeeting : SubHandler {
 
         // need to create map from preset Questions to how many times where selected
         // participant type very similar for request and response
-        return Response(MeetingResponse(meeting.title!!,meeting.startTime!!,meeting.endTime!!,meeting.qualityList!!,
-            meeting.responsesCount!!,meeting.organizerId!!,null,null, meeting.feedbacks!!)
-        )
+//        return Response(MeetingResponse(meeting.title!!,meeting.startTime!!,meeting.endTime!!,meeting.qualityList!!,
+//            meeting.responsesCount!!,meeting.organizerId!!,null,null, meeting.feedbacks!!)
+//        )
     }
 
 

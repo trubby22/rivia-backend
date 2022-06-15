@@ -4,20 +4,21 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import me.rivia.api.database.Database
 import me.rivia.api.database.DynamoDatabase
+import me.rivia.api.handlers.GetTenant
 import me.rivia.api.handlers.SubHandler
 import java.net.URL
 import java.util.*
 
 class Handler(val database: Database) : RequestHandler<Event, Response> {
     companion object {
-        fun getPath(path: String): List<String> = path.split('/').drop(1)
+        fun getPath(path: String): List<String> = path.split('/')
 
     }
 
-    private val pathMappings = Trie<String, MutableMap<HttpMethod, Pair<Boolean, SubHandler>>>()
+    private val pathMappings = Trie<String, MutableMap<HttpMethod, Pair<Boolean, Lazy<SubHandler>>>>()
 
     init {
-
+        registerSubHandler(listOf(), HttpMethod.GET, false, lazy {GetTenant()})
     }
     constructor() : this(DynamoDatabase())
 
@@ -25,7 +26,7 @@ class Handler(val database: Database) : RequestHandler<Event, Response> {
         url: List<String?>,
         method: HttpMethod,
         withoutUser: Boolean,
-        subHandler: SubHandler
+        subHandler: Lazy<SubHandler>
     ) {
         var methodMappings = pathMappings[url]
         if (methodMappings == null) {
@@ -60,16 +61,20 @@ class Handler(val database: Database) : RequestHandler<Event, Response> {
             val jsonData = event.jsonData ?: mapOf()
 
             if (withoutUser) {
-                return handler.handleRequest(path, tenant, null, jsonData, database)
+                return handler.value.handleRequest(path, tenant, null, jsonData, database)
             }
-            return handler.handleRequest(
+            if (event.user?.isEmpty() != false) {
+                return Response(ResponseError.NOUSER)
+            }
+            return handler.value.handleRequest(
                 path,
                 tenant,
-                event.user ?: return Response(ResponseError.NOUSER),
+                event.user,
                 jsonData,
                 database
             )
         } catch (e: Error) {
+            throw e
             return Response(ResponseError.EXCEPTION)
         }
     }
