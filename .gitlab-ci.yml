@@ -28,6 +28,8 @@ deploy:
   rules:
     - if: '$CI_COMMIT_REF_NAME == "master"'
     - when: manual
-  script: for fun in $AWS_FUNCTIONS; do aws lambda update-function-code --function-name $fun --zip-file fileb://build/distributions/rivia-backend.zip; done
+  script:
+#    - for fun in $AWS_FUNCTIONS; do aws lambda update-function-code --function-name $fun --zip-file fileb://build/distributions/rivia-backend.zip; done
+    - aws lambda update-function-code --function-name main-handler --zip-file fileb://build/distributions/rivia-backend.zip
   dependencies:
     - build
