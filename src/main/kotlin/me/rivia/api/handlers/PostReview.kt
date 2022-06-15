@@ -2,11 +2,11 @@ package me.rivia.api.handlers
 
 import me.rivia.api.Response
 import me.rivia.api.ResponseError
-import me.rivia.api.database.Database
-import me.rivia.api.database.Table
-import me.rivia.api.database.entry.ResponseTenantUser
-import me.rivia.api.database.getEntry
-import me.rivia.api.database.putEntry
+import me.rivia.api.database.entry.Meeting
+import me.rivia.api.database.*
+import me.rivia.api.database.entry.ResponseParticipant
+import me.rivia.api.database.entry.ResponsePresetQ
+
 
 class PostReview : SubHandler {
     override fun handleRequest(
@@ -17,45 +17,82 @@ class PostReview : SubHandler {
         database: Database
     ): Response {
         val meetingId = url[1]
-
-        val needed = jsonData["needed"]
-        if (needed !is String?) {
-            return Response(ResponseError.WRONGENTRY)
-        }
-        val notNeeded = jsonData["notNeeded"]
-        if (notNeeded !is String?) {
-            return Response(ResponseError.WRONGENTRY)
-        }
-        val prepared = jsonData["prepared"]
-        if (prepared !is String?) {
-            return Response(ResponseError.WRONGENTRY)
-        }
-        val notPrepared = jsonData["notPrepared"]
-        if (notPrepared !is String?) {
-            return Response(ResponseError.WRONGENTRY)
-        }
-        // should this be a map
-        val presetQs = jsonData["presetQs"]
-        if (presetQs !is Map<*, *>) {
-            return Response(ResponseError.WRONGENTRY)
-        }
+        val needed = (jsonData["needed"] as? List<*>)?.checkListType<String>() ?: return Response(
+            ResponseError.WRONGENTRY
+        )
+        val notNeeded =
+            (jsonData["notNeeded"] as? List<*>)?.checkListType<String>() ?: return Response(
+                ResponseError.WRONGENTRY
+            )
+        val prepared =
+            (jsonData["prepared"] as? List<*>)?.checkListType<String>() ?: return Response(
+                ResponseError.WRONGENTRY
+            )
+        val notPrepared =
+            (jsonData["notPrepared"] as? List<*>)?.checkListType<String>() ?: return Response(
+                ResponseError.WRONGENTRY
+            )
+        val feedback = jsonData["feedback"] as? String ?: return Response(ResponseError.WRONGENTRY)
         val quality = jsonData["quality"]
-        if (quality !is Float) {
+        if (quality !is Float?) {
             return Response(ResponseError.WRONGENTRY)
         }
-        val feedback = jsonData["feedback"]
-        if (feedback !is String?) {
+        val presetQIds = jsonData["presetQs"]
+        if (presetQIds !is List<*>?) {
+            return Response(ResponseError.WRONGENTRY)
+        }
+        if (presetQIds != null && presetQIds.checkListType<String>() == null) {
             return Response(ResponseError.WRONGENTRY)
         }
 
-        // need to check if there hasn't been a response from this participant yet
-        val rtu: ResponseTenantUser = ResponseTenantUser(user!!, tenant, meetingId)
-        database.putEntry(Table.RESPONSETENANTUSERS, rtu);
-        TODO("Not yet implemented")
-        // If implemented, check if the user is in that tenant (Microsoft Graph)
-        // Check if there hasn't been a response from this participant yet (ResponseTenantUsers)
-        // Update the feedback list and the quality variables (Meetings)
-        // Update responses about participants (ResponseParticipants)
-        // Update responses about questions (ResponsePresetQs)
+        val meetingEntry = database.updateEntry<Meeting>(Table.MEETINGS, meetingId) {
+            if (quality != null) {
+                it.qualities = it.qualities!! + listOf(quality)
+            }
+            it.feedbacks = it.feedbacks!! + listOf(feedback)
+            it.responsesCount = it.responsesCount!! + 1
+            it
+        } ?: return Response(ResponseError.WRONGTENANTMEETING)
+
+        if (presetQIds != null) {
+                for (presetQId in meetingEntry.presetQIds!!) {
+                    database.updateEntry<ResponsePresetQ>(Table.RESPONSEPRESETQS, presetQId) {
+                        it.numSubmitted = it.numSubmitted!! + 1
+                        it
+                    }
+                }
+
+            for (presetQId in presetQIds) {
+                database.updateEntry<ResponsePresetQ>(Table.RESPONSEPRESETQS, presetQId as String) {
+                    it.numSubmitted = it.numSubmitted!! + 1
+                    it
+                }
+            }
+        }
+        for (neededId in needed) {
+            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, neededId) {
+                it.needed = it.needed!! + 1
+                it
+            }
+        }
+        for (notNeededId in notNeeded) {
+            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, notNeededId) {
+                it.notNeeded = it.notNeeded!! + 1
+                it
+            }
+        }
+        for (preparedId in prepared) {
+            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, preparedId) {
+                it.prepared = it.prepared!! + 1
+                it
+            }
+        }
+        for (notPreparedId in notPrepared) {
+            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, notPreparedId) {
+                it.notPrepared = it.notPrepared!! + 1
+                it
+            }
+        }
+        return Response(null)
     }
 }

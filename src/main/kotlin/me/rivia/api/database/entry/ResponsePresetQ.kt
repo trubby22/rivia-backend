@@ -5,9 +5,9 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 
 
 @DynamoDbBean
-internal class ResponsePresetQ(@get:DynamoDbPartitionKey var presetQIdMeetingId: String?) {
-    constructor() : this(null)
-    constructor(presetQId: String, meetingId: String) : this("$presetQId $meetingId")
+internal class ResponsePresetQ(@get:DynamoDbPartitionKey var presetQIdMeetingId: String?, var numSubmitted: Int?, var numSelected: Int?) {
+    constructor() : this(null, null, null)
+    constructor(presetQId: String, meetingId: String, numSubmitted: Int?, numSelected: Int?) : this("$presetQId $meetingId", numSubmitted, numSelected)
 }
 
 internal var ResponsePresetQ.presetQId

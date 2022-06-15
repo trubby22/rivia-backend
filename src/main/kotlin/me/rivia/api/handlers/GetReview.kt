@@ -1,6 +1,7 @@
 package me.rivia.api.handlers
 
 import me.rivia.api.Response
+import me.rivia.api.ResponseError
 import me.rivia.api.database.Database
 import me.rivia.api.database.Table
 import me.rivia.api.database.entry.ResponseTenantUser
@@ -14,9 +15,8 @@ class GetReview : SubHandler {
         jsonData: Map<String, Any?>,
         database: Database
     ): Response {
-        val rtuKey : String = "tenant" + "user" + url[1]
-        val responseTenantUserEntry = database.getEntry<ResponseTenantUser>(Table.RESPONSETENANTUSERS, rtuKey);
-        val result = responseTenantUserEntry == null;
-        return Response(!result);
+        val meetingId = url[1]
+        val responseTenantUserEntry = database.getEntry<ResponseTenantUser>(Table.RESPONSETENANTUSERS, ResponseTenantUser(tenant, user!!, meetingId).tenantIduserIdMeetingId!!)
+        return Response(responseTenantUserEntry != null)
     }
 }

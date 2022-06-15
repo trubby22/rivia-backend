@@ -4,10 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import me.rivia.api.database.Database
 import me.rivia.api.database.DynamoDatabase
-import me.rivia.api.handlers.GetMeeting
-import me.rivia.api.handlers.GetTenant
-import me.rivia.api.handlers.PostTenant
-import me.rivia.api.handlers.SubHandler
+import me.rivia.api.handlers.*
 import java.net.URL
 import java.util.*
 
@@ -17,13 +14,27 @@ class Handler(val database: Database) : RequestHandler<Event, Response> {
 
     }
 
-    private val pathMappings = Trie<String, MutableMap<HttpMethod, Pair<Boolean, Lazy<SubHandler>>>>()
+    private val pathMappings =
+        Trie<String, MutableMap<HttpMethod, Pair<Boolean, Lazy<SubHandler>>>>()
 
     init {
-        registerSubHandler(listOf(), HttpMethod.GET, false, lazy {GetTenant()})
+        registerSubHandler(listOf(), HttpMethod.GET, false, lazy { GetTenant() })
         registerSubHandler(listOf(), HttpMethod.POST, true, lazy { PostTenant() })
+        registerSubHandler(listOf("meetings"), HttpMethod.GET, false, lazy { GetMeetings() })
+        registerSubHandler(listOf("meetings"), HttpMethod.POST, false, lazy { PostMeeting() })
         registerSubHandler(listOf("meetings", null), HttpMethod.GET, false, lazy { GetMeeting() })
+        registerSubHandler(
+            listOf("meetings", null, "reviews"),
+            HttpMethod.GET,
+            false,
+            lazy { GetReview() })
+        registerSubHandler(
+            listOf("meetings", null, "reviews"),
+            HttpMethod.POST,
+            false,
+            lazy { PostReview() })
     }
+
     constructor() : this(DynamoDatabase())
 
     fun registerSubHandler(
@@ -78,7 +89,8 @@ class Handler(val database: Database) : RequestHandler<Event, Response> {
                 database
             )
         } catch (e: Error) {
-            return Response(e.toString())
+            throw e
+            return Response(ResponseError.EXCEPTION)
         }
     }
 }

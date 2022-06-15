@@ -4,9 +4,22 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
 
 @DynamoDbBean
-internal class ResponseParticipant(@get:DynamoDbPartitionKey var participantIdMeetingId: String?) {
-    constructor() : this(null)
-    constructor(participantId: String, meetingId: String) : this("$participantId $meetingId")
+internal class ResponseParticipant(
+    @get:DynamoDbPartitionKey var participantIdMeetingId: String?,
+    var needed: Int?,
+    var notNeeded: Int?,
+    var prepared: Int?,
+    var notPrepared: Int?
+) {
+    constructor() : this(null, null, null, null, null)
+    constructor(
+        participantId: String,
+        meetingId: String,
+        needed: Int?,
+        notNeeded: Int?,
+        prepared: Int?,
+        notPrepared: Int?
+    ) : this("$participantId $meetingId", needed, notNeeded, prepared, notPrepared)
 }
 
 internal var ResponseParticipant.participantId
