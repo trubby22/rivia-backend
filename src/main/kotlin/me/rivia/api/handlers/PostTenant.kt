@@ -59,12 +59,13 @@ class PostTenant : SubHandler {
         }
 
         // Inserting the tenant entry
-        val tenantEntry: Tenant = if (refreshToken == null) {
-            database.updateEntry(Table.TENANTS, tenant) { tenantEntry: Tenant ->
-                tenantEntry.presetQIds = presetQIds?.value ?: defaultPresetQIds.value
-                tenantEntry
-            } ?: return Response(ResponseError.NOTENANT)
-        } else {
+        val tenantEntry: Tenant =
+//        = if (refreshToken == null) {
+//            database.updateEntry(Table.TENANTS, tenant) { tenantEntry: Tenant ->
+//                tenantEntry.presetQIds = presetQIds?.value ?: defaultPresetQIds.value
+//                tenantEntry
+//            } ?: return Response(ResponseError.NOTENANT)
+//        } else {
             database.updateEntryWithDefault(Table.TENANTS, {
                 Tenant(
                     tenant, refreshToken, defaultPresetQIds.value, listOf()
@@ -76,7 +77,6 @@ class PostTenant : SubHandler {
                 }
                 tenantEntry
             })
-        }
         // tenantEntry.presetQIds will be either equal to presetQIds.value or defaultPresetQIds.value at this point
         assert(
             (defaultPresetQIds.isInitialized() && tenantEntry.presetQIds === defaultPresetQIds.value) || (presetQIds != null && presetQIds.isInitialized() && tenantEntry.presetQIds === presetQIds.value)

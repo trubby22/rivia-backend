@@ -78,7 +78,7 @@ class Handler(val database: Database) : RequestHandler<Event, Response> {
                 database
             )
         } catch (e: Error) {
-            return Response(ResponseError.EXCEPTION)
+            return Response(e.toString())
         }
     }
 }

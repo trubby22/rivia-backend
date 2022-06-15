@@ -58,7 +58,7 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
         val entry =
             dynamoTable.getItem(Key.builder().partitionValue(keyValue).build()) ?: return null
         // Check for null entries
-        return fieldNullCheck(entry, "entry from '$table' has a nulled component", clazz)
+        return fieldNullCheck(entry, "${entry} from '$table' has a nulled component", clazz)
     }
 
     override fun <EntryType : Any> getAllEntries(
@@ -67,8 +67,9 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
     ): List<EntryType> {
         val dynamoTable = dbEnhancedClient.table(table.toString(), TableSchema.fromBean(clazz.java))
         val entries = dynamoTable.scan().items().toList()
+
         for (entry in entries) {
-            fieldNullCheck(entry, "entry from '$table' has a nulled component", clazz)
+            fieldNullCheck(entry, "$entry from '$table' has a nulled component", clazz)
         }
         return entries
     }
