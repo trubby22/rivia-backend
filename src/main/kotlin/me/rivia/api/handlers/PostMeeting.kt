@@ -43,6 +43,7 @@ class PostMeeting : SubHandler {
         do {
             organizer = Participant(generateUid(), organizerName, organizerSurname)
         } while (!database.putEntry(Table.PARTICIPANTS, organizer))
+
         val participants = participantsNamesSurnames.map { (name: String, surname: String) ->
             lateinit var participant: Participant
             do {

@@ -29,6 +29,16 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
             entry, table.tableSchema(), table.partitionKeyName()
         ).partitionKeyValue()
 
+        fun numberToText(x: Int): String {
+            var xChanging = x;
+            var out = ""
+            do {
+                out += (xChanging + 'a'.code).toChar()
+                xChanging /= ('z'.code - 'a'.code + 1)
+            } while(xChanging > 0)
+            return out
+        }
+
         /**
          * Checks if any class fields in the specified value are null
          */
@@ -43,8 +53,7 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
     }
 
     private val httpClient = UrlConnectionHttpClient.builder().build()
-    private val dbClient =
-        DynamoDbClient.builder().region(region).httpClient(httpClient).build()
+    private val dbClient = DynamoDbClient.builder().region(region).httpClient(httpClient).build()
     private val dbEnhancedClient = DynamoDbEnhancedClient.builder().dynamoDbClient(dbClient).build()
 
     /**
@@ -62,8 +71,7 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
     }
 
     override fun <EntryType : Any> getAllEntries(
-        table: Table,
-        clazz: KClass<EntryType>
+        table: Table, clazz: KClass<EntryType>
     ): List<EntryType> {
         val dynamoTable = dbEnhancedClient.table(table.toString(), TableSchema.fromBean(clazz.java))
         val entries = dynamoTable.scan().items().toList()
@@ -97,14 +105,17 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
         clazz: KClass<EntryType>
     ): Boolean {
         val sameEntryExpression = table.tableSchema().attributeNames().map { attributeName ->
-            Expression.builder()
-                .expression("#$attributeName = :$attributeName")
-                .putExpressionName("#$attributeName", attributeName)
-                .putExpressionValue(
-                    ":$attributeName",
-                    table.tableSchema().attributeValue(oldEntry, attributeName)
-                ).build()
-        }.reduce(Expression::and)
+            val attributeValue = table.tableSchema().attributeValue(oldEntry, attributeName)
+            if (attributeValue.hasL()) {
+                null
+            } else {
+                Expression.builder().expression("#$attributeName = :$attributeName")
+                    .putExpressionName("#$attributeName", attributeName).putExpressionValue(
+                        ":$attributeName",
+                        attributeValue
+                    ).build()
+            }
+        }.filterNotNull().reduce(Expression::and)
 
         val request = PutItemEnhancedRequest.builder(clazz.java).item(newEntry)
             .conditionExpression(sameEntryExpression).build()
@@ -153,19 +164,14 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
             entry =
                 dynamoTable.getItem(Key.builder().partitionValue(keyValue).build()) ?: return null
             newEntry = update(entry)
-        } while (!updateRequest(dynamoTable, entry, newEntry, clazz)
-        )
+        } while (!updateRequest(dynamoTable, entry, newEntry, clazz))
         return newEntry
     }
 
     override fun <EntryType : Any> putEntry(
-        table: Table,
-        entry: EntryType,
-        clazz: KClass<EntryType>
+        table: Table, entry: EntryType, clazz: KClass<EntryType>
     ): Boolean = putRequest(
-        dbEnhancedClient.table(table.toString(), TableSchema.fromBean(clazz.java)),
-        entry,
-        clazz
+        dbEnhancedClient.table(table.toString(), TableSchema.fromBean(clazz.java)), entry, clazz
     )
 }
 

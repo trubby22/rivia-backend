@@ -6,6 +6,7 @@ import me.rivia.api.database.entry.Meeting
 import me.rivia.api.database.*
 import me.rivia.api.database.entry.ResponseParticipant
 import me.rivia.api.database.entry.ResponsePresetQ
+import me.rivia.api.database.entry.ResponseTenantUser
 
 
 class PostReview : SubHandler {
@@ -17,6 +18,9 @@ class PostReview : SubHandler {
         database: Database
     ): Response {
         val meetingId = url[1]
+        if (!database.putEntry(Table.RESPONSETENANTUSERS, ResponseTenantUser(tenant, user!!, meetingId))) {
+            return Response(ResponseError.REVIEWSUBMITTED)
+        }
         val needed = (jsonData["needed"] as? List<*>)?.checkListType<String>() ?: return Response(
             ResponseError.WRONGENTRY
         )

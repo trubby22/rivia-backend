@@ -7,6 +7,7 @@ enum class ResponseError(val id: Int) {
     NOUSER(402),
     WRONGTENANTMEETING(404),
     WRONGENTRY(406),
+    REVIEWSUBMITTED(407),
     EXCEPTION(500),
 }
 
