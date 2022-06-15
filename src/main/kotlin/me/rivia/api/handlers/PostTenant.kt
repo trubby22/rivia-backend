@@ -35,7 +35,7 @@ class PostTenant : SubHandler {
         // Generating presetQIds
         val defaultPresetQs = lazy {
             database.getAllEntries<PresetQ>(Table.PRESETQS).filter {
-                it.isDefault!!
+                it.isdefault!!
             }
         }
         val defaultPresetQIds = lazy {
