@@ -34,9 +34,12 @@ class PostReview : SubHandler {
                 ResponseError.WRONGENTRY
             )
         val feedback = jsonData["feedback"] as? String ?: return Response(ResponseError.WRONGENTRY)
-        val quality = jsonData["quality"]
-        if (quality !is Float?) {
+        var quality = jsonData["quality"]
+        if (quality !is Double? && quality !is Int?) {
             return Response(ResponseError.WRONGENTRY)
+        }
+        if (quality is Int?) {
+            quality = quality?.toDouble()
         }
         val presetQIds = jsonData["presetQs"]
         if (presetQIds !is List<*>?) {
@@ -52,7 +55,7 @@ class PostReview : SubHandler {
 
         val meetingEntry = database.updateEntry<Meeting>(Table.MEETINGS, meetingId) {
             if (quality != null) {
-                it.qualities = it.qualities!! + listOf(quality)
+                it.qualities = it.qualities!! + listOf(quality as Double)
             }
             it.feedbacks = it.feedbacks!! + listOf(feedback)
             it.responsesCount = it.responsesCount!! + 1
@@ -61,42 +64,42 @@ class PostReview : SubHandler {
 
         if (presetQIds != null) {
                 for (presetQId in meetingEntry.presetQIds!!) {
-                    database.updateEntry<ResponsePresetQ>(Table.RESPONSEPRESETQS, presetQId) {
+                    database.updateEntry<ResponsePresetQ>(Table.RESPONSEPRESETQS, ResponsePresetQ(presetQId, meetingId, null, null).presetQIdMeetingId!!) {
                         it.numSubmitted = it.numSubmitted!! + 1
                         it
-                    }
+                    } ?: throw Error("ResponsePresetQ not present")
                 }
 
             for (presetQId in presetQIds) {
-                database.updateEntry<ResponsePresetQ>(Table.RESPONSEPRESETQS, presetQId as String) {
+                database.updateEntry<ResponsePresetQ>(Table.RESPONSEPRESETQS, ResponsePresetQ(presetQId as String, meetingId, null, null).presetQIdMeetingId!!) {
                     it.numSubmitted = it.numSubmitted!! + 1
                     it
-                }
+                } ?: throw Error("ResponsePresetQ not present")
             }
         }
         for (neededId in needed) {
-            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, neededId) {
+            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, ResponseParticipant(neededId, meetingId, null, null, null, null).participantIdMeetingId!!) {
                 it.needed = it.needed!! + 1
                 it
-            }
+            } ?: throw Error("ResponseParticipant not present")
         }
         for (notNeededId in notNeeded) {
-            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, notNeededId) {
+            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, ResponseParticipant(notNeededId, meetingId, null, null, null, null).participantIdMeetingId!!) {
                 it.notNeeded = it.notNeeded!! + 1
                 it
-            }
+            } ?: throw Error("ResponseParticipant not present")
         }
         for (preparedId in prepared) {
-            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, preparedId) {
+            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, ResponseParticipant(preparedId, meetingId, null, null, null, null).participantIdMeetingId!!) {
                 it.prepared = it.prepared!! + 1
                 it
-            }
+            } ?: throw Error("ResponseParticipant not present")
         }
         for (notPreparedId in notPrepared) {
-            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, notPreparedId) {
+            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, ResponseParticipant(notPreparedId, meetingId, null, null, null, null).participantIdMeetingId!!) {
                 it.notPrepared = it.notPrepared!! + 1
                 it
-            }
+            } ?: throw Error("ResponseParticipant not present")
         }
         return Response(null)
     }

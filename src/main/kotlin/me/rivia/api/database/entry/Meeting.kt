@@ -13,7 +13,7 @@ internal class Meeting(
     var startTime: Int?,
     var endTime: Int?,
     var responsesCount: Int?,
-    var qualities: List<Float>?,
+    var qualities: List<Double>?,
     var feedbacks: List<String>?
 ) {
     constructor() : this(null, null, null, null, null, null, null, null, null, null)
