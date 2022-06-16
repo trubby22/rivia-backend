@@ -18,9 +18,6 @@ class PostReview : SubHandler {
         database: Database
     ): Response {
         val meetingId = url[1]
-        if (!database.putEntry(Table.RESPONSETENANTUSERS, ResponseTenantUser(tenant, user!!, meetingId))) {
-            return Response(ResponseError.REVIEWSUBMITTED)
-        }
         val needed = (jsonData["needed"] as? List<*>)?.checkListType<String>() ?: return Response(
             ResponseError.WRONGENTRY
         )
@@ -47,6 +44,10 @@ class PostReview : SubHandler {
         }
         if (presetQIds != null && presetQIds.checkListType<String>() == null) {
             return Response(ResponseError.WRONGENTRY)
+        }
+
+        if (!database.putEntry(Table.RESPONSETENANTUSERS, ResponseTenantUser(tenant, user!!, meetingId))) {
+            return Response(ResponseError.REVIEWSUBMITTED)
         }
 
         val meetingEntry = database.updateEntry<Meeting>(Table.MEETINGS, meetingId) {
