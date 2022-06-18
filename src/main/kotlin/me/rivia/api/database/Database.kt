@@ -34,6 +34,12 @@ interface Database {
         entry: EntryType,
         clazz: KClass<EntryType>
     ) : Boolean
+
+    fun <EntryType : Any> deleteEntry(
+        table: Table,
+        keyValue: String,
+        clazz: KClass<EntryType>
+    ) : EntryType?
 }
 
 inline fun <reified EntryType : Any> Database.getEntry(
@@ -61,3 +67,8 @@ inline fun <reified EntryType : Any> Database.updateEntry(
     keyValue: String,
     noinline update: (EntryType) -> EntryType
 ): EntryType? = this.updateEntry(table, keyValue, update, EntryType::class)
+
+inline fun  <reified EntryType : Any> Database.deleteEntry(
+    table: Table,
+    keyValue: String
+): EntryType? = this.deleteEntry(table, keyValue, EntryType::class)

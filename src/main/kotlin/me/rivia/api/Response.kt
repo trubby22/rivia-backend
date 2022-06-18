@@ -15,4 +15,5 @@ class Response private constructor(responseError: ResponseError, val jsonData: A
     val errorCode = responseError.id
     constructor(responseError: ResponseError) : this(responseError, null)
     constructor(jsonData: Any?) : this(ResponseError.NONE, jsonData)
+    constructor() : this(mapOf<String, Any?>())
 }

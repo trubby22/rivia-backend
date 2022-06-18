@@ -7,14 +7,16 @@ import me.rivia.api.database.entry.Meeting
 import me.rivia.api.database.entry.ResponseParticipant
 import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.*
+import me.rivia.api.websocket.WebsocketClient
 
 class PostMeeting : SubHandler {
     override fun handleRequest(
         url: List<String>,
-        tenant: String,
-        user: String?,
+        tenantId: String,
+        userId: String?,
         jsonData: Map<String, Any?>,
-        database: Database
+        database: Database,
+        websocket: WebsocketClient
     ): Response {
         val title = jsonData["title"] as? String ?: return Response(ResponseError.WRONGENTRY)
         val startTime = jsonData["startTime"] as? Int ?: return Response(ResponseError.WRONGENTRY)
@@ -35,7 +37,7 @@ class PostMeeting : SubHandler {
             Pair(participantName, participantSurname)
         }
 
-        val tenantEntry = database.getEntry<Tenant>(Table.TENANTS, tenant) ?: return Response(
+        val tenantEntry = database.getEntry<Tenant>(Table.TENANTS, tenantId) ?: return Response(
             ResponseError.NOTENANT
         )
 
@@ -89,23 +91,16 @@ class PostMeeting : SubHandler {
             }
         }
 
-        if (!database.putEntry(Table.TENANTMEETINGS, TenantMeeting(tenant, meeting.meetingId!!))) {
+        if (!database.putEntry(Table.TENANTMEETINGS, TenantMeeting(tenantId, meeting.meetingId!!))) {
             throw Error("Entry already present")
         }
 
-        if (database.updateEntry<Tenant>(Table.TENANTS, tenant) {
+        if (database.updateEntry<Tenant>(Table.TENANTS, tenantId) {
                 it.meetingIds = it.meetingIds!! + listOf(meeting.meetingId!!)
                 it
             } == null) {
             throw Error("Tenant removed")
         }
         return Response(meeting.meetingId)
-
-        // Meetings
-        // TenantMeetings
-        // ResponseParticipants
-        // ResponsePresetQs
-        // TenantMeetings
-        // Tenant
     }
 }

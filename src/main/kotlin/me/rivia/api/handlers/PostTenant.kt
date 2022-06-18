@@ -5,15 +5,17 @@ import me.rivia.api.ResponseError
 import me.rivia.api.database.*
 import me.rivia.api.database.entry.PresetQ
 import me.rivia.api.database.entry.Tenant
+import me.rivia.api.websocket.WebsocketClient
 import me.rivia.api.handlers.responses.PresetQ as ResponsePresetQ
 
 class PostTenant : SubHandler {
     override fun handleRequest(
         url: List<String>,
-        tenant: String,
-        user: String?,
+        tenantId: String,
+        userId: String?,
         jsonData: Map<String, Any?>,
-        database: Database
+        database: Database,
+        websocket: WebsocketClient
     ): Response {
         // Extracting json data
         val refreshToken = jsonData["refreshToken"]
@@ -61,14 +63,14 @@ class PostTenant : SubHandler {
         // Inserting the tenant entry
         val tenantEntry: Tenant =
             if (refreshToken == null) {
-                database.updateEntry(Table.TENANTS, tenant) { tenantEntry: Tenant ->
+                database.updateEntry(Table.TENANTS, tenantId) { tenantEntry: Tenant ->
                     tenantEntry.presetQIds = presetQIds?.value ?: defaultPresetQIds.value
                     tenantEntry
                 } ?: return Response(ResponseError.NOTENANT)
             } else {
                 database.updateEntryWithDefault(Table.TENANTS, {
                     Tenant(
-                        tenant, refreshToken, defaultPresetQIds.value, listOf()
+                        tenantId, refreshToken, defaultPresetQIds.value, listOf()
                     )
                 }, { tenantEntry: Tenant ->
                     tenantEntry.refreshToken = refreshToken

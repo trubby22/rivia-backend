@@ -4,7 +4,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
 
 @DynamoDbBean
-internal class ResponseParticipant(
+data class ResponseParticipant(
     @get:DynamoDbPartitionKey var participantIdMeetingId: String?,
     var needed: Int?,
     var notNeeded: Int?,
@@ -22,16 +22,16 @@ internal class ResponseParticipant(
     ) : this("$participantId $meetingId", needed, notNeeded, prepared, notPrepared)
 }
 
-internal var ResponseParticipant.participantId
+var ResponseParticipant.participantId
     get() = this.participantIdMeetingId?.subSequence(0, this.participantIdMeetingId!!.indexOf(' '))
         ?.toString()
     set(participantId) {
         this.participantIdMeetingId = "$participantId $meetingId"
     }
 
-internal var ResponseParticipant.meetingId
+var ResponseParticipant.meetingId
     get() = this.participantIdMeetingId?.subSequence(
-        this.participantIdMeetingId!!.indexOf(' '), this.participantIdMeetingId!!.length
+        this.participantIdMeetingId!!.indexOf(' ') + 1, this.participantIdMeetingId!!.length
     )?.toString()
     set(meetingId) {
         this.participantIdMeetingId = "$participantId $meetingId"

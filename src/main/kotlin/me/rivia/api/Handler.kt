@@ -5,47 +5,51 @@ import com.amazonaws.services.lambda.runtime.RequestHandler
 import me.rivia.api.database.Database
 import me.rivia.api.database.DynamoDatabase
 import me.rivia.api.handlers.*
-import java.net.URL
+import me.rivia.api.websocket.ApiGatewayWebsocketClient
+import me.rivia.api.websocket.WebsocketClient
 import java.util.*
 
-class Handler(val database: Database) : RequestHandler<Event, Response> {
+class Handler(private val database: Database, private val websocketClient: WebsocketClient) : RequestHandler<Event, Response> {
     companion object {
         fun getPath(path: String): List<String> = path.split('/')
 
     }
 
     private val pathMappings =
-        Trie<String, MutableMap<HttpMethod, Pair<Boolean, Lazy<SubHandler>>>>()
+        Trie<String, MutableMap<ApiMethod, Pair<Boolean, Lazy<SubHandler>>>>()
 
     init {
-        registerSubHandler(listOf(), HttpMethod.GET, false, lazy { GetTenant() })
-        registerSubHandler(listOf(), HttpMethod.POST, true, lazy { PostTenant() })
-        registerSubHandler(listOf("meetings"), HttpMethod.GET, false, lazy { GetMeetings() })
-        registerSubHandler(listOf("meetings"), HttpMethod.POST, false, lazy { PostMeeting() })
-        registerSubHandler(listOf("meetings", null), HttpMethod.GET, false, lazy { GetMeeting() })
+        registerSubHandler(listOf(), ApiMethod.HTTP_GET, false, lazy { GetTenant() })
+        registerSubHandler(listOf(), ApiMethod.HTTP_POST, true, lazy { PostTenant() })
+        registerSubHandler(listOf("meetings"), ApiMethod.HTTP_GET, false, lazy { GetMeetings() })
+        registerSubHandler(listOf("meetings"), ApiMethod.HTTP_POST, false, lazy { PostMeeting() })
+        registerSubHandler(listOf("meetings", null), ApiMethod.HTTP_GET, false, lazy { GetMeeting() })
         registerSubHandler(
             listOf("meetings", null, "reviews"),
-            HttpMethod.GET,
+            ApiMethod.HTTP_GET,
             false,
             lazy { GetReview() })
         registerSubHandler(
             listOf("meetings", null, "reviews"),
-            HttpMethod.POST,
+            ApiMethod.HTTP_POST,
             false,
             lazy { PostReview() })
+        registerSubHandler(listOf("websockets", null), ApiMethod.WEBSOCKET_MESSAGE, false, lazy { WebsocketMessage() })
+        registerSubHandler(listOf("websockets", null), ApiMethod.WEBSOCKET_DISCONNECT, true, lazy { WebsocketDisconnect() })
     }
 
+    private constructor(database: Database) : this(database, ApiGatewayWebsocketClient(database))
     constructor() : this(DynamoDatabase())
 
     fun registerSubHandler(
         url: List<String?>,
-        method: HttpMethod,
+        method: ApiMethod,
         withoutUser: Boolean,
         subHandler: Lazy<SubHandler>
     ) {
         var methodMappings = pathMappings[url]
         if (methodMappings == null) {
-            methodMappings = EnumMap(HttpMethod::class.java)
+            methodMappings = EnumMap(ApiMethod::class.java)
             pathMappings[url] = methodMappings
         }
         methodMappings[method] = (withoutUser to subHandler)
@@ -56,40 +60,46 @@ class Handler(val database: Database) : RequestHandler<Event, Response> {
             if (event == null) {
                 throw Error("Event not present")
             }
+            if (event.api == null) {
+                throw Error("Unknown api entrypoint")
+            }
+            if (event.api!!.type == null) {
+                throw Error("Unknown api type")
+            }
+            if (event.api!!.method == null) {
+                throw Error("Unknown api method")
+            }
 
-            val pathRaw = getPath(
+            val path = getPath(
                 event.path ?: throw Error("Path field empty")
             )
 
-            if (pathRaw[0] != "tenants") {
-                return Response(ResponseError.NOHANDLER)
+            if (event.tenant?.isEmpty() != false) {
+                return Response(ResponseError.NOTENANT)
             }
 
-            val tenant = pathRaw[1]
-            val path = pathRaw.drop(2)
-
             val (withoutUser, handler) = pathMappings[path]?.get(
-                HttpMethod.valueOf(
-                    event.method ?: throw Error("Method field empty")
+                ApiMethod.valueOf(
+                    "${event.api!!.type!!}_${event.api!!.method!!}".uppercase()
                 )
             ) ?: return Response(ResponseError.NOHANDLER)
             val jsonData = event.jsonData ?: mapOf()
 
             if (withoutUser) {
-                return handler.value.handleRequest(path, tenant, null, jsonData, database)
+                return handler.value.handleRequest(path, event.tenant!!, null, jsonData, database, websocketClient)
             }
             if (event.user?.isEmpty() != false) {
                 return Response(ResponseError.NOUSER)
             }
             return handler.value.handleRequest(
                 path,
-                tenant,
-                event.user,
+                event.tenant!!,
+                event.user!!,
                 jsonData,
-                database
+                database,
+                websocketClient
             )
         } catch (e: Error) {
-            throw e
             return Response(ResponseError.EXCEPTION)
         }
     }

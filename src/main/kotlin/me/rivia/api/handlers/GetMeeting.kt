@@ -9,16 +9,18 @@ import me.rivia.api.database.entry.Meeting
 import me.rivia.api.database.entry.ResponseParticipant
 import me.rivia.api.database.entry.TenantMeeting
 import me.rivia.api.database.getEntry
+import me.rivia.api.websocket.WebsocketClient
 import me.rivia.api.handlers.responses.PresetQ as HttpPresetQ
 import me.rivia.api.handlers.responses.Participant as HttpParticipant
 
 class GetMeeting : SubHandler {
     override fun handleRequest(
         url: List<String>,
-        tenant: String,
-        user: String?,
+        tenantId: String,
+        userId: String?,
         jsonData: Map<String, Any?>,
-        database: Database
+        database: Database,
+        websocket: WebsocketClient
     ): Response {
         val meetingId = url[1]
         val meetingEntry = database.getEntry<Meeting>(Table.MEETINGS, meetingId) ?: return Response(
@@ -26,7 +28,7 @@ class GetMeeting : SubHandler {
         )
         if (database.getEntry<TenantMeeting>(
                 Table.TENANTMEETINGS,
-                TenantMeeting(tenant, meetingId).tenantIdMeetingId!!
+                TenantMeeting(tenantId, meetingId).tenantIdMeetingId!!
             ) == null
         ) {
             return Response(ResponseError.WRONGTENANTMEETING)

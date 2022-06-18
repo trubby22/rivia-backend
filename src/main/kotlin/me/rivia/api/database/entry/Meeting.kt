@@ -4,7 +4,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
 
 @DynamoDbBean
-internal class Meeting(
+data class Meeting(
     @get:DynamoDbPartitionKey var meetingId: String?,
     var presetQIds: List<String>?,
     var organizerId: String?,

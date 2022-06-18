@@ -8,7 +8,9 @@ enum class Table(val tableName: String) {
     TENANTMEETINGS("TenantMeetings"), // For validating if a meeting is in an organization
     RESPONSETENANTUSERS("ResponseTenantUsers"),
     RESPONSEPARTICIPANTS("ResponseParticipants"),
-    RESPONSEPRESETQS("ResponsePresetQs");
+    RESPONSEPRESETQS("ResponsePresetQs"),
+    WEBSOCKETS("Websockets"),
+    CONNECTIONS("Connections");
 
     override fun toString(): String {
         return tableName

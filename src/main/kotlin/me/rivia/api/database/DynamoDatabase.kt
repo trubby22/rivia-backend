@@ -174,5 +174,13 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
     ): Boolean = putRequest(
         dbEnhancedClient.table(table.toString(), TableSchema.fromBean(clazz.java)), entry, clazz
     )
+
+    override fun <EntryType : Any> deleteEntry(
+        table: Table, keyValue: String, clazz: KClass<EntryType>
+    ): EntryType? {
+        val dynamoTable = dbEnhancedClient.table(table.toString(), TableSchema.fromBean(clazz.java))
+        val entry : EntryType? = dynamoTable.deleteItem(Key.builder().partitionValue(keyValue).build())
+        return entry?.apply {fieldNullCheck(entry, "$entry from '$table' has a nulled component", clazz)}
+    }
 }
 
