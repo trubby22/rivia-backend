@@ -100,31 +100,30 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
 
     private fun <EntryType : Any> updateRequest(
         table: DynamoDbTable<EntryType>,
-        oldEntry: EntryType,
-        newEntry: EntryType,
+        entry: EntryType,
+        update: (EntryType) -> EntryType,
         clazz: KClass<EntryType>
-    ): Boolean {
+    ): EntryType? {
         val sameEntryExpression = table.tableSchema().attributeNames().map { attributeName ->
-            val attributeValue = table.tableSchema().attributeValue(oldEntry, attributeName)
-            if (attributeValue.hasL() || attributeValue.n() != null) {
-                null
-            } else {
-                Expression.builder().expression("$attributeName = :$attributeName")
+            val attributeValue = table.tableSchema().attributeValue(entry, attributeName)
+            Expression.builder().expression("#$attributeName = :$attributeName")
+                    .putExpressionName("#$attributeName", attributeName)
                     .putExpressionValue(
                         ":$attributeName",
                         attributeValue
                     ).build()
-            }
-        }.filterNotNull().reduce(Expression::and)
+        }.reduce(Expression::and)
+
+        val newEntry = update(entry)
 
         val request = PutItemEnhancedRequest.builder(clazz.java).item(newEntry)
             .conditionExpression(sameEntryExpression).build()
         try {
             table.putItem(request)
         } catch (e: ConditionalCheckFailedException) {
-            return false
+            return null
         }
-        return true
+        return newEntry
     }
 
     override fun <EntryType : Any> updateEntryWithDefault(
@@ -138,18 +137,18 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
         )
         lateinit var defaultEntry: EntryType
         var entry: EntryType?
-        lateinit var newEntry: Lazy<EntryType>
+        var newEntry: EntryType? = null
         do {
             defaultEntry = default()
             entry = dynamoTable.getItem(defaultEntry)
-            newEntry = lazy { update(entry!!) }
         } while (!if (entry == null) {
                 putRequest(dynamoTable, defaultEntry, clazz)
             } else {
-                updateRequest(dynamoTable, entry, newEntry.value, clazz)
+                newEntry = updateRequest(dynamoTable, entry, update, clazz)
+                newEntry != null
             }
         )
-        return if (entry == null) defaultEntry else newEntry.value
+        return if (entry == null) defaultEntry else newEntry!!
     }
 
     override fun <EntryType : Any> updateEntry(
@@ -159,12 +158,14 @@ class DynamoDatabase(region: Region = Region.EU_WEST_2) : Database {
             table.toString(), TableSchema.fromClass(clazz.java)
         )
         lateinit var entry: EntryType
-        lateinit var newEntry: EntryType
+        var newEntry: EntryType?
         do {
             entry =
                 dynamoTable.getItem(Key.builder().partitionValue(keyValue).build()) ?: return null
-            newEntry = update(entry)
-        } while (!updateRequest(dynamoTable, entry, newEntry, clazz))
+        } while (!run {
+                newEntry = updateRequest(dynamoTable, entry, update, clazz)
+                newEntry != null
+            })
         return newEntry
     }
 

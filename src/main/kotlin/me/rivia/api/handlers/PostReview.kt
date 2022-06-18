@@ -57,7 +57,9 @@ class PostReview : SubHandler {
             if (quality != null) {
                 it.qualities = it.qualities!! + listOf(quality as Double)
             }
-            it.feedbacks = it.feedbacks!! + listOf(feedback)
+            if (feedback != "") {
+                it.feedbacks = it.feedbacks!! + listOf(feedback)
+            }
             it.responsesCount = it.responsesCount!! + 1
             it
         } ?: return Response(ResponseError.WRONGTENANTMEETING)
