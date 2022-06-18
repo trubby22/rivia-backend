@@ -1,12 +1,13 @@
 package me.rivia.api.handlers
 
 import me.rivia.api.Response
+import me.rivia.api.ResponseError
 import me.rivia.api.database.Database
 import me.rivia.api.database.Table
-import me.rivia.api.database.entry.ResponseTenantUser
+import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.getEntry
 
-class GetReview : SubHandler {
+class GetMeetings : SubHandler {
     override fun handleRequest(
         url: List<String>,
         tenant: String,
@@ -14,8 +15,8 @@ class GetReview : SubHandler {
         jsonData: Map<String, Any?>,
         database: Database
     ): Response {
-        val meetingId = url[1]
-        val responseTenantUserEntry = database.getEntry<ResponseTenantUser>(Table.RESPONSETENANTUSERS, ResponseTenantUser(tenant, user!!, meetingId).tenantIdUserIdMeetingId!!)
-        return Response(responseTenantUserEntry != null)
+        val tenantEntry = database.getEntry<Tenant>(Table.TENANTS, tenant) ?: return Response(
+            ResponseError.NOTENANT)
+        return Response(tenantEntry.meetingIds)
     }
 }

@@ -1,71 +1,108 @@
 package me.rivia.api.handlers
 
-import com.amazonaws.services.lambda.runtime.Context
+import me.rivia.api.Response
+import me.rivia.api.ResponseError
+import me.rivia.api.database.entry.Meeting
 import me.rivia.api.database.*
-import me.rivia.api.database.Meeting
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import me.rivia.api.database.Review as DbReview
+import me.rivia.api.database.entry.ResponseParticipant
+import me.rivia.api.database.entry.ResponsePresetQ
+import me.rivia.api.database.entry.ResponseTenantUser
 
-// Meeting, Review
 
-class PostReview : HandlerInit() {
-    companion object {
-        class Review(
-            var quality: Float?,
-            var preset_qs: List<String>?,
-            var not_needed: List<String>?,
-            var not_prepared: List<String>?,
-            var feedback: String?
-        ) {
-            constructor() : this(null, null, null, null, null)
-        }
-
-        class ApiContext(var meeting_id: Uid?, var session: Uid?, var data: Review?) {
-            constructor() : this(null, null, null)
-        }
-    }
-
-    fun handle(input: ApiContext?, context: Context?) {
-        var meetingEntry = entryNullCheck(
-            getEntry<Meeting>(
-                Table.MEETING, input?.meeting_id ?: throw Error("Meeting id not present")
-            ) ?: return, Table.MEETING
+class PostReview : SubHandler {
+    override fun handleRequest(
+        url: List<String>,
+        tenant: String,
+        user: String?,
+        jsonData: Map<String, Any?>,
+        database: Database
+    ): Response {
+        val meetingId = url[1]
+        val needed = (jsonData["needed"] as? List<*>)?.checkListType<String>() ?: return Response(
+            ResponseError.WRONGENTRY
         )
-
-        var userId = getUser(input.session) ?: return
-
-        if (meetingEntry.reviewedBy!!.contains(userId)) {
-            return
+        val notNeeded =
+            (jsonData["notNeeded"] as? List<*>)?.checkListType<String>() ?: return Response(
+                ResponseError.WRONGENTRY
+            )
+        val prepared =
+            (jsonData["prepared"] as? List<*>)?.checkListType<String>() ?: return Response(
+                ResponseError.WRONGENTRY
+            )
+        val notPrepared =
+            (jsonData["notPrepared"] as? List<*>)?.checkListType<String>() ?: return Response(
+                ResponseError.WRONGENTRY
+            )
+        val feedback = jsonData["feedback"] as? String ?: return Response(ResponseError.WRONGENTRY)
+        var quality = jsonData["quality"]
+        if (quality !is Double? && quality !is Int?) {
+            return Response(ResponseError.WRONGENTRY)
+        }
+        if (quality is Int?) {
+            quality = quality?.toDouble()
+        }
+        val presetQIds = jsonData["presetQs"]
+        if (presetQIds !is List<*>?) {
+            return Response(ResponseError.WRONGENTRY)
+        }
+        if (presetQIds != null && presetQIds.checkListType<String>() == null) {
+            return Response(ResponseError.WRONGENTRY)
         }
 
-        val review = input.data ?: return
-        lateinit var outputReview: DbReview
-        do {
-            outputReview = DbReview(
-                reviewId = generateId(),
-                user = userId,
-                notNeeded = review.not_needed,
-                notPrepared = review.not_prepared,
-                presetQs = review.preset_qs ?: return,
-                quality = review.quality ?: return,
-                feedback = review.feedback ?: return,
-            )
-        } while (!putEntry(Table.REVIEW, outputReview))
+        if (!database.putEntry(Table.RESPONSETENANTUSERS, ResponseTenantUser(tenant, user!!, meetingId))) {
+            return Response(ResponseError.REVIEWSUBMITTED)
+        }
 
-        do {
-            meetingEntry = entryNullCheck(
-                getEntry<Meeting>(
-                    Table.MEETING, input.meeting_id!!
-                ) ?: return, Table.MEETING
-            )
-            val oldReviewedBy = meetingEntry.reviewedBy!!
-            meetingEntry.reviewedBy = meetingEntry.reviewedBy!! + listOf(userId)
-        } while (!updateEntry(
-                Table.MEETING,
-                meetingEntry,
-                "reviewedBy",
-                AttributeValue.fromL(oldReviewedBy.map { AttributeValue.fromS(it) })
-            )
-        )
+        val meetingEntry = database.updateEntry<Meeting>(Table.MEETINGS, meetingId) {
+            if (quality != null) {
+                it.qualities = it.qualities!! + listOf(quality as Double)
+            }
+            if (feedback != "") {
+                it.feedbacks = it.feedbacks!! + listOf(feedback)
+            }
+            it.responsesCount = it.responsesCount!! + 1
+            it
+        } ?: return Response(ResponseError.WRONGTENANTMEETING)
+
+        if (presetQIds != null) {
+                for (presetQId in meetingEntry.presetQIds!!) {
+                    database.updateEntry<ResponsePresetQ>(Table.RESPONSEPRESETQS, ResponsePresetQ(presetQId, meetingId, null, null).presetQIdMeetingId!!) {
+                        it.numSubmitted = it.numSubmitted!! + 1
+                        it
+                    } ?: throw Error("ResponsePresetQ not present")
+                }
+
+            for (presetQId in presetQIds) {
+                database.updateEntry<ResponsePresetQ>(Table.RESPONSEPRESETQS, ResponsePresetQ(presetQId as String, meetingId, null, null).presetQIdMeetingId!!) {
+                    it.numSubmitted = it.numSubmitted!! + 1
+                    it
+                } ?: throw Error("ResponsePresetQ not present")
+            }
+        }
+        for (neededId in needed) {
+            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, ResponseParticipant(neededId, meetingId, null, null, null, null).participantIdMeetingId!!) {
+                it.needed = it.needed!! + 1
+                it
+            } ?: throw Error("ResponseParticipant not present")
+        }
+        for (notNeededId in notNeeded) {
+            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, ResponseParticipant(notNeededId, meetingId, null, null, null, null).participantIdMeetingId!!) {
+                it.notNeeded = it.notNeeded!! + 1
+                it
+            } ?: throw Error("ResponseParticipant not present")
+        }
+        for (preparedId in prepared) {
+            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, ResponseParticipant(preparedId, meetingId, null, null, null, null).participantIdMeetingId!!) {
+                it.prepared = it.prepared!! + 1
+                it
+            } ?: throw Error("ResponseParticipant not present")
+        }
+        for (notPreparedId in notPrepared) {
+            database.updateEntry<ResponseParticipant>(Table.RESPONSEPARTICIPANTS, ResponseParticipant(notPreparedId, meetingId, null, null, null, null).participantIdMeetingId!!) {
+                it.notPrepared = it.notPrepared!! + 1
+                it
+            } ?: throw Error("ResponseParticipant not present")
+        }
+        return Response(null)
     }
 }
