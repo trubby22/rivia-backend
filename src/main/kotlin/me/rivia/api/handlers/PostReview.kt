@@ -72,7 +72,7 @@ class PostReview : SubHandler {
                     Table.RESPONSEPRESETQS,
                     ResponsePresetQ(presetQId, meetingId, null, null).presetQIdMeetingId!!
                 ) {
-                    it.numSubmitted = it.numSelected!! + 1
+                    it.numSelected = it.numSelected!! + 1
                     it
                 } ?: throw Error("ResponsePresetQ not present")
             }
@@ -127,6 +127,7 @@ class PostReview : SubHandler {
                 it
             } ?: throw Error("ResponseParticipant not present")
         }
+        websocket.sendEvent({_, _ -> true}, me.rivia.api.handlers.responses.Meeting.fetch(database, meetingId))
         return Response(null)
     }
 }

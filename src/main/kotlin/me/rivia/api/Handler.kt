@@ -7,6 +7,7 @@ import me.rivia.api.database.DynamoDatabase
 import me.rivia.api.handlers.*
 import me.rivia.api.websocket.ApiGatewayWebsocketClient
 import me.rivia.api.websocket.WebsocketClient
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import java.util.*
 
 class Handler(private val database: Database, private val websocketClient: WebsocketClient) : RequestHandler<Event, Response> {
@@ -100,6 +101,7 @@ class Handler(private val database: Database, private val websocketClient: Webso
                 websocketClient
             )
         } catch (e: Error) {
+            throw e
             return Response(ResponseError.EXCEPTION)
         }
     }

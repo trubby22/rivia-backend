@@ -4,4 +4,4 @@ import kotlin.random.Random
 
 private const val UID_SIZE = 16
 
-fun generateUid() = Random.Default.nextBytes(UID_SIZE).let {String.format("0x%02X", it)}
+fun generateUid() = Random.Default.nextBytes(UID_SIZE).joinToString("") {String.format("%02x", it)}
