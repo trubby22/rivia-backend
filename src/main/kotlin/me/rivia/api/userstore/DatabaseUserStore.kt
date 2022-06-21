@@ -26,7 +26,7 @@ class DatabaseUserStore(private val database: Database, private val applicationT
                     URI.create("https://graph.microsoft.com/v1.0/users/$userId")
                 )
                     .header("Content-type", "application/json")
-                    .header("Authorization", accessToken)
+                    .header("Authorization", "Bearer ${accessToken}")
                     .build()
                 val response = client.send(request, HttpResponse.BodyHandlers.ofString())
                 val json : String? = response.body()
