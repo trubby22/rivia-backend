@@ -5,6 +5,7 @@ import kotlinx.serialization.json.jsonObject
 import me.rivia.api.database.Database
 import me.rivia.api.database.Table
 import me.rivia.api.database.entry.Tenant
+import me.rivia.api.database.updateEntry
 import java.net.URI
 import java.net.URLEncoder
 import java.net.http.HttpClient
@@ -20,6 +21,7 @@ class MicrosoftGraphClient(
     private val database: Database,
     private val tokenType: TokenType
 ) : TeamsClient {
+
     private val clientId = "9661a5c4-6c18-49b8-aad6-e3a4722c2515"
     private val scope =
         if (tokenType == TokenType.APPLICATION) "ChatMessage.Read.All" else "ChannelMessage.Send"
@@ -56,6 +58,7 @@ class MicrosoftGraphClient(
         val map = json.jsonObject.toMap()
         val accessToken = map["access_token"].toString()
         refreshToken = map["refresh_token"].toString()
+        setRefreshToken(tenantId, refreshToken!!)
 
         return accessToken.substring(1, accessToken.length - 1)
     }
@@ -86,7 +89,8 @@ class MicrosoftGraphClient(
         val json = Json.parseToJsonElement(jsonString)
         val map = json.jsonObject.toMap()
         val accessToken = map["access_token"].toString()
-        val refreshToken2 = map["refresh_token"].toString()
+        refreshToken = map["refresh_token"].toString()
+        setRefreshToken(tenantId, refreshToken!!)
 
         return accessToken.substring(1, accessToken.length - 1)
     }
@@ -95,8 +99,7 @@ class MicrosoftGraphClient(
         tenantId: String,
         apiCall: (String) -> T?
     ): T {
-        var accessToken: String? = null
-//            getAccessToken(tenantId)
+        var accessToken: String? = getAccessToken(tenantId)
         var result = apiCall(accessToken!!)
         while (result == null) {
             do {
@@ -109,8 +112,25 @@ class MicrosoftGraphClient(
 
     override fun setRefreshToken(tenantId: String, refreshToken: String):
             Boolean {
-//        database.updateEntry(Table.TENANTS)
-        TODO("Not yet implemented")
+        val tenant = database.updateEntry(
+            Table.TENANTS,
+            tenantId
+        ) { tenantEntry: Tenant ->
+            tenantEntry.applicationRefreshToken = refreshToken
+            tenantEntry
+        }
+        return tenant != null
+    }
+
+    override fun getRefreshToken(tenantId: String): String? {
+        val tenant: Tenant? = database.getEntry<Tenant>(
+            Table.TENANTS,
+            tenantId,
+            Tenant::class
+        )
+
+        return if (tokenType == TokenType.USER) tenant!!.userRefreshToken
+        else tenant!!.applicationRefreshToken
     }
 }
 
