@@ -50,7 +50,7 @@ class PostReview : SubHandler {
         }
 
         if (!database.putEntry(
-                Table.RESPONSETENANTUSERS, ResponseTenantUser(tenantId, userId!!, meetingId)
+                Table.RESPONSETENANTUSERS, ResponseSubmissionUser(tenantId, userId!!, meetingId)
             )
         ) {
             return Response(ResponseError.REVIEWSUBMITTED)
@@ -89,8 +89,8 @@ class PostReview : SubHandler {
             }
         }
         for (neededId in needed) {
-            database.updateEntry<ResponseParticipant>(
-                Table.RESPONSEPARTICIPANTS, ResponseParticipant(
+            database.updateEntry<ResponseDataUsers>(
+                Table.RESPONSEPARTICIPANTS, ResponseDataUsers(
                     neededId, meetingId, null, null, null, null
                 ).participantIdMeetingId!!
             ) {
@@ -99,8 +99,8 @@ class PostReview : SubHandler {
             } ?: throw Error("ResponseParticipant not present")
         }
         for (notNeededId in notNeeded) {
-            database.updateEntry<ResponseParticipant>(
-                Table.RESPONSEPARTICIPANTS, ResponseParticipant(
+            database.updateEntry<ResponseDataUsers>(
+                Table.RESPONSEPARTICIPANTS, ResponseDataUsers(
                     notNeededId, meetingId, null, null, null, null
                 ).participantIdMeetingId!!
             ) {
@@ -109,8 +109,8 @@ class PostReview : SubHandler {
             } ?: throw Error("ResponseParticipant not present")
         }
         for (preparedId in prepared) {
-            database.updateEntry<ResponseParticipant>(
-                Table.RESPONSEPARTICIPANTS, ResponseParticipant(
+            database.updateEntry<ResponseDataUsers>(
+                Table.RESPONSEPARTICIPANTS, ResponseDataUsers(
                     preparedId, meetingId, null, null, null, null
                 ).participantIdMeetingId!!
             ) {
@@ -119,8 +119,8 @@ class PostReview : SubHandler {
             } ?: throw Error("ResponseParticipant not present")
         }
         for (notPreparedId in notPrepared) {
-            database.updateEntry<ResponseParticipant>(
-                Table.RESPONSEPARTICIPANTS, ResponseParticipant(
+            database.updateEntry<ResponseDataUsers>(
+                Table.RESPONSEPARTICIPANTS, ResponseDataUsers(
                     notPreparedId, meetingId, null, null, null, null
                 ).participantIdMeetingId!!
             ) {

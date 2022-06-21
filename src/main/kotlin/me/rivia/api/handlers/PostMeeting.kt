@@ -3,7 +3,7 @@ package me.rivia.api.handlers
 import me.rivia.api.Response
 import me.rivia.api.ResponseError
 import me.rivia.api.database.entry.*
-import me.rivia.api.database.entry.ResponseParticipant
+import me.rivia.api.database.entry.ResponseDataUsers
 import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.*
 import me.rivia.api.handlers.responses.MeetingId
@@ -41,15 +41,15 @@ class PostMeeting : SubHandler {
             ResponseError.NOTENANT
         )
 
-        lateinit var organizer: Participant
+        lateinit var organizer: User
         do {
-            organizer = Participant(generateUid(), organizerName, organizerSurname)
+            organizer = User(generateUid(), organizerName, organizerSurname)
         } while (!database.putEntry(Table.PARTICIPANTS, organizer))
 
         val participants = participantsNamesSurnames.map { (name: String, surname: String) ->
-            lateinit var participant: Participant
+            lateinit var participant: User
             do {
-                participant = Participant(generateUid(), name, surname)
+                participant = User(generateUid(), name, surname)
             } while (!database.putEntry(Table.PARTICIPANTS, participant))
             participant
         } + listOf(organizer)
@@ -73,7 +73,7 @@ class PostMeeting : SubHandler {
 
         for (participant in participants) {
             if (!database.putEntry(
-                    Table.RESPONSEPARTICIPANTS, ResponseParticipant(
+                    Table.RESPONSEPARTICIPANTS, ResponseDataUsers(
                         participant.participantId!!, meeting.meetingId!!, 0, 0, 0, 0
                     )
                 )

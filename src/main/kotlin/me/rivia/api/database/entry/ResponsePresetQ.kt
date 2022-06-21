@@ -5,22 +5,30 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 
 
 @DynamoDbBean
-class ResponsePresetQ(@get:DynamoDbPartitionKey var presetQIdMeetingId: String?, var numSubmitted: Int?, var numSelected: Int?) {
+data class ResponsePresetQ(
+    @get:DynamoDbPartitionKey var presetQIdMeetingId: String?,
+    var numSubmitted: Int?,
+    var numSelected: Int?
+) {
+    companion object {
+        fun constructKey(presetQId: String?, meetingId: String?) = "${presetQId!!} ${meetingId!!}"
+    }
+
     constructor() : this(null, null, null)
-    constructor(presetQId: String, meetingId: String, numSubmitted: Int?, numSelected: Int?) : this("$presetQId $meetingId", numSubmitted, numSelected)
+    constructor(
+        presetQId: String?, meetingId: String?, numSubmitted: Int?, numSelected: Int?
+    ) : this(
+        constructKey(presetQId, meetingId), numSubmitted, numSelected
+    )
+
+    var presetQId
+        get() = this.presetQIdMeetingId?.split(' ')?.get(0)
+        set(presetQId) {
+            this.presetQIdMeetingId = constructKey(presetQId, meetingId)
+        }
+    var meetingId
+        get() = this.presetQIdMeetingId?.split(' ')?.get(1)
+        set(meetingId) {
+            this.presetQIdMeetingId = constructKey(presetQId, meetingId)
+        }
 }
-
-var ResponsePresetQ.presetQId
-    get() = this.presetQIdMeetingId?.subSequence(0, this.presetQIdMeetingId!!.indexOf(' '))
-        ?.toString()
-    set(presetQId) {
-        this.presetQIdMeetingId = "$presetQId $meetingId"
-    }
-
-var ResponsePresetQ.meetingId
-    get() = this.presetQIdMeetingId?.subSequence(
-        this.presetQIdMeetingId!!.indexOf(' ') + 1, this.presetQIdMeetingId!!.length
-    )?.toString()
-    set(meetingId) {
-        this.presetQIdMeetingId = "$presetQId $meetingId"
-    }

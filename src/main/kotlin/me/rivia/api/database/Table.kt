@@ -1,16 +1,21 @@
 package me.rivia.api.database
 
 enum class Table(val tableName: String) {
+    // General Tables
     TENANTS("Tenants"),
     MEETINGS("Meetings"),
-    PARTICIPANTS("Participants"),
     PRESETQS("PresetQs"),
-    TENANTMEETINGS("TenantMeetings"), // For validating if a meeting is in an organization
-    RESPONSETENANTUSERS("ResponseTenantUsers"),
-    RESPONSEPARTICIPANTS("ResponseParticipants"),
+    USERS("Users"),
+    // Response Tables
+    RESPONSESUBMISSIONUSERS("ResponseSubmissionUsers"),
+    RESPONSEDATAUSERS("ResponseDataUsers"),
     RESPONSEPRESETQS("ResponsePresetQs"),
+    // Websocket Tables
     WEBSOCKETS("Websockets"),
-    CONNECTIONS("Connections");
+    CONNECTIONS("Connections"),
+    // Rating Tables
+    OPINIONS("Opinions"),
+    USAGES("Usages");
 
     override fun toString(): String {
         return tableName

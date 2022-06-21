@@ -6,15 +6,16 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 @DynamoDbBean
 data class Meeting(
     @get:DynamoDbPartitionKey var meetingId: String?,
-    var presetQIds: List<String>?,
+    var tenantId: String?,
     var organizerId: String?,
-    var participantIds: List<String>?,
+    var userIds: List<String>?,
     var title: String?,
     var startTime: Int?,
     var endTime: Int?,
     var responsesCount: Int?,
+    var presetQIds: List<String>?,
     var qualities: List<Double>?,
     var feedbacks: List<String>?
 ) {
-    constructor() : this(null, null, null, null, null, null, null, null, null, null)
+    constructor() : this(null, null, null, null, null, null, null, null, null, null, null)
 }

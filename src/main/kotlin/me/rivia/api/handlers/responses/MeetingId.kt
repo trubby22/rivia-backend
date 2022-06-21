@@ -3,7 +3,7 @@ package me.rivia.api.handlers.responses
 import me.rivia.api.database.Database
 import me.rivia.api.database.Table
 import me.rivia.api.database.entry.Meeting as DatabaseMeeting
-import me.rivia.api.database.entry.ResponseParticipant
+import me.rivia.api.database.entry.ResponseDataUsers
 import me.rivia.api.database.entry.ResponsePresetQ
 import me.rivia.api.database.getEntry
 
@@ -22,11 +22,11 @@ class MeetingId(val id: String, val meeting: Meeting) {
                     meetingEntry.organizerId!!,
                     meetingEntry.participantIds!!.map {
                         val participantEntry =
-                            database.getEntry<me.rivia.api.database.entry.Participant>(
+                            database.getEntry<me.rivia.api.database.entry.User>(
                                 Table.PARTICIPANTS, it
                             ) ?: throw Error("Participant not present")
-                        val responseParticipantEntry = database.getEntry<ResponseParticipant>(
-                            Table.RESPONSEPARTICIPANTS, ResponseParticipant(
+                        val responseParticipantEntry = database.getEntry<ResponseDataUsers>(
+                            Table.RESPONSEPARTICIPANTS, ResponseDataUsers(
                                 participantEntry.participantId!!, meetingId, null, null, null, null
                             ).participantIdMeetingId!!
                         ) ?: throw Error("ResponseParticipant not present")

@@ -4,11 +4,12 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
 
 @DynamoDbBean
-data class Participant(
-    @get:DynamoDbPartitionKey
-    var participantId: String?,
-    var name: String?,
-    var surname: String?
+data class Opinion(
+    @get:DynamoDbPartitionKey var opinionId: String?,
+    var tenantId: String?,
+    var userId: String?,
+    var like: Float?,
+    var use: Float?
 ) {
-    constructor() : this(null,null,null)
+    constructor() : this(null, null, null, null, null)
 }
