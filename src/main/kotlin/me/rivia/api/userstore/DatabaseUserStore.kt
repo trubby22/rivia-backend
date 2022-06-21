@@ -1,30 +1,18 @@
 package me.rivia.api.userstore
 
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
-import jdk.incubator.jpackage.internal.IOUtils
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import me.rivia.api.database.Database
 import me.rivia.api.database.Table
 import me.rivia.api.database.getEntry
 import me.rivia.api.database.putEntry
 import me.rivia.api.teams.TeamsClient
 import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
 import software.amazon.awssdk.http.HttpExecuteRequest
 import software.amazon.awssdk.http.SdkHttpMethod
 import software.amazon.awssdk.http.SdkHttpRequest
-import software.amazon.awssdk.protocols.jsoncore.JsonNode
-import java.net.URLEncoder
-
-data class UserResponse(
-    @SerializedName("displayName") val displayName: String,
-    @SerializedName("surname") val surname: String,
-)
-
-
 
 class DatabaseUserStore(private val database: Database, private val applicationTeamsClient: TeamsClient) : UserStore {
     override fun getUser(tenantId: String, userId: String): User? {
@@ -57,17 +45,25 @@ class DatabaseUserStore(private val database: Database, private val applicationT
                 val json = inputStream.toString()
                 json
             }
+
+            // make API call
             val json = applicationTeamsClient.tokenOperation(tenantId, apiCall)
-            val userResponse = Gson().fromJson(
-                json,
-                UserResponse::class.java
-            )
-            // no meeting Ids when first adding user
-            val newUser = User(tenantId + userId, userResponse.displayName, userResponse.surname, listOf())
+            val jsonObject : JsonObject = JsonParser().parse(json).asJsonObject
+
+            // if id not found in microsoft database then return null
+            if (jsonObject.getAsJsonObject("error").asString != null) {
+                return null
+            }
+            val displayName : String = jsonObject.getAsJsonObject("displayName").asString;
+            val surname : String = jsonObject.getAsJsonObject("surname").asString;
+
+            // no meeting Ids when first adding user, will be updated by other code
+            val newUser = User(tenantId + userId, displayName, surname, listOf())
             database.putEntry(Table.USERS, newUser);
 
             return newUser
         } else {
+            // otherwise already stored in "cache" database so just return
             return userEntry;
         }
 
