@@ -3,11 +3,8 @@ package me.rivia.api.handlers
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import me.rivia.api.Response
-import me.rivia.api.ResponseError
 import me.rivia.api.database.Database
-import me.rivia.api.teams.MicrosoftGraphClient
 import me.rivia.api.teams.TeamsClient
-import me.rivia.api.teams.TokenType
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
 import software.amazon.awssdk.http.HttpExecuteRequest
@@ -18,6 +15,9 @@ import java.net.URI
 import java.time.OffsetDateTime
 
 class PostSubscription : SubHandler {
+    private val client = UrlConnectionHttpClient.builder().build()
+    private val jsonConverter = Gson()
+
     companion object {
         const val CHANGE_TYPE = "created"
         const val NOTIFICATION_URL =
@@ -48,11 +48,6 @@ class PostSubscription : SubHandler {
         applicationAccessToken: TeamsClient,
         websocket: WebsocketClient
     ): Response {
-        val client = UrlConnectionHttpClient.builder().build()
-        val msClient = MicrosoftGraphClient(
-            database, TokenType.APPLICATION
-        )
-        val jsonConverter = Gson()
         val body = jsonConverter.toJson(
             SubscriptionBody(
                 changeType = CHANGE_TYPE,
@@ -65,22 +60,23 @@ class PostSubscription : SubHandler {
             )
         )
 
-        val response = msClient.tokenOperation(tenantId!!) { token: String ->
-            client.prepareRequest(
-                HttpExecuteRequest.builder().request(
-                    SdkHttpRequest.builder().uri(
-                        URI.create(
-                            "https://graph.microsoft.com/beta/subscriptions"
-                        )
-                    ).putHeader("Content-Type", "application/json").putHeader(
-                        "Authorization", "Bearer $token"
-                    ).method(SdkHttpMethod.POST).build()
-                ).contentStreamProvider { body.byteInputStream() }.build()
-            )
-        }.call()
-        if (!response.httpResponse().isSuccessful) {
-            return Response(ResponseError.EXCEPTION)
-        }
-        return Response(response.responseBody().get().readAllBytes().toString())
+        val jsonString =
+            applicationAccessToken.tokenOperation(tenantId!!) { token: String ->
+                val response = client.prepareRequest(
+                    HttpExecuteRequest.builder().request(
+                        SdkHttpRequest.builder().uri(
+                            URI.create(
+                                "https://graph.microsoft.com/beta/subscriptions"
+                            )
+                        ).putHeader("Content-Type", "application/json")
+                            .putHeader(
+                                "Authorization", "Bearer $token"
+                            ).method(SdkHttpMethod.POST).build()
+                    ).contentStreamProvider { body.byteInputStream() }.build()
+                ).call()
+                if (response.httpResponse().isSuccessful) response.responseBody()
+                    .get().readAllBytes().toString() else null
+            }
+        return Response(jsonString)
     }
 }
