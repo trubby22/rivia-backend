@@ -8,6 +8,7 @@ import me.rivia.api.database.entry.TenantMeeting
 import me.rivia.api.database.getEntry
 import me.rivia.api.websocket.WebsocketClient
 import me.rivia.api.handlers.responses.Meeting
+import me.rivia.api.handlers.responses.MeetingId
 
 class GetMeeting : SubHandler {
     override fun handleRequest(
@@ -26,6 +27,6 @@ class GetMeeting : SubHandler {
         ) {
             return Response(ResponseError.WRONGTENANTMEETING)
         }
-        return Response(Meeting.fetch(database, meetingId))
+        return Response(MeetingId.fetch(database, meetingId).meeting)
     }
 }

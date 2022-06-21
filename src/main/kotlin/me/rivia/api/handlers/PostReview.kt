@@ -4,6 +4,7 @@ import me.rivia.api.Response
 import me.rivia.api.ResponseError
 import me.rivia.api.database.*
 import me.rivia.api.database.entry.*
+import me.rivia.api.handlers.responses.MeetingId
 import me.rivia.api.websocket.WebsocketClient
 
 
@@ -127,7 +128,7 @@ class PostReview : SubHandler {
                 it
             } ?: throw Error("ResponseParticipant not present")
         }
-        websocket.sendEvent({_, _ -> true}, me.rivia.api.handlers.responses.Meeting.fetch(database, meetingId))
+        websocket.sendEvent({_, _ -> true}, MeetingId.fetch(database, meetingId))
         return Response(null)
     }
 }

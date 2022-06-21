@@ -6,7 +6,7 @@ import me.rivia.api.database.entry.*
 import me.rivia.api.database.entry.ResponseParticipant
 import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.*
-import me.rivia.api.handlers.responses.Meeting as HttpMeeting
+import me.rivia.api.handlers.responses.MeetingId
 import me.rivia.api.websocket.WebsocketClient
 
 class PostMeeting : SubHandler {
@@ -101,7 +101,7 @@ class PostMeeting : SubHandler {
             } == null) {
             throw Error("Tenant removed")
         }
-        websocket.sendEvent({_, _ -> true}, HttpMeeting.fetch(database, meeting.meetingId!!))
+        websocket.sendEvent({_, _ -> true}, MeetingId.fetch(database, meeting.meetingId!!))
         return Response(meeting.meetingId!!)
     }
 }
