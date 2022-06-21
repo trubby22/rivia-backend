@@ -57,15 +57,15 @@ class PostSubscription : SubHandler {
                 changeType = CHANGE_TYPE,
                 notificationUrl = NOTIFICATION_URL,
                 resource = RESOURCE,
-                expirationDateTime = OffsetDateTime.now().plusHours(1),
+                expirationDateTime = OffsetDateTime.now().plusMinutes(59),
                 includeResourceData = true,
                 encryptionCertificate = CERTIFICATE,
                 encryptionCertificateId = CERTIFICATE_ID
             )
         )
 
-        val request = { token: String ->
-            client.prepareRequest(
+        val jsonString = msClient.tokenOperation(tenantId!!) { token: String ->
+            val response = client.prepareRequest(
                 HttpExecuteRequest.builder().request(
                     SdkHttpRequest.builder().uri(
                         URI.create(
@@ -75,10 +75,9 @@ class PostSubscription : SubHandler {
                         "Authorization", "Bearer $token"
                     ).method(SdkHttpMethod.POST).build()
                 ).contentStreamProvider { body.byteInputStream() }.build()
-            )
+            ).call()
+            response.responseBody().get().readAllBytes().toString()
         }
-        val response = msClient.tokenOperation(tenantId!!, request).call()
-        val jsonString = response.responseBody().get().readAllBytes().toString()
         return Response(jsonString)
     }
 }
