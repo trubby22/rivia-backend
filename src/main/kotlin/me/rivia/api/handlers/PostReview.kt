@@ -22,6 +22,7 @@ class PostReview : SubHandler {
         applicationAccessToken: TeamsClient,
         websocket: WebsocketClient
     ): Response {
+        // Extracting json data
         val meetingId = url[1]
         val needed = (jsonData["needed"] as? List<*>)?.checkListType<String>() ?: return Response(
             ResponseError.WRONGENTRY
@@ -54,8 +55,9 @@ class PostReview : SubHandler {
             return Response(ResponseError.WRONGENTRY)
         }
 
+        // Inserting the data
         if (!database.putEntry(
-                Table.RESPONSETENANTUSERS, ResponseSubmission(tenantId, userId!!, meetingId)
+                Table.RESPONSESUBMISSIONS, ResponseSubmission(tenantId, userId!!, meetingId)
             )
         ) {
             return Response(ResponseError.REVIEWSUBMITTED)
@@ -95,9 +97,7 @@ class PostReview : SubHandler {
         }
         for (neededId in needed) {
             database.updateEntry<ResponseDataUser>(
-                Table.RESPONSEPARTICIPANTS, ResponseDataUser(
-                    neededId, meetingId, null, null, null, null
-                ).participantIdMeetingId!!
+                Table.RESPONSEDATAUSERS, ResponseDataUser.constructKey(tenantId, userId, meetingId)
             ) {
                 it.needed = it.needed!! + 1
                 it
@@ -105,9 +105,7 @@ class PostReview : SubHandler {
         }
         for (notNeededId in notNeeded) {
             database.updateEntry<ResponseDataUser>(
-                Table.RESPONSEPARTICIPANTS, ResponseDataUser(
-                    notNeededId, meetingId, null, null, null, null
-                ).participantIdMeetingId!!
+                Table.RESPONSEDATAUSERS, ResponseDataUser.constructKey(tenantId, userId, meetingId)
             ) {
                 it.notNeeded = it.notNeeded!! + 1
                 it
@@ -115,9 +113,7 @@ class PostReview : SubHandler {
         }
         for (preparedId in prepared) {
             database.updateEntry<ResponseDataUser>(
-                Table.RESPONSEPARTICIPANTS, ResponseDataUser(
-                    preparedId, meetingId, null, null, null, null
-                ).participantIdMeetingId!!
+                Table.RESPONSEDATAUSERS, ResponseDataUser.constructKey(tenantId, userId, meetingId)
             ) {
                 it.prepared = it.prepared!! + 1
                 it
@@ -125,15 +121,13 @@ class PostReview : SubHandler {
         }
         for (notPreparedId in notPrepared) {
             database.updateEntry<ResponseDataUser>(
-                Table.RESPONSEPARTICIPANTS, ResponseDataUser(
-                    notPreparedId, meetingId, null, null, null, null
-                ).participantIdMeetingId!!
+                Table.RESPONSEDATAUSERS, ResponseDataUser.constructKey(tenantId, userId, meetingId)
             ) {
                 it.notPrepared = it.notPrepared!! + 1
                 it
             } ?: throw Error("ResponseParticipant not present")
         }
-        websocket.sendEvent({_, _ -> true}, MeetingId.fetch(database, meetingId))
+        websocket.sendEvent({_, _ -> true}, MeetingId.fetch(database, userStore, meetingId)!!.second)
         return Response(null)
     }
 }

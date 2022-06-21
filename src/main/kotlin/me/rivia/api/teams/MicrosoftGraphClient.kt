@@ -13,13 +13,11 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
 enum class TokenType {
-    APPLICATION,
-    USER,
+    APPLICATION, USER,
 }
 
 class MicrosoftGraphClient(
-    private val database: Database,
-    private val tokenType: TokenType
+    private val database: Database, private val tokenType: TokenType
 ) : TeamsClient {
 
     private val clientId = "9661a5c4-6c18-49b8-aad6-e3a4722c2515"
@@ -36,21 +34,21 @@ class MicrosoftGraphClient(
 
     private fun getAccessToken(tenantId: String): String {
         val params = mapOf(
-            "client_id" to clientId, "scope" to scope, "code"
-                    to code, "redirect_uri" to redirectUri, "grant_type" to
-                    "authorization_code", "client_secret" to clientSecret
+            "client_id" to clientId,
+            "scope" to scope,
+            "code" to code,
+            "redirect_uri" to redirectUri,
+            "grant_type" to "authorization_code",
+            "client_secret" to clientSecret
         )
-        val urlParams = params.map { (k, v) -> "${k.utf8()}=${v.utf8()}" }
-            .joinToString("&")
+        val urlParams = params.map { (k, v) -> "${k.utf8()}=${v.utf8()}" }.joinToString("&")
 
         val request = HttpRequest.newBuilder()
             .uri(URI.create("https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token?${urlParams}"))
             .POST(HttpRequest.BodyPublishers.ofString(urlParams))
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .build()
+            .header("Content-Type", "application/x-www-form-urlencoded").build()
 
-        val response =
-            client.send(request, HttpResponse.BodyHandlers.ofString())
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
 
         val jsonString = response.body()
         val json = Json.parseToJsonElement(jsonString)
@@ -75,17 +73,14 @@ class MicrosoftGraphClient(
             "grant_type" to "refresh_token",
             "client_secret" to clientSecret
         )
-        val urlParams = params.map { (k, v) -> "${k.utf8()}=${v.utf8()}" }
-            .joinToString("&")
+        val urlParams = params.map { (k, v) -> "${k.utf8()}=${v.utf8()}" }.joinToString("&")
 
         val request = HttpRequest.newBuilder()
             .uri(URI.create("https://login.microsoftonline.com/common/oauth2/v2.0/token?${urlParams}"))
             .POST(HttpRequest.BodyPublishers.ofString(urlParams))
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .build()
+            .header("Content-Type", "application/x-www-form-urlencoded").build()
 
-        val response =
-            client.send(request, HttpResponse.BodyHandlers.ofString())
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
 
         val jsonString = response.body()
         val json = Json.parseToJsonElement(jsonString)
@@ -101,8 +96,7 @@ class MicrosoftGraphClient(
     }
 
     override fun <T : Any> tokenOperation(
-        tenantId: String,
-        apiCall: (String) -> T?
+        tenantId: String, apiCall: (String) -> T?
     ): T {
         var accessToken: String? = getAccessToken(tenantId)
         var result = apiCall(accessToken!!)
@@ -118,8 +112,7 @@ class MicrosoftGraphClient(
     override fun setRefreshToken(tenantId: String, token: String):
             Boolean {
         val tenant = database.updateEntry(
-            Table.TENANTS,
-            tenantId
+            Table.TENANTS, tenantId
         ) { tenantEntry: Tenant ->
             if (tokenType == TokenType.USER) {
                 tenantEntry.userRefreshToken = token
@@ -133,9 +126,7 @@ class MicrosoftGraphClient(
 
     private fun dbGetRefreshToken(tenantId: String): String? {
         val tenant: Tenant? = database.getEntry<Tenant>(
-            Table.TENANTS,
-            tenantId,
-            Tenant::class
+            Table.TENANTS, tenantId, Tenant::class
         )
 
         return if (tokenType == TokenType.USER) tenant!!.userRefreshToken
@@ -189,13 +180,10 @@ class MicrosoftGraphClient(
 
 fun getInfoAboutMe(accessToken: String): String {
     val client = HttpClient.newBuilder().build()
-    val request = HttpRequest.newBuilder()
-        .uri(URI.create("https://graph.microsoft.com/v1.0/me"))
-        .header("Authorization", "Bearer ${accessToken}")
-        .build()
+    val request = HttpRequest.newBuilder().uri(URI.create("https://graph.microsoft.com/v1.0/me"))
+        .header("Authorization", "Bearer ${accessToken}").build()
 
-    val response =
-        client.send(request, HttpResponse.BodyHandlers.ofString())
+    val response = client.send(request, HttpResponse.BodyHandlers.ofString())
 
     return response.body()
 }
