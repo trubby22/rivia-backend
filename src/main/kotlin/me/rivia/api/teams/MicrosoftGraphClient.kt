@@ -6,7 +6,6 @@ import me.rivia.api.database.Database
 import me.rivia.api.database.Table
 import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.updateEntry
-import org.apache.commons.io.IOUtils
 import software.amazon.awssdk.http.HttpExecuteRequest
 import software.amazon.awssdk.http.SdkHttpMethod
 import software.amazon.awssdk.http.SdkHttpRequest
@@ -40,24 +39,20 @@ class MicrosoftGraphClient(
         else tenant!!.applicationAccessToken!!
     }
 
+    private fun getRefreshToken(tenantId: String): String? {
+        val tenant: Tenant? = database.getEntry<Tenant>(
+            Table.TENANTS, tenantId, Tenant::class
+        )
+        return if (tokenType == TokenType.USER) tenant!!.userRefreshToken
+        else tenant!!.applicationRefreshToken
+    }
+
     private fun refreshAccessToken(tenantId: String): String? {
         val clientId = "9661a5c4-6c18-49b8-aad6-e3a4722c2515"
         val scope =
             if (tokenType == TokenType.APPLICATION) "ChatMessage.Read.All" else "ChannelMessage.Send"
-        val redirectUri = "http://localhost/myapp"
+        val redirectUri = "https://vbc48le64j.execute-api.eu-west-2.amazonaws.com/production/token"
         val clientSecret = "cap8Q~ESKP.5rpds2UeVfKw39.SB55YSmSwVmag8"
-
-        val params = mapOf(
-            "client_id" to clientId,
-            "scope" to scope,
-            "refresh_token"
-                    to dbGetRefreshToken(tenantId)!!,
-            "redirect_uri" to redirectUri,
-            "grant_type" to "refresh_token",
-            "client_secret" to clientSecret
-        )
-        val urlParams =
-            params.map { (k, v) -> "${k.utf8()}=${v.utf8()}" }.joinToString("&")
 
         val client = UrlConnectionHttpClient.builder().build()
 
@@ -66,11 +61,19 @@ class MicrosoftGraphClient(
                 (
                 SdkHttpRequest.builder().uri(
                     URI.create(
-                        "https://login.microsoftonline.com/common/oauth2/v2.0/token?${urlParams}"
+                        "https://login.microsoftonline.com/common/oauth2/v2.0/token"
                     )
                 ).putHeader
                     ("Content-Type", "application/x-www-form-urlencoded").method
-                    (SdkHttpMethod.POST).build()
+                    (SdkHttpMethod.POST)
+                    .appendRawQueryParameter("client_id", clientId)
+                    .appendRawQueryParameter("scope", scope)
+                    .appendRawQueryParameter("refresh_token", getRefreshToken
+                        (tenantId)!!)
+                    .appendRawQueryParameter("redirect_uri", redirectUri)
+                    .appendRawQueryParameter("grant_type", "refresh_token")
+                    .appendRawQueryParameter("client_secret", clientSecret)
+                    .build()
             ).build()
         )
 
@@ -79,7 +82,7 @@ class MicrosoftGraphClient(
         client.close()
 
         val inputStream = response.responseBody().get()
-        val jsonString = IOUtils.toString(inputStream)
+        val jsonString = inputStream.readAllBytes().toString()
 
         val tokenResponse = Gson().fromJson(
             jsonString,
@@ -103,15 +106,6 @@ class MicrosoftGraphClient(
             result = apiCall(accessToken)
         }
         return result
-    }
-
-
-    private fun dbGetRefreshToken(tenantId: String): String? {
-        val tenant: Tenant? = database.getEntry<Tenant>(
-            Table.TENANTS, tenantId, Tenant::class
-        )
-        return if (tokenType == TokenType.USER) tenant!!.userRefreshToken
-        else tenant!!.applicationRefreshToken
     }
 
     private fun setTokens(
