@@ -3,7 +3,7 @@ package me.rivia.api.handlers
 import me.rivia.api.Response
 import me.rivia.api.database.Database
 import me.rivia.api.database.Table
-import me.rivia.api.database.entry.ResponseSubmissionUser
+import me.rivia.api.database.entry.ResponseSubmission
 import me.rivia.api.database.getEntry
 import me.rivia.api.websocket.WebsocketClient
 
@@ -17,7 +17,7 @@ class GetReview : SubHandler {
         websocket: WebsocketClient
     ): Response {
         val meetingId = url[1]
-        val responseTenantUserEntry = database.getEntry<ResponseSubmissionUser>(Table.RESPONSETENANTUSERS, ResponseSubmissionUser(tenantId, userId!!, meetingId).tenantIdUserIdMeetingId!!)
+        val responseTenantUserEntry = database.getEntry<ResponseSubmission>(Table.RESPONSETENANTUSERS, ResponseSubmission(tenantId, userId!!, meetingId).tenantIdUserIdMeetingId!!)
         return Response(responseTenantUserEntry != null)
     }
 }

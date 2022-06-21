@@ -4,7 +4,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
 
 @DynamoDbBean
-data class ResponseSubmissionUser(@get:DynamoDbPartitionKey var tenantIdUserIdMeetingId: String?) {
+data class ResponseSubmission(@get:DynamoDbPartitionKey var tenantIdUserIdMeetingId: String?) {
     companion object {
         fun constructKey(tenantId: String?, userId: String?, meetingId: String?) =
             "${tenantId!!} ${userId!!} ${meetingId!!}"

@@ -5,6 +5,8 @@ import me.rivia.api.ResponseError
 import me.rivia.api.database.*
 import me.rivia.api.database.entry.PresetQ
 import me.rivia.api.database.entry.Tenant
+import me.rivia.api.teams.TeamsClient
+import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
 import me.rivia.api.handlers.responses.PresetQ as ResponsePresetQ
 
@@ -15,11 +17,18 @@ class PostTenant : SubHandler {
         userId: String?,
         jsonData: Map<String, Any?>,
         database: Database,
+        userStore: UserStore,
+        userAccessToken: TeamsClient,
+        applicationAccessToken: TeamsClient,
         websocket: WebsocketClient
     ): Response {
         // Extracting json data
-        val refreshToken = jsonData["refreshToken"]
-        if (refreshToken !is String?) {
+        val applicationRefreshToken = jsonData["adminRefreshToken"]
+        if (applicationRefreshToken !is String?) {
+            return Response(ResponseError.WRONGENTRY)
+        }
+        val userRefreshToken = jsonData["userRefreshToken"]
+        if (userRefreshToken !is String?) {
             return Response(ResponseError.WRONGENTRY)
         }
         val presetQTexts = jsonData["presetQs"]
@@ -62,18 +71,41 @@ class PostTenant : SubHandler {
 
         // Inserting the tenant entry
         val tenantEntry: Tenant =
-            if (refreshToken == null) {
+            if (applicationRefreshToken == null || userRefreshToken == null) {
                 database.updateEntry(Table.TENANTS, tenantId) { tenantEntry: Tenant ->
+                    if (applicationRefreshToken != null) {
+                        tenantEntry.applicationRefreshToken = applicationRefreshToken
+                        tenantEntry.applicationAccessToken = TODO()
+                    }
+                    if (userRefreshToken != null) {
+                        tenantEntry.userRefreshToken = userRefreshToken
+                        tenantEntry.userAccessToken = TODO()
+                    }
                     tenantEntry.presetQIds = presetQIds?.value ?: defaultPresetQIds.value
                     tenantEntry
                 } ?: return Response(ResponseError.NOTENANT)
             } else {
                 database.updateEntryWithDefault(Table.TENANTS, {
+                    val applicationAccessToken = TODO()
+                    val userAccessToken = TODO()
                     Tenant(
-                        tenantId, refreshToken, defaultPresetQIds.value, listOf()
+                        tenantId,
+                        applicationRefreshToken,
+                        applicationAccessToken,
+                        userRefreshToken,
+                        userAccessToken,
+                        if (presetQIds != null) {
+                            presetQIds.value
+                        } else {
+                            defaultPresetQIds.value
+                        },
+                        listOf(),
                     )
                 }, { tenantEntry: Tenant ->
-                    tenantEntry.refreshToken = refreshToken
+                    tenantEntry.applicationRefreshToken = applicationRefreshToken
+                    tenantEntry.applicationAccessToken = TODO()
+                    tenantEntry.userRefreshToken = userRefreshToken
+                    tenantEntry.userAccessToken = TODO()
                     if (presetQIds != null) {
                         tenantEntry.presetQIds = presetQIds.value
                     }
@@ -82,7 +114,9 @@ class PostTenant : SubHandler {
             }
 
         return Response(tenantEntry.presetQIds!!.map {
-            ResponsePresetQ(database.getEntry(Table.PRESETQS, it) ?: throw Error("presetQ not present"))
+            ResponsePresetQ(
+                database.getEntry(Table.PRESETQS, it) ?: throw Error("presetQ not present")
+            )
         })
     }
 }

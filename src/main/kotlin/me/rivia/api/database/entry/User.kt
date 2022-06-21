@@ -5,25 +5,25 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 
 @DynamoDbBean
 data class User(
-    @get:DynamoDbPartitionKey var tenantIduserId: String?, var name: String?, var surname: String?
+    @get:DynamoDbPartitionKey var tenantIdUserId: String?, var name: String?, var surname: String?, var meetingIds: List<String>?
 ) {
     companion object {
         fun constructKey(tenantId: String?, userId: String?) = "${tenantId!!} ${userId!!}"
     }
 
-    constructor() : this(null, null, null)
-    constructor(tenantId: String?, userId: String?, name: String?, surname: String?) : this(
-        constructKey(tenantId, userId), name, surname
+    constructor() : this(null, null, null, null)
+    constructor(tenantId: String?, userId: String?, name: String?, surname: String?, meetingIds: List<String>?) : this(
+        constructKey(tenantId, userId), name, surname, meetingIds
     )
 
     var tenantId
-        get() = tenantIduserId?.split(' ')?.get(0)
+        get() = tenantIdUserId?.split(' ')?.get(0)
         set(tenantId) {
-            this.tenantIduserId = constructKey(tenantId, userId)
+            this.tenantIdUserId = constructKey(tenantId, userId)
         }
     var userId
-        get() = tenantIduserId?.split(' ')?.get(1)
+        get() = tenantIdUserId?.split(' ')?.get(1)
         set(userId) {
-            this.tenantIduserId = constructKey(tenantId, userId)
+            this.tenantIdUserId = constructKey(tenantId, userId)
         }
 }

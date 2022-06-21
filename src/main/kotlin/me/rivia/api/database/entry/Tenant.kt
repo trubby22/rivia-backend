@@ -12,7 +12,6 @@ data class Tenant(
     var userRefreshToken: String?,
     var userAccessToken: String?,
     var presetQIds: List<String>?,
-    var meetingIds: List<String>?, // for listing the meetings in the organization
 ) {
-    constructor() : this(null,null,null,null, null, null, null)
+    constructor() : this(null,null,null,null, null, null)
 }

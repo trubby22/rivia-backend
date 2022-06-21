@@ -7,7 +7,7 @@ class Meeting(
     var qualities: List<Double>,
     var responses: Int,
     var organizerId: String,
-    var participants: List<ParticipantData>,
+    var users: List<UserData>,
     var presetQs: List<PresetQData>,
     var feedbacks: List<String>
 )

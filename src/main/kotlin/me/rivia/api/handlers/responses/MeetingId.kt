@@ -9,10 +9,10 @@ import me.rivia.api.database.getEntry
 
 class MeetingId(val id: String, val meeting: Meeting) {
     companion object {
-        fun fetch(database: Database, meetingId: String): MeetingId {
+        fun fetch(database: Database, meetingId: String): Pair<DatabaseMeeting, MeetingId>? {
             val meetingEntry = database.getEntry<DatabaseMeeting>(Table.MEETINGS, meetingId)
-                ?: throw Error("Meeting not present")
-            return MeetingId(
+                ?: return null
+            return meetingEntry to MeetingId(
                 meetingId, Meeting(
                     meetingEntry.title!!,
                     meetingEntry.startTime!!,
@@ -30,8 +30,8 @@ class MeetingId(val id: String, val meeting: Meeting) {
                                 participantEntry.participantId!!, meetingId, null, null, null, null
                             ).participantIdMeetingId!!
                         ) ?: throw Error("ResponseParticipant not present")
-                        ParticipantData(
-                            Participant(participantEntry),
+                        UserData(
+                            User(participantEntry),
                             responseParticipantEntry.needed!!,
                             responseParticipantEntry.notNeeded!!,
                             responseParticipantEntry.prepared!!,

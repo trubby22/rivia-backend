@@ -3,12 +3,10 @@ package me.rivia.api.handlers
 import me.rivia.api.Response
 import me.rivia.api.ResponseError
 import me.rivia.api.database.Database
-import me.rivia.api.database.Table
-import me.rivia.api.database.entry.TenantMeeting
-import me.rivia.api.database.getEntry
 import me.rivia.api.websocket.WebsocketClient
-import me.rivia.api.handlers.responses.Meeting
 import me.rivia.api.handlers.responses.MeetingId
+import me.rivia.api.teams.TeamsClient
+import me.rivia.api.userstore.UserStore
 
 class GetMeeting : SubHandler {
     override fun handleRequest(
@@ -17,16 +15,21 @@ class GetMeeting : SubHandler {
         userId: String?,
         jsonData: Map<String, Any?>,
         database: Database,
+        userStore: UserStore,
+        userAccessToken: TeamsClient,
+        applicationAccessToken: TeamsClient,
         websocket: WebsocketClient
     ): Response {
         val meetingId = url[1]
-        if (database.getEntry<TenantMeeting>(
-                Table.TENANTMEETINGS,
-                TenantMeeting(tenantId, meetingId).tenantIdMeetingId!!
-            ) == null
-        ) {
+        val (meetingEntry, idMeeting) = MeetingId.fetch(database, meetingId) ?: return Response(
+            ResponseError.NOMEETING
+        )
+        if (tenantId != meetingEntry.tenantId) {
             return Response(ResponseError.WRONGTENANTMEETING)
         }
-        return Response(MeetingId.fetch(database, meetingId).meeting)
+        if (userId!! !in meetingEntry.userIds!!) {
+            return Response(ResponseError.WRONGUSERMEETING)
+        }
+        return Response(idMeeting.meeting)
     }
 }

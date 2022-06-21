@@ -50,7 +50,7 @@ class PostReview : SubHandler {
         }
 
         if (!database.putEntry(
-                Table.RESPONSETENANTUSERS, ResponseSubmissionUser(tenantId, userId!!, meetingId)
+                Table.RESPONSETENANTUSERS, ResponseSubmission(tenantId, userId!!, meetingId)
             )
         ) {
             return Response(ResponseError.REVIEWSUBMITTED)

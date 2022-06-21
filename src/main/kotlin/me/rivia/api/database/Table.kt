@@ -7,7 +7,7 @@ enum class Table(val tableName: String) {
     PRESETQS("PresetQs"),
     USERS("Users"),
     // Response Tables
-    RESPONSESUBMISSIONUSERS("ResponseSubmissionUsers"),
+    RESPONSESUBMISSIONS("ResponseSubmissions"),
     RESPONSEDATAUSERS("ResponseDataUsers"),
     RESPONSEPRESETQS("ResponsePresetQs"),
     // Websocket Tables

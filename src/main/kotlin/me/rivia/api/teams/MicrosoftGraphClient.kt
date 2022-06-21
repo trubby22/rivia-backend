@@ -28,7 +28,7 @@ class MicrosoftGraphClient(private val database: Database, private val tokenType
         return result
     }
 
-    override fun setRefreshToken(tenantId: String, refreshToken: String) {
+    override fun setRefreshToken(tenantId: String, refreshToken: String): Boolean {
         TODO("Not yet implemented")
     }
 }
