@@ -26,19 +26,27 @@ enum class TokenType {
     APPLICATION, USER,
 }
 
+fun Any.utf8(): String = URLEncoder.encode(this.toString(), "UTF-8")
+
 class MicrosoftGraphClient(
     private val database: Database, private val tokenType: TokenType
 ) : TeamsClient {
 
-    override fun getAccessToken(tenantId: String): String? {
+    private fun getAccessToken(tenantId: String): String {
+        val tenant: Tenant? = database.getEntry<Tenant>(
+            Table.TENANTS, tenantId, Tenant::class
+        )
+        return if (tokenType == TokenType.USER) tenant!!.userAccessToken!!
+        else tenant!!.applicationAccessToken!!
+    }
+
+    private fun refreshAccessToken(tenantId: String): String? {
         val clientId = "9661a5c4-6c18-49b8-aad6-e3a4722c2515"
         val scope =
             if (tokenType == TokenType.APPLICATION) "ChatMessage.Read.All" else "ChannelMessage.Send"
         val redirectUri = "http://localhost/myapp"
         val clientSecret = "cap8Q~ESKP.5rpds2UeVfKw39.SB55YSmSwVmag8"
 
-        //        val client = HttpClient.newBuilder().build()
-        fun String.utf8(): String = URLEncoder.encode(this, "UTF-8")
         val params = mapOf(
             "client_id" to clientId,
             "scope" to scope,
@@ -85,34 +93,18 @@ class MicrosoftGraphClient(
         return accessToken
     }
 
-    override fun <T : Any> tokenOperation(
-        tenantId: String, apiCall: (String) -> T?
-    ): T {
-        var accessToken = getAccessToken(tenantId)
+    override fun <T : Any> tokenOperation(tenantId: String, apiCall: (String) -> T?): T {
+        var accessToken: String? = getAccessToken(tenantId)
         var result = apiCall(accessToken!!)
         while (result == null) {
             do {
-                accessToken = getAccessToken(tenantId)
+                accessToken = refreshAccessToken(tenantId)
             } while (accessToken == null)
             result = apiCall(accessToken)
         }
         return result
     }
 
-    override fun setRefreshToken(tenantId: String, token: String):
-            Boolean {
-        val tenant = database.updateEntry(
-            Table.TENANTS, tenantId
-        ) { tenantEntry: Tenant ->
-            if (tokenType == TokenType.USER) {
-                tenantEntry.userRefreshToken = token
-            } else {
-                tenantEntry.applicationRefreshToken = token
-            }
-            tenantEntry
-        }
-        return tenant != null
-    }
 
     private fun dbGetRefreshToken(tenantId: String): String? {
         val tenant: Tenant? = database.getEntry<Tenant>(
