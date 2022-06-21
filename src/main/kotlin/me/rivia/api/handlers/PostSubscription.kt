@@ -3,6 +3,7 @@ package me.rivia.api.handlers
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import me.rivia.api.Response
+import me.rivia.api.ResponseError
 import me.rivia.api.database.Database
 import me.rivia.api.teams.MicrosoftGraphClient
 import me.rivia.api.teams.TeamsClient
@@ -64,8 +65,8 @@ class PostSubscription : SubHandler {
             )
         )
 
-        val jsonString = msClient.tokenOperation(tenantId!!) { token: String ->
-            val response = client.prepareRequest(
+        val response = msClient.tokenOperation(tenantId!!) { token: String ->
+            client.prepareRequest(
                 HttpExecuteRequest.builder().request(
                     SdkHttpRequest.builder().uri(
                         URI.create(
@@ -75,9 +76,11 @@ class PostSubscription : SubHandler {
                         "Authorization", "Bearer $token"
                     ).method(SdkHttpMethod.POST).build()
                 ).contentStreamProvider { body.byteInputStream() }.build()
-            ).call()
-            response.responseBody().get().readAllBytes().toString()
+            )
+        }.call()
+        if (!response.httpResponse().isSuccessful) {
+            return Response(ResponseError.EXCEPTION)
         }
-        return Response(jsonString)
+        return Response(response.responseBody().get().readAllBytes().toString())
     }
 }
