@@ -30,7 +30,6 @@ class MicrosoftGraphClient(
         """
     private val redirectUri = "http://localhost/myapp"
     private val clientSecret = "cap8Q~ESKP.5rpds2UeVfKw39.SB55YSmSwVmag8"
-    private var refreshToken: String? = null
     private val client = HttpClient.newBuilder().build()
 
     private fun String.utf8(): String = URLEncoder.encode(this, "UTF-8")
@@ -56,19 +55,22 @@ class MicrosoftGraphClient(
         val jsonString = response.body()
         val json = Json.parseToJsonElement(jsonString)
         val map = json.jsonObject.toMap()
-        val accessToken = map["access_token"].toString()
-        refreshToken = map["refresh_token"].toString()
-        setRefreshToken(tenantId, refreshToken!!)
+        val accessTokenTemp = map["access_token"].toString()
+        val accessToken = accessTokenTemp.substring(1, accessTokenTemp.length - 1)
+        val refreshTokenTemp = map["refresh_token"].toString()
+        val refreshToken = refreshTokenTemp.substring(1, refreshTokenTemp.length - 1)
 
-        return accessToken.substring(1, accessToken.length - 1)
+        setTokens(tenantId, accessToken, refreshToken)
+
+        return accessToken
     }
 
-    private fun refreshAccessToken(tenantId: String): String? {
+    override fun refreshAccessToken(tenantId: String): String? {
         val params = mapOf(
             "client_id" to clientId,
             "scope" to scope,
             "refresh_token"
-                    to refreshToken!!,
+                    to dbGetRefreshToken(tenantId)!!,
             "redirect_uri" to redirectUri,
             "grant_type" to "refresh_token",
             "client_secret" to clientSecret
@@ -88,11 +90,14 @@ class MicrosoftGraphClient(
         val jsonString = response.body()
         val json = Json.parseToJsonElement(jsonString)
         val map = json.jsonObject.toMap()
-        val accessToken = map["access_token"].toString()
-        refreshToken = map["refresh_token"].toString()
-        setRefreshToken(tenantId, refreshToken!!)
+        val accessTokenTemp = map["access_token"].toString()
+        val accessToken = accessTokenTemp.substring(1, accessTokenTemp.length - 1)
+        val refreshTokenTemp = map["refresh_token"].toString()
+        val refreshToken = refreshTokenTemp.substring(1, refreshTokenTemp.length - 1)
 
-        return accessToken.substring(1, accessToken.length - 1)
+        setTokens(tenantId, accessToken, refreshToken)
+
+        return accessToken
     }
 
     override fun <T : Any> tokenOperation(
@@ -110,19 +115,23 @@ class MicrosoftGraphClient(
         return result
     }
 
-    override fun setRefreshToken(tenantId: String, refreshToken: String):
+    override fun setRefreshToken(tenantId: String, token: String):
             Boolean {
         val tenant = database.updateEntry(
             Table.TENANTS,
             tenantId
         ) { tenantEntry: Tenant ->
-            tenantEntry.applicationRefreshToken = refreshToken
+            if (tokenType == TokenType.USER) {
+                tenantEntry.userRefreshToken = token
+            } else {
+                tenantEntry.applicationRefreshToken = token
+            }
             tenantEntry
         }
         return tenant != null
     }
 
-    override fun getRefreshToken(tenantId: String): String? {
+    private fun dbGetRefreshToken(tenantId: String): String? {
         val tenant: Tenant? = database.getEntry<Tenant>(
             Table.TENANTS,
             tenantId,
@@ -131,6 +140,50 @@ class MicrosoftGraphClient(
 
         return if (tokenType == TokenType.USER) tenant!!.userRefreshToken
         else tenant!!.applicationRefreshToken
+    }
+
+    private fun dbGetAccessToken(tenantId: String): String? {
+        val tenant: Tenant? = database.getEntry<Tenant>(
+            Table.TENANTS,
+            tenantId,
+            Tenant::class
+        )
+
+        return if (tokenType == TokenType.USER) tenant!!.userAccessToken
+        else tenant!!.applicationAccessToken
+    }
+
+//    private fun dbSetAccessToken(tenantId: String, token: String): Boolean {
+//        val tenant = database.updateEntry(
+//            Table.TENANTS,
+//            tenantId
+//        ) { tenantEntry: Tenant ->
+//            if (tokenType == TokenType.USER) {
+//                tenantEntry.userAccessToken = token
+//            } else {
+//                tenantEntry.applicationAccessToken = token
+//            }
+//            tenantEntry
+//        }
+//        return tenant != null
+//    }
+
+    private fun setTokens(tenantId: String, accessToken: String,
+                          refreshToken: String): Boolean {
+        val tenant = database.updateEntry(
+            Table.TENANTS,
+            tenantId
+        ) { tenantEntry: Tenant ->
+            if (tokenType == TokenType.USER) {
+                tenantEntry.userAccessToken = accessToken
+                tenantEntry.userRefreshToken = refreshToken
+            } else {
+                tenantEntry.applicationAccessToken = accessToken
+                tenantEntry.userRefreshToken = refreshToken
+            }
+            tenantEntry
+        }
+        return tenant != null
     }
 }
 

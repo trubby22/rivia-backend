@@ -72,22 +72,29 @@ class PostTenant : SubHandler {
         // Inserting the tenant entry
         val tenantEntry: Tenant =
             if (applicationRefreshToken == null || userRefreshToken == null) {
-                database.updateEntry(Table.TENANTS, tenantId) { tenantEntry: Tenant ->
+                database.updateEntry(
+                    Table.TENANTS,
+                    tenantId
+                ) { tenantEntry: Tenant ->
                     if (applicationRefreshToken != null) {
-                        tenantEntry.applicationRefreshToken = applicationRefreshToken
-                        tenantEntry.applicationAccessToken = TODO()
+                        tenantEntry.applicationRefreshToken =
+                            applicationRefreshToken
+                        tenantEntry.applicationAccessToken =
+                            applicationAccessToken.refreshAccessToken(tenantId)
                     }
                     if (userRefreshToken != null) {
                         tenantEntry.userRefreshToken = userRefreshToken
-                        tenantEntry.userAccessToken = TODO()
+                        tenantEntry.userAccessToken = userAccessToken
+                            .refreshAccessToken(tenantId)
                     }
-                    tenantEntry.presetQIds = presetQIds?.value ?: defaultPresetQIds.value
+                    tenantEntry.presetQIds =
+                        presetQIds?.value ?: defaultPresetQIds.value
                     tenantEntry
                 } ?: return Response(ResponseError.NOTENANT)
             } else {
                 database.updateEntryWithDefault(Table.TENANTS, {
-                    val applicationAccessToken = TODO()
-                    val userAccessToken = TODO()
+                    val applicationAccessToken = applicationAccessToken.refreshAccessToken(tenantId)
+                    val userAccessToken = userAccessToken.refreshAccessToken(tenantId)
                     Tenant(
                         tenantId,
                         applicationRefreshToken,
@@ -101,10 +108,11 @@ class PostTenant : SubHandler {
                         }
                     )
                 }, { tenantEntry: Tenant ->
-                    tenantEntry.applicationRefreshToken = applicationRefreshToken
-                    tenantEntry.applicationAccessToken = TODO()
+                    tenantEntry.applicationRefreshToken =
+                        applicationRefreshToken
+                    tenantEntry.applicationAccessToken = applicationAccessToken.refreshAccessToken(tenantId)
                     tenantEntry.userRefreshToken = userRefreshToken
-                    tenantEntry.userAccessToken = TODO()
+                    tenantEntry.userAccessToken = userAccessToken.refreshAccessToken(tenantId)
                     if (presetQIds != null) {
                         tenantEntry.presetQIds = presetQIds.value
                     }
@@ -114,7 +122,8 @@ class PostTenant : SubHandler {
 
         return Response(tenantEntry.presetQIds!!.map {
             ResponsePresetQ(
-                database.getEntry(Table.PRESETQS, it) ?: throw Error("presetQ not present")
+                database.getEntry(Table.PRESETQS, it)
+                    ?: throw Error("presetQ not present")
             )
         })
     }
