@@ -11,7 +11,7 @@ import me.rivia.api.userstore.UserStore
 class GetMeeting : SubHandler {
     override fun handleRequest(
         url: List<String>,
-        tenantId: String,
+        tenantId: String?,
         userId: String?,
         jsonData: Map<String, Any?>,
         database: Database,
@@ -24,7 +24,7 @@ class GetMeeting : SubHandler {
         val (meetingEntry, idMeeting) = MeetingId.fetch(database, userStore, meetingId) ?: return Response(
             ResponseError.NOMEETING
         )
-        if (tenantId != meetingEntry.tenantId) {
+        if (tenantId!! != meetingEntry.tenantId) {
             return Response(ResponseError.WRONGTENANTMEETING)
         }
         if (userId!! !in meetingEntry.userIds!!) {

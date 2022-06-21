@@ -12,7 +12,7 @@ import me.rivia.api.websocket.WebsocketClient
 class GetReview : SubHandler {
     override fun handleRequest(
         url: List<String>,
-        tenantId: String,
+        tenantId: String?,
         userId: String?,
         jsonData: Map<String, Any?>,
         database: Database,
@@ -22,7 +22,7 @@ class GetReview : SubHandler {
         websocket: WebsocketClient
     ): Response {
         val meetingId = url[1]
-        val responseSubmissionEntry = database.getEntry<ResponseSubmission>(Table.RESPONSESUBMISSIONS, ResponseSubmission.constructKey(tenantId, userId!!, meetingId))
+        val responseSubmissionEntry = database.getEntry<ResponseSubmission>(Table.RESPONSESUBMISSIONS, ResponseSubmission.constructKey(tenantId!!, userId!!, meetingId))
         return Response(responseSubmissionEntry != null)
     }
 }

@@ -6,8 +6,8 @@ import me.rivia.api.teams.TeamsClient
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
 
-fun interface SubHandler {
-    fun handleRequest(
+class PostGraphEvent : SubHandler {
+    override fun handleRequest(
         url: List<String>,
         tenantId: String?,
         userId: String?,
@@ -17,5 +17,7 @@ fun interface SubHandler {
         userAccessToken: TeamsClient,
         applicationAccessToken: TeamsClient,
         websocket: WebsocketClient
-    ): Response
+    ): Response {
+        TODO("Not yet implemented")
+    }
 }

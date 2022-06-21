@@ -11,7 +11,7 @@ import me.rivia.api.websocket.WebsocketClient
 class PostRating : SubHandler {
     override fun handleRequest(
         url: List<String>,
-        tenantId: String,
+        tenantId: String?,
         userId: String?,
         jsonData: Map<String, Any?>,
         database: Database,
@@ -26,7 +26,7 @@ class PostRating : SubHandler {
         do {
             opinionEntry = Opinion(
                 generateUid(),
-                tenantId,
+                tenantId!!,
                 userId!!,
                 like,
                 use

@@ -9,7 +9,7 @@ import me.rivia.api.websocket.WebsocketClient
 class WebsocketMessage : SubHandler {
     override fun handleRequest(
         url: List<String>,
-        tenantId: String,
+        tenantId: String?,
         userId: String?,
         jsonData: Map<String, Any?>,
         database: Database,
@@ -18,7 +18,7 @@ class WebsocketMessage : SubHandler {
         applicationAccessToken: TeamsClient,
         websocket: WebsocketClient
     ): Response {
-        websocket.registerWebsocket(url[1], tenantId, userId!!);
+        websocket.registerWebsocket(url[1], tenantId!!, userId!!)
         return Response()
     }
 }

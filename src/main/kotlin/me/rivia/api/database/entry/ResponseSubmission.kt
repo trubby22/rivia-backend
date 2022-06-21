@@ -16,21 +16,20 @@ data class ResponseSubmission(@get:DynamoDbPartitionKey var tenantIdUserIdMeetin
             tenantId, userId, meetingId
         )
     )
-
-    var tenantId
-        get() = this.tenantIdUserIdMeetingId?.split(' ')?.get(0)
-        set(tenantId) {
-            this.tenantIdUserIdMeetingId = constructKey(tenantId, userId, meetingId)
-        }
-    var userId: String?
-        get() = this.tenantIdUserIdMeetingId?.split(' ')?.get(1)
-        set(userId) {
-            this.tenantIdUserIdMeetingId = constructKey(tenantId, userId, meetingId)
-        }
-    var meetingId: String?
-        get() = this.tenantIdUserIdMeetingId?.split(' ')?.get(2)
-        set(meetingId) {
-            this.tenantIdUserIdMeetingId = constructKey(tenantId, userId, meetingId)
-        }
 }
 
+var ResponseSubmission.tenantId
+    get() = this.tenantIdUserIdMeetingId?.split(' ')?.get(0)
+    set(tenantId) {
+        this.tenantIdUserIdMeetingId = ResponseSubmission.constructKey(tenantId, userId, meetingId)
+    }
+var ResponseSubmission.userId: String?
+    get() = this.tenantIdUserIdMeetingId?.split(' ')?.get(1)
+    set(userId) {
+        this.tenantIdUserIdMeetingId = ResponseSubmission.constructKey(tenantId, userId, meetingId)
+    }
+var ResponseSubmission.meetingId: String?
+    get() = this.tenantIdUserIdMeetingId?.split(' ')?.get(2)
+    set(meetingId) {
+        this.tenantIdUserIdMeetingId = ResponseSubmission.constructKey(tenantId, userId, meetingId)
+    }

@@ -13,7 +13,7 @@ import me.rivia.api.websocket.WebsocketClient
 class GetMeetings : SubHandler {
     override fun handleRequest(
         url: List<String>,
-        tenantId: String,
+        tenantId: String?,
         userId: String?,
         jsonData: Map<String, Any?>,
         database: Database,
@@ -22,7 +22,7 @@ class GetMeetings : SubHandler {
         applicationAccessToken: TeamsClient,
         websocket: WebsocketClient
     ): Response {
-        val userEntry = userStore.getUser(tenantId, userId!!) ?: return Response(
+        val userEntry = userStore.getUser(tenantId!!, userId!!) ?: return Response(
             ResponseError.NOUSER)
         return Response(userEntry.meetingIds)
     }

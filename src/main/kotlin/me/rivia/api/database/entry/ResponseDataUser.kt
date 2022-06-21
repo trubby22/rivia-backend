@@ -26,20 +26,20 @@ data class ResponseDataUser(
         prepared: Int?,
         notPrepared: Int?
     ) : this(constructKey(tenantId, userId, meetingId), needed, notNeeded, prepared, notPrepared)
-
-    var tenantId
-        get() = this.tenantIdUserIdMeetingId?.split(' ')?.get(0)
-        set(tenantId) {
-            this.tenantIdUserIdMeetingId = constructKey(tenantId, userId, meetingId)
-        }
-    var userId: String?
-        get() = this.tenantIdUserIdMeetingId?.split(' ')?.get(1)
-        set(userId) {
-            this.tenantIdUserIdMeetingId = constructKey(tenantId, userId, meetingId)
-        }
-    var meetingId: String?
-        get() = this.tenantIdUserIdMeetingId?.split(' ')?.get(2)
-        set(meetingId) {
-            this.tenantIdUserIdMeetingId = constructKey(tenantId, userId, meetingId)
-        }
 }
+
+var ResponseDataUser.tenantId
+    get() = this.tenantIdUserIdMeetingId?.split(' ')?.get(0)
+    set(tenantId) {
+        this.tenantIdUserIdMeetingId = ResponseDataUser.constructKey(tenantId, userId, meetingId)
+    }
+var ResponseDataUser.userId: String?
+    get() = this.tenantIdUserIdMeetingId?.split(' ')?.get(1)
+    set(userId) {
+        this.tenantIdUserIdMeetingId = ResponseDataUser.constructKey(tenantId, userId, meetingId)
+    }
+var ResponseDataUser.meetingId: String?
+    get() = this.tenantIdUserIdMeetingId?.split(' ')?.get(2)
+    set(meetingId) {
+        this.tenantIdUserIdMeetingId = ResponseDataUser.constructKey(tenantId, userId, meetingId)
+    }

@@ -13,7 +13,7 @@ import me.rivia.api.websocket.WebsocketClient
 class PostReview : SubHandler {
     override fun handleRequest(
         url: List<String>,
-        tenantId: String,
+        tenantId: String?,
         userId: String?,
         jsonData: Map<String, Any?>,
         database: Database,
@@ -57,7 +57,7 @@ class PostReview : SubHandler {
 
         // Inserting the data
         if (!database.putEntry(
-                Table.RESPONSESUBMISSIONS, ResponseSubmission(tenantId, userId!!, meetingId)
+                Table.RESPONSESUBMISSIONS, ResponseSubmission(tenantId!!, userId!!, meetingId)
             )
         ) {
             return Response(ResponseError.REVIEWSUBMITTED)

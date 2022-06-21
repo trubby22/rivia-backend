@@ -2,15 +2,9 @@ package me.rivia.api.websocket
 
 import com.google.gson.Gson
 import me.rivia.api.database.*
-import me.rivia.api.database.entry.Connection
-import me.rivia.api.database.entry.Websocket
-import me.rivia.api.database.entry.tenantId
-import me.rivia.api.database.entry.userId
+import me.rivia.api.database.entry.*
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.http.ExecutableHttpRequest
-import software.amazon.awssdk.http.HttpExecuteRequest
-import software.amazon.awssdk.http.SdkHttpClient
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.apigatewaymanagementapi.ApiGatewayManagementApiClient
@@ -28,18 +22,16 @@ class ApiGatewayWebsocketClient(private val database: Database, region: Region =
 
     private val wsClient =
         ApiGatewayManagementApiClient.builder().httpClient(httpClient).region(region)
-            .credentialsProvider(DefaultCredentialsProvider.create())
-            .endpointOverride(URI(URL)).build()
+            .credentialsProvider(DefaultCredentialsProvider.create()).endpointOverride(URI(URL))
+            .build()
 
     private val jsonConverter = Gson()
 
     override fun registerWebsocket(connectionId: String, tenantId: String, userId: String) {
-        database.updateEntryWithDefault(
-            Table.WEBSOCKETS,
+        database.updateEntryWithDefault(Table.WEBSOCKETS,
             { Websocket(connectionId, tenantId, userId) },
             { Websocket(connectionId, tenantId, userId) })
-        database.updateEntryWithDefault(
-            Table.CONNECTIONS,
+        database.updateEntryWithDefault(Table.CONNECTIONS,
             { Connection(tenantId, userId, listOf(connectionId)) },
             { connectionEntry ->
                 connectionEntry.connectionIds =
@@ -53,19 +45,15 @@ class ApiGatewayWebsocketClient(private val database: Database, region: Region =
         val websocketEntry = database.deleteEntry<Websocket>(Table.WEBSOCKETS, connectionId)
         if (websocketEntry != null) {
             database.updateEntry<Connection>(
-                Table.CONNECTIONS,
-                Connection(
-                    websocketEntry.tenantId!!,
-                    websocketEntry.userId!!,
-                    null
+                Table.CONNECTIONS, Connection(
+                    websocketEntry.tenantId!!, websocketEntry.userId!!, null
                 ).tenantIdUserId!!
             ) {
-                it.connectionIds =
-                    it.connectionIds!!.filter { otherConnectionId: String ->
-                        !(connectionId::equals)(
-                            otherConnectionId
-                        )
-                    }; it
+                it.connectionIds = it.connectionIds!!.filter { otherConnectionId: String ->
+                    !(connectionId::equals)(
+                        otherConnectionId
+                    )
+                }; it
             }
         }
     }

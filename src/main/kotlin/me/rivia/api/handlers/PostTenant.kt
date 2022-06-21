@@ -13,7 +13,7 @@ import me.rivia.api.handlers.responses.PresetQ as ResponsePresetQ
 class PostTenant : SubHandler {
     override fun handleRequest(
         url: List<String>,
-        tenantId: String,
+        tenantId: String?,
         userId: String?,
         jsonData: Map<String, Any?>,
         database: Database,
@@ -70,60 +70,52 @@ class PostTenant : SubHandler {
         }
 
         // Inserting the tenant entry
-        val tenantEntry: Tenant =
-            if (applicationRefreshToken == null || userRefreshToken == null) {
-                database.updateEntry(
-                    Table.TENANTS,
-                    tenantId
-                ) { tenantEntry: Tenant ->
-                    if (applicationRefreshToken != null) {
-                        tenantEntry.applicationRefreshToken =
-                            applicationRefreshToken
-                        tenantEntry.applicationAccessToken =
-                            applicationAccessToken.getAccessAndRefreshToken(tenantId).component1()
-                    }
-                    if (userRefreshToken != null) {
-                        tenantEntry.userRefreshToken = userRefreshToken
-                        tenantEntry.userAccessToken = userAccessToken
-                            .getAccessAndRefreshToken(tenantId).component1()
-                    }
-                    tenantEntry.presetQIds =
-                        presetQIds?.value ?: defaultPresetQIds.value
-                    tenantEntry
-                } ?: return Response(ResponseError.NOTENANT)
-            } else {
-                database.updateEntryWithDefault(Table.TENANTS, {
-                    val applicationAccessToken = applicationAccessToken.getAccessAndRefreshToken(tenantId).component1()
-                    val userAccessToken = userAccessToken.getAccessAndRefreshToken(tenantId).component1()
-                    Tenant(
-                        tenantId,
-                        applicationRefreshToken,
-                        applicationAccessToken,
-                        userRefreshToken,
-                        userAccessToken,
-                        if (presetQIds != null) {
-                            presetQIds.value
-                        } else {
-                            defaultPresetQIds.value
-                        }
-                    )
-                }, { tenantEntry: Tenant ->
-                    tenantEntry.applicationRefreshToken =
-                        applicationRefreshToken
-                    tenantEntry.applicationAccessToken = applicationAccessToken.getAccessAndRefreshToken(tenantId).component1()
+        val tenantEntry: Tenant = if (applicationRefreshToken == null || userRefreshToken == null) {
+            database.updateEntry(
+                Table.TENANTS, tenantId!!
+            ) { tenantEntry: Tenant ->
+                if (applicationRefreshToken != null) {
+                    tenantEntry.applicationRefreshToken = applicationRefreshToken
+                    tenantEntry.applicationAccessToken = TODO()
+                }
+                if (userRefreshToken != null) {
                     tenantEntry.userRefreshToken = userRefreshToken
-                    tenantEntry.userAccessToken = userAccessToken.getAccessAndRefreshToken(tenantId).component1()
+                    tenantEntry.userAccessToken = TODO()
+                }
+                tenantEntry.presetQIds = presetQIds?.value ?: defaultPresetQIds.value
+                tenantEntry
+            } ?: return Response(ResponseError.NOTENANT)
+        } else {
+            database.updateEntryWithDefault(Table.TENANTS, {
+                val applicationAccessToken = TODO()
+                val userAccessToken = TODO()
+                Tenant(
+                    tenantId,
+                    applicationRefreshToken,
+                    applicationAccessToken,
+                    userRefreshToken,
+                    userAccessToken,
                     if (presetQIds != null) {
-                        tenantEntry.presetQIds = presetQIds.value
+                        presetQIds.value
+                    } else {
+                        defaultPresetQIds.value
                     }
-                    tenantEntry
-                })
-            }
+                )
+            }, { tenantEntry: Tenant ->
+                tenantEntry.applicationRefreshToken = applicationRefreshToken
+                tenantEntry.applicationAccessToken = TODO()
+                tenantEntry.userRefreshToken = userRefreshToken
+                tenantEntry.userAccessToken = TODO()
+                if (presetQIds != null) {
+                    tenantEntry.presetQIds = presetQIds.value
+                }
+                tenantEntry
+            })
+        }
 
         return Response(tenantEntry.presetQIds!!.map {
             ResponsePresetQ(
-                database.getEntry(Table.PRESETQS, it)
-                    ?: throw Error("presetQ not present")
+                database.getEntry(Table.PRESETQS, it) ?: throw Error("presetQ not present")
             )
         })
     }

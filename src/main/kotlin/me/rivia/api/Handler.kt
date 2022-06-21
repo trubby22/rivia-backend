@@ -28,36 +28,65 @@ class Handler(
     }
 
     private val pathMappings =
-        Trie<String, MutableMap<ApiMethod, Pair<Boolean, Lazy<SubHandler>>>>()
+        Trie<String, MutableMap<ApiMethod, Triple<Boolean, Boolean, Lazy<SubHandler>>>>()
 
     init {
         // Frontend handlers
-        registerSubHandler(listOf(), ApiMethod.HTTP_GET, false, lazy { GetTenant() })
-        registerSubHandler(listOf(), ApiMethod.HTTP_POST, true, lazy { PostTenant() })
-        registerSubHandler(listOf("meetings"), ApiMethod.HTTP_GET, false, lazy { GetMeetings() })
-        registerSubHandler(listOf("meetings", null),
+        registerSubHandler(listOf(), ApiMethod.HTTP_GET, false, false, lazy { GetTenant() })
+        registerSubHandler(listOf(), ApiMethod.HTTP_POST, false, true, lazy { PostTenant() })
+        registerSubHandler(
+            listOf("meetings"),
             ApiMethod.HTTP_GET,
             false,
+            false,
+            lazy { GetMeetings() })
+        registerSubHandler(listOf("meetings", null),
+            ApiMethod.HTTP_GET,
+            false, false,
             lazy { GetMeeting() })
         registerSubHandler(listOf("meetings", null, "reviews"),
             ApiMethod.HTTP_GET,
-            false,
+            false, false,
             lazy { GetReview() })
         registerSubHandler(listOf("meetings", null, "reviews"),
             ApiMethod.HTTP_POST,
-            false,
+            false, false,
             lazy { PostReview() })
-        registerSubHandler(listOf("rating"), ApiMethod.HTTP_POST, false, lazy { PostRating() })
-        registerSubHandler(listOf("timing"), ApiMethod.HTTP_POST, false, lazy { PostTiming() })
+        registerSubHandler(
+            listOf("rating"),
+            ApiMethod.HTTP_POST,
+            false,
+            false,
+            lazy { PostRating() })
+        registerSubHandler(
+            listOf("timing"),
+            ApiMethod.HTTP_POST,
+            false,
+            false,
+            lazy { PostTiming() })
+
+        // Teams integration handlers
+        registerSubHandler(
+            listOf("subscription"),
+            ApiMethod.HTTP_POST,
+            true,
+            true,
+            lazy { PostSubscription() })
+        registerSubHandler(
+            listOf("graphEvent"),
+            ApiMethod.HTTP_POST,
+            true,
+            true,
+            lazy { PostGraphEvent() })
 
         // Websocket handlers
         registerSubHandler(listOf("websockets", null),
             ApiMethod.WEBSOCKET_MESSAGE,
-            false,
+            false, false,
             lazy { WebsocketMessage() })
         registerSubHandler(listOf("websockets", null),
             ApiMethod.WEBSOCKET_DISCONNECT,
-            true,
+            true, true,
             lazy { WebsocketDisconnect() })
     }
 
@@ -80,14 +109,18 @@ class Handler(
     constructor() : this(DynamoDatabase())
 
     fun registerSubHandler(
-        url: List<String?>, method: ApiMethod, withoutUser: Boolean, subHandler: Lazy<SubHandler>
+        url: List<String?>,
+        method: ApiMethod,
+        withoutTenant: Boolean,
+        withoutUser: Boolean,
+        subHandler: Lazy<SubHandler>
     ) {
         var methodMappings = pathMappings[url]
         if (methodMappings == null) {
             methodMappings = EnumMap(ApiMethod::class.java)
             pathMappings[url] = methodMappings
         }
-        methodMappings[method] = (withoutUser to subHandler)
+        methodMappings[method] = Triple(withoutTenant, withoutUser, subHandler)
     }
 
     override fun handleRequest(event: Event?, context: Context?): Response {
@@ -109,17 +142,29 @@ class Handler(
                 event.path ?: throw Error("Path field empty")
             )
 
-            if (event.tenant?.isEmpty() != false) {
-                return Response(ResponseError.NOTENANT)
-            }
-
-            val (withoutUser, handler) = pathMappings[path]?.get(
+            val (withoutTenant, withoutUser, handler) = pathMappings[path]?.get(
                 ApiMethod.valueOf(
                     "${event.api!!.type!!}_${event.api!!.method!!}".uppercase()
                 )
             ) ?: return Response(ResponseError.NOHANDLER)
             val jsonData = event.jsonData ?: mapOf()
 
+            if (withoutTenant) {
+                return handler.value.handleRequest(
+                    path,
+                    null,
+                    null,
+                    jsonData,
+                    database,
+                    userStore,
+                    userTeamsClient,
+                    applicationTeamsClient,
+                    websocket
+                )
+            }
+            if (event.tenant?.isEmpty() != false) {
+                return Response(ResponseError.NOTENANT)
+            }
             if (withoutUser) {
                 return handler.value.handleRequest(
                     path,

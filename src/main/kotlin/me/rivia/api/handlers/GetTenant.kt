@@ -14,7 +14,7 @@ import me.rivia.api.handlers.responses.PresetQ as ResponsePresetQ
 class GetTenant : SubHandler {
     override fun handleRequest(
         url: List<String>,
-        tenantId: String,
+        tenantId: String?,
         userId: String?,
         jsonData: Map<String, Any?>,
         database: Database,
@@ -23,7 +23,7 @@ class GetTenant : SubHandler {
         applicationAccessToken: TeamsClient,
         websocket: WebsocketClient
     ): Response {
-        val tenantEntry = database.getEntry<Tenant>(Table.TENANTS, tenantId) ?: return Response(ResponseError.NOTENANT)
+        val tenantEntry = database.getEntry<Tenant>(Table.TENANTS, tenantId!!) ?: return Response(ResponseError.NOTENANT)
         val responsePresetQs = tenantEntry.presetQIds!!.map {ResponsePresetQ(database.getEntry(Table.PRESETQS, it) ?: throw Error("presetQ not found"))}
         return Response(responsePresetQs)
     }

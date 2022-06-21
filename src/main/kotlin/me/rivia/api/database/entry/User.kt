@@ -15,15 +15,15 @@ data class User(
     constructor(tenantId: String?, userId: String?, name: String?, surname: String?, meetingIds: List<String>?) : this(
         constructKey(tenantId, userId), name, surname, meetingIds
     )
-
-    var tenantId
-        get() = tenantIdUserId?.split(' ')?.get(0)
-        set(tenantId) {
-            this.tenantIdUserId = constructKey(tenantId, userId)
-        }
-    var userId
-        get() = tenantIdUserId?.split(' ')?.get(1)
-        set(userId) {
-            this.tenantIdUserId = constructKey(tenantId, userId)
-        }
 }
+
+var User.tenantId
+    get() = tenantIdUserId?.split(' ')?.get(0)
+    set(tenantId) {
+        this.tenantIdUserId = User.constructKey(tenantId, userId)
+    }
+var User.userId
+    get() = tenantIdUserId?.split(' ')?.get(1)
+    set(userId) {
+        this.tenantIdUserId = User.constructKey(tenantId, userId)
+    }

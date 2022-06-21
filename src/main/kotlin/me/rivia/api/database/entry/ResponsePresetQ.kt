@@ -20,15 +20,15 @@ data class ResponsePresetQ(
     ) : this(
         constructKey(presetQId, meetingId), numSubmitted, numSelected
     )
-
-    var presetQId
-        get() = this.presetQIdMeetingId?.split(' ')?.get(0)
-        set(presetQId) {
-            this.presetQIdMeetingId = constructKey(presetQId, meetingId)
-        }
-    var meetingId
-        get() = this.presetQIdMeetingId?.split(' ')?.get(1)
-        set(meetingId) {
-            this.presetQIdMeetingId = constructKey(presetQId, meetingId)
-        }
 }
+
+var ResponsePresetQ.presetQId
+    get() = this.presetQIdMeetingId?.split(' ')?.get(0)
+    set(presetQId) {
+        this.presetQIdMeetingId = ResponsePresetQ.constructKey(presetQId, meetingId)
+    }
+var ResponsePresetQ.meetingId
+    get() = this.presetQIdMeetingId?.split(' ')?.get(1)
+    set(meetingId) {
+        this.presetQIdMeetingId = ResponsePresetQ.constructKey(presetQId, meetingId)
+    }
