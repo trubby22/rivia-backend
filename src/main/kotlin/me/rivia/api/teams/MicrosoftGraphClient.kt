@@ -8,13 +8,10 @@ import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.getEntry
 import me.rivia.api.database.updateEntry
 import software.amazon.awssdk.http.HttpExecuteRequest
-import software.amazon.awssdk.http.HttpExecuteResponse
 import software.amazon.awssdk.http.SdkHttpMethod
 import software.amazon.awssdk.http.SdkHttpRequest
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
-import java.io.IOException
 import java.net.URI
-import java.net.URLEncoder
 
 enum class TokenType {
     APPLICATION, USER,
@@ -33,6 +30,7 @@ class MicrosoftGraphClient(
             @SerializedName("scope") val scope: String?,
             @SerializedName("refresh_token") val refreshToken: String?,
         )
+        val clientId = "9661a5c4-6c18-49b8-aad6-e3a4722c2515"
     }
 
     private fun getAccessToken(tenantId: String): String {
@@ -52,7 +50,6 @@ class MicrosoftGraphClient(
     }
 
     private fun refreshAccessToken(tenantId: String): String? {
-        val clientId = "9661a5c4-6c18-49b8-aad6-e3a4722c2515"
         val scope =
             if (tokenType == TokenType.APPLICATION) "ChatMessage.Read.All" else "ChannelMessage.Send"
         val redirectUri =
@@ -71,21 +68,12 @@ class MicrosoftGraphClient(
             ).appendRawQueryParameter("redirect_uri", redirectUri)
             .appendRawQueryParameter("grant_type", "refresh_token")
             .appendRawQueryParameter("client_secret", clientSecret).build()
-        val request = client.prepareRequest(
+        val response = client.prepareRequest(
             HttpExecuteRequest.builder().request(
                 sdkHttpRequest
             ).build()
-        )
+        ).call()
 
-        val response: HttpExecuteResponse
-
-        try {
-            response = request.call()
-        } catch (e: IOException) {
-            return null
-        } finally {
-            client.close()
-        }
         if (!response.httpResponse().isSuccessful) {
             return null
         }
@@ -133,6 +121,4 @@ class MicrosoftGraphClient(
         }
         return tenant != null
     }
-
-    private fun Any.utf8(): String = URLEncoder.encode(this.toString(), "UTF-8")
 }
