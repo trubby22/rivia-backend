@@ -76,19 +76,19 @@ class PostTenant : SubHandler {
             ) { tenantEntry: Tenant ->
                 if (applicationRefreshToken != null) {
                     tenantEntry.applicationRefreshToken = applicationRefreshToken
-                    tenantEntry.applicationAccessToken = TODO()
+                    tenantEntry.applicationAccessToken = applicationAccessToken.getAccessToken(tenantId)
                 }
                 if (userRefreshToken != null) {
                     tenantEntry.userRefreshToken = userRefreshToken
-                    tenantEntry.userAccessToken = TODO()
+                    tenantEntry.userAccessToken = userAccessToken.getAccessToken(tenantId)
                 }
                 tenantEntry.presetQIds = presetQIds?.value ?: defaultPresetQIds.value
                 tenantEntry
             } ?: return Response(ResponseError.NOTENANT)
         } else {
             database.updateEntryWithDefault(Table.TENANTS, {
-                val applicationAccessToken = TODO()
-                val userAccessToken = TODO()
+                val applicationAccessToken = applicationAccessToken.getAccessToken(tenantId!!)
+                val userAccessToken = userAccessToken.getAccessToken(tenantId)
                 Tenant(
                     tenantId,
                     applicationRefreshToken,
@@ -103,9 +103,9 @@ class PostTenant : SubHandler {
                 )
             }, { tenantEntry: Tenant ->
                 tenantEntry.applicationRefreshToken = applicationRefreshToken
-                tenantEntry.applicationAccessToken = TODO()
+                tenantEntry.applicationAccessToken = applicationAccessToken.getAccessToken(tenantId!!)
                 tenantEntry.userRefreshToken = userRefreshToken
-                tenantEntry.userAccessToken = TODO()
+                tenantEntry.userAccessToken = userAccessToken.getAccessToken(tenantId)
                 if (presetQIds != null) {
                     tenantEntry.presetQIds = presetQIds.value
                 }

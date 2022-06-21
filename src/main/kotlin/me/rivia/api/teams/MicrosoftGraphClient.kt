@@ -1,9 +1,5 @@
 package me.rivia.api.teams
 
-//import java.net.http.HttpClient
-//import java.net.http.HttpRequest
-//import java.net.http.HttpResponse
-
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import me.rivia.api.database.Database
@@ -34,7 +30,7 @@ class MicrosoftGraphClient(
     private val database: Database, private val tokenType: TokenType
 ) : TeamsClient {
 
-    override fun getAccessAndRefreshToken(tenantId: String): Pair<String?, String?> {
+    override fun getAccessToken(tenantId: String): String? {
         val clientId = "9661a5c4-6c18-49b8-aad6-e3a4722c2515"
         val scope =
             if (tokenType == TokenType.APPLICATION) "ChatMessage.Read.All" else "ChannelMessage.Send"
@@ -52,17 +48,8 @@ class MicrosoftGraphClient(
             "grant_type" to "refresh_token",
             "client_secret" to clientSecret
         )
-        val urlParams = params.map { (k, v) -> "${k.utf8()}=${v.utf8()}" }.joinToString("&")
-
-//        val request = HttpRequest.newBuilder()
-//            .uri(URI.create("https://login.microsoftonline.com/common/oauth2/v2.0/token?${urlParams}"))
-//            .POST(HttpRequest.BodyPublishers.ofString(urlParams))
-//            .header("Content-Type", "application/x-www-form-urlencoded")
-//            .build()
-//
-//        val response =
-//            client.send(request, HttpResponse.BodyHandlers.ofString())
-//        val jsonString = response.body()
+        val urlParams =
+            params.map { (k, v) -> "${k.utf8()}=${v.utf8()}" }.joinToString("&")
 
         val client = UrlConnectionHttpClient.builder().build()
 
@@ -95,17 +82,17 @@ class MicrosoftGraphClient(
 
         setTokens(tenantId, accessToken, refreshToken)
 
-        return accessToken to refreshToken
+        return accessToken
     }
 
     override fun <T : Any> tokenOperation(
         tenantId: String, apiCall: (String) -> T?
     ): T {
-        var accessToken = getAccessAndRefreshToken(tenantId).component1()
+        var accessToken = getAccessToken(tenantId)
         var result = apiCall(accessToken!!)
         while (result == null) {
             do {
-                accessToken = getAccessAndRefreshToken(tenantId).component1()
+                accessToken = getAccessToken(tenantId)
             } while (accessToken == null)
             result = apiCall(accessToken)
         }
@@ -131,20 +118,8 @@ class MicrosoftGraphClient(
         val tenant: Tenant? = database.getEntry<Tenant>(
             Table.TENANTS, tenantId, Tenant::class
         )
-
         return if (tokenType == TokenType.USER) tenant!!.userRefreshToken
         else tenant!!.applicationRefreshToken
-    }
-
-    private fun dbGetAccessToken(tenantId: String): String? {
-        val tenant: Tenant? = database.getEntry<Tenant>(
-            Table.TENANTS,
-            tenantId,
-            Tenant::class
-        )
-
-        return if (tokenType == TokenType.USER) tenant!!.userAccessToken
-        else tenant!!.applicationAccessToken
     }
 
     private fun setTokens(
@@ -166,4 +141,4 @@ class MicrosoftGraphClient(
         }
         return tenant != null
     }
-
+}
