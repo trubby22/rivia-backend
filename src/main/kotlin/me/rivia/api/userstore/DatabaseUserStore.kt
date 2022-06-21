@@ -1,7 +1,8 @@
 package me.rivia.api.userstore
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
+import jdk.incubator.jpackage.internal.IOUtils
 import me.rivia.api.database.Database
 import me.rivia.api.database.Table
 import me.rivia.api.database.getEntry
@@ -11,6 +12,18 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
+import software.amazon.awssdk.http.HttpExecuteRequest
+import software.amazon.awssdk.http.SdkHttpMethod
+import software.amazon.awssdk.http.SdkHttpRequest
+import software.amazon.awssdk.protocols.jsoncore.JsonNode
+import java.net.URLEncoder
+
+data class UserResponse(
+    @SerializedName("displayName") val displayName: String,
+    @SerializedName("surname") val surname: String,
+)
+
 
 
 class DatabaseUserStore(private val database: Database, private val applicationTeamsClient: TeamsClient) : UserStore {
@@ -20,32 +33,38 @@ class DatabaseUserStore(private val database: Database, private val applicationT
         if (userEntry == null) {
             // create api lambda to use with access/refresh token in client
             val apiCall = {accessToken : String ->
-                val client = HttpClient.newHttpClient()
-                // create a request
-                val request = HttpRequest.newBuilder(
-                    URI.create("https://graph.microsoft.com/v1.0/users/$userId")
+                val client = UrlConnectionHttpClient.builder().build()
+
+                val request = client.prepareRequest(
+                    HttpExecuteRequest.builder().request
+                        (
+                        SdkHttpRequest.builder().uri(
+                            URI.create(
+                                "https://graph.microsoft.com/v1.0/users/${userId}"
+                            )
+                        ).putHeader
+                            ("Content-Type", "application/json")
+                            .putHeader("Authorization", "Bearer $accessToken").method
+                            (SdkHttpMethod.GET).build()
+                    ).build()
                 )
-                    .header("Content-type", "application/json")
-                    .header("Authorization", "Bearer ${accessToken}")
-                    .build()
-                val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-                val json : String? = response.body()
+
+                val response = request.call()
+
+                client.close()
+
+                val inputStream = response.responseBody().get()
+                val json = inputStream.toString()
                 json
             }
             val json = applicationTeamsClient.tokenOperation(tenantId, apiCall)
-            val objectMapper = ObjectMapper()
-
-            val jsonNode: JsonNode = objectMapper.readTree(json);
-
-            if (jsonNode.get("error") != null) {
-                return null
-            }
-
-            val firstName : String = jsonNode.get("givenName").asText()
-            val surname : String = jsonNode.get("surname").asText()
-
-            val newUser = User(tenantId + userId, firstName, surname)
-            database.putEntry<User>(Table.USERS, newUser);
+            val userResponse = Gson().fromJson(
+                json,
+                UserResponse::class.java
+            )
+            // no meeting Ids when first adding user
+            val newUser = User(tenantId + userId, userResponse.displayName, userResponse.surname, listOf())
+            database.putEntry(Table.USERS, newUser);
 
             return newUser
         } else {
