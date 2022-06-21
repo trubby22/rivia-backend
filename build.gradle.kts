@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.6.21"
+    kotlin("plugin.serialization") version "1.6.21"
 }
 
 group = "org.example"
@@ -21,7 +22,8 @@ dependencies {
     implementation("com.amazonaws:aws-lambda-java-core:1.2.1")
     implementation("com.amazonaws:aws-lambda-java-events:3.11.0")
     implementation("com.google.code.gson:gson:2.8.5")
-
+    implementation("com.beust:klaxon:5.5")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 }
 
 tasks {
