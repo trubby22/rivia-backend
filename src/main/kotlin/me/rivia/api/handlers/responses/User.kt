@@ -1,7 +1,7 @@
 package me.rivia.api.handlers.responses
 
-import me.rivia.api.database.entry.User as DatabaseUser
+import me.rivia.api.userstore.User as StoreUser
 
 class User(val id: String, val name: String, val surname: String) {
-    constructor(user: DatabaseUser) : this(user.userId!!, user.name!!, user.surname!!)
+    constructor(user: StoreUser) : this(user.id, user.name, user.surname)
 }

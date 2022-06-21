@@ -22,8 +22,8 @@ class GetMeetings : SubHandler {
         applicationAccessToken: TeamsClient,
         websocket: WebsocketClient
     ): Response {
-        val userEntry = database.getEntry<User>(Table.MEETINGS, User.constructKey(tenantId, userId)) ?: return Response(
-            ResponseError.NOTENANT)
-        return Response(userEntry.meetingIds!!)
+        val userEntry = userStore.getUser(tenantId, userId!!) ?: return Response(
+            ResponseError.NOUSER)
+        return Response(userEntry.meetingIds)
     }
 }

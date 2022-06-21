@@ -98,8 +98,7 @@ class PostTenant : SubHandler {
                             presetQIds.value
                         } else {
                             defaultPresetQIds.value
-                        },
-                        listOf(),
+                        }
                     )
                 }, { tenantEntry: Tenant ->
                     tenantEntry.applicationRefreshToken = applicationRefreshToken

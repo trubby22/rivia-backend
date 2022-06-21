@@ -3,13 +3,19 @@ package me.rivia.api.handlers.responses
 import me.rivia.api.database.Database
 import me.rivia.api.database.Table
 import me.rivia.api.database.entry.Meeting as DatabaseMeeting
-import me.rivia.api.database.entry.ResponseDataUsers
+import me.rivia.api.database.entry.ResponseDataUser
 import me.rivia.api.database.entry.ResponsePresetQ
+import me.rivia.api.database.entry.PresetQ as DatabasePresetQ
 import me.rivia.api.database.getEntry
+import me.rivia.api.userstore.UserStore
 
 class MeetingId(val id: String, val meeting: Meeting) {
     companion object {
-        fun fetch(database: Database, meetingId: String): Pair<DatabaseMeeting, MeetingId>? {
+        fun fetch(
+            database: Database,
+            userStore: UserStore,
+            meetingId: String
+        ): Pair<DatabaseMeeting, MeetingId>? {
             val meetingEntry = database.getEntry<DatabaseMeeting>(Table.MEETINGS, meetingId)
                 ?: return null
             return meetingEntry to MeetingId(
@@ -20,26 +26,23 @@ class MeetingId(val id: String, val meeting: Meeting) {
                     meetingEntry.qualities!!,
                     meetingEntry.responsesCount!!,
                     meetingEntry.organizerId!!,
-                    meetingEntry.participantIds!!.map {
-                        val participantEntry =
-                            database.getEntry<me.rivia.api.database.entry.User>(
-                                Table.PARTICIPANTS, it
-                            ) ?: throw Error("Participant not present")
-                        val responseParticipantEntry = database.getEntry<ResponseDataUsers>(
-                            Table.RESPONSEPARTICIPANTS, ResponseDataUsers(
-                                participantEntry.participantId!!, meetingId, null, null, null, null
-                            ).participantIdMeetingId!!
-                        ) ?: throw Error("ResponseParticipant not present")
+                    meetingEntry.userIds!!.map {
+                        val userEntry = userStore.getUser(meetingEntry.tenantId!!, it)
+                            ?: throw Error("User not a part of this meeting")
+                        val responseDataUserEntry = database.getEntry<ResponseDataUser>(
+                            Table.RESPONSEDATAUSERS,
+                            ResponseDataUser.constructKey(meetingEntry.tenantId!!, it, meetingId)
+                        ) ?: throw Error("No ResponseDataUserEntry")
                         UserData(
-                            User(participantEntry),
-                            responseParticipantEntry.needed!!,
-                            responseParticipantEntry.notNeeded!!,
-                            responseParticipantEntry.prepared!!,
-                            responseParticipantEntry.notPrepared!!
+                            User(userEntry),
+                            responseDataUserEntry.needed!!,
+                            responseDataUserEntry.notNeeded!!,
+                            responseDataUserEntry.prepared!!,
+                            responseDataUserEntry.notPrepared!!
                         )
                     },
                     meetingEntry.presetQIds!!.map {
-                        val presetQEntry = database.getEntry<me.rivia.api.database.entry.PresetQ>(
+                        val presetQEntry = database.getEntry<DatabasePresetQ>(
                             Table.PRESETQS, it
                         ) ?: throw Error("PresetQ not present")
                         val responsePresetQEntry = database.getEntry<ResponsePresetQ>(

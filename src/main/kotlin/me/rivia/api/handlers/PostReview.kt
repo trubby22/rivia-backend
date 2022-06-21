@@ -5,6 +5,8 @@ import me.rivia.api.ResponseError
 import me.rivia.api.database.*
 import me.rivia.api.database.entry.*
 import me.rivia.api.handlers.responses.MeetingId
+import me.rivia.api.teams.TeamsClient
+import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
 
 
@@ -15,6 +17,9 @@ class PostReview : SubHandler {
         userId: String?,
         jsonData: Map<String, Any?>,
         database: Database,
+        userStore: UserStore,
+        userAccessToken: TeamsClient,
+        applicationAccessToken: TeamsClient,
         websocket: WebsocketClient
     ): Response {
         val meetingId = url[1]
@@ -89,8 +94,8 @@ class PostReview : SubHandler {
             }
         }
         for (neededId in needed) {
-            database.updateEntry<ResponseDataUsers>(
-                Table.RESPONSEPARTICIPANTS, ResponseDataUsers(
+            database.updateEntry<ResponseDataUser>(
+                Table.RESPONSEPARTICIPANTS, ResponseDataUser(
                     neededId, meetingId, null, null, null, null
                 ).participantIdMeetingId!!
             ) {
@@ -99,8 +104,8 @@ class PostReview : SubHandler {
             } ?: throw Error("ResponseParticipant not present")
         }
         for (notNeededId in notNeeded) {
-            database.updateEntry<ResponseDataUsers>(
-                Table.RESPONSEPARTICIPANTS, ResponseDataUsers(
+            database.updateEntry<ResponseDataUser>(
+                Table.RESPONSEPARTICIPANTS, ResponseDataUser(
                     notNeededId, meetingId, null, null, null, null
                 ).participantIdMeetingId!!
             ) {
@@ -109,8 +114,8 @@ class PostReview : SubHandler {
             } ?: throw Error("ResponseParticipant not present")
         }
         for (preparedId in prepared) {
-            database.updateEntry<ResponseDataUsers>(
-                Table.RESPONSEPARTICIPANTS, ResponseDataUsers(
+            database.updateEntry<ResponseDataUser>(
+                Table.RESPONSEPARTICIPANTS, ResponseDataUser(
                     preparedId, meetingId, null, null, null, null
                 ).participantIdMeetingId!!
             ) {
@@ -119,8 +124,8 @@ class PostReview : SubHandler {
             } ?: throw Error("ResponseParticipant not present")
         }
         for (notPreparedId in notPrepared) {
-            database.updateEntry<ResponseDataUsers>(
-                Table.RESPONSEPARTICIPANTS, ResponseDataUsers(
+            database.updateEntry<ResponseDataUser>(
+                Table.RESPONSEPARTICIPANTS, ResponseDataUser(
                     notPreparedId, meetingId, null, null, null, null
                 ).participantIdMeetingId!!
             ) {

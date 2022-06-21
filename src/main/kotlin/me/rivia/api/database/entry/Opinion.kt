@@ -8,8 +8,8 @@ data class Opinion(
     @get:DynamoDbPartitionKey var opinionId: String?,
     var tenantId: String?,
     var userId: String?,
-    var like: Float?,
-    var use: Float?
+    var like: Double?,
+    var use: Double?
 ) {
     constructor() : this(null, null, null, null, null)
 }

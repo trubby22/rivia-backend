@@ -31,10 +31,10 @@ class Handler(
         Trie<String, MutableMap<ApiMethod, Pair<Boolean, Lazy<SubHandler>>>>()
 
     init {
+        // Frontend handlers
         registerSubHandler(listOf(), ApiMethod.HTTP_GET, false, lazy { GetTenant() })
         registerSubHandler(listOf(), ApiMethod.HTTP_POST, true, lazy { PostTenant() })
         registerSubHandler(listOf("meetings"), ApiMethod.HTTP_GET, false, lazy { GetMeetings() })
-        registerSubHandler(listOf("meetings"), ApiMethod.HTTP_POST, false, lazy { PostMeeting() })
         registerSubHandler(listOf("meetings", null),
             ApiMethod.HTTP_GET,
             false,
@@ -47,6 +47,10 @@ class Handler(
             ApiMethod.HTTP_POST,
             false,
             lazy { PostReview() })
+        registerSubHandler(listOf("rating"), ApiMethod.HTTP_POST, false, lazy { PostRating() })
+        registerSubHandler(listOf("timing"), ApiMethod.HTTP_POST, false, lazy { PostTiming() })
+
+        // Websocket handlers
         registerSubHandler(listOf("websockets", null),
             ApiMethod.WEBSOCKET_MESSAGE,
             false,

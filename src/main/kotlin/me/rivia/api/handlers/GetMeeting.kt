@@ -21,7 +21,7 @@ class GetMeeting : SubHandler {
         websocket: WebsocketClient
     ): Response {
         val meetingId = url[1]
-        val (meetingEntry, idMeeting) = MeetingId.fetch(database, meetingId) ?: return Response(
+        val (meetingEntry, idMeeting) = MeetingId.fetch(database, userStore, meetingId) ?: return Response(
             ResponseError.NOMEETING
         )
         if (tenantId != meetingEntry.tenantId) {

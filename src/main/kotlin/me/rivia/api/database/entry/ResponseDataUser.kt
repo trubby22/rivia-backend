@@ -4,7 +4,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
 
 @DynamoDbBean
-data class ResponseDataUsers(
+data class ResponseDataUser(
     @get:DynamoDbPartitionKey var tenantIdUserIdMeetingId: String?,
     var needed: Int?,
     var notNeeded: Int?,
