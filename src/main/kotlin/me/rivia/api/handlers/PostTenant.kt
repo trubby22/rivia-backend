@@ -80,12 +80,12 @@ class PostTenant : SubHandler {
                         tenantEntry.applicationRefreshToken =
                             applicationRefreshToken
                         tenantEntry.applicationAccessToken =
-                            applicationAccessToken.refreshAccessToken(tenantId)
+                            applicationAccessToken.getAccessAndRefreshToken(tenantId).component1()
                     }
                     if (userRefreshToken != null) {
                         tenantEntry.userRefreshToken = userRefreshToken
                         tenantEntry.userAccessToken = userAccessToken
-                            .refreshAccessToken(tenantId)
+                            .getAccessAndRefreshToken(tenantId).component1()
                     }
                     tenantEntry.presetQIds =
                         presetQIds?.value ?: defaultPresetQIds.value
@@ -93,8 +93,8 @@ class PostTenant : SubHandler {
                 } ?: return Response(ResponseError.NOTENANT)
             } else {
                 database.updateEntryWithDefault(Table.TENANTS, {
-                    val applicationAccessToken = applicationAccessToken.refreshAccessToken(tenantId)
-                    val userAccessToken = userAccessToken.refreshAccessToken(tenantId)
+                    val applicationAccessToken = applicationAccessToken.getAccessAndRefreshToken(tenantId).component1()
+                    val userAccessToken = userAccessToken.getAccessAndRefreshToken(tenantId).component1()
                     Tenant(
                         tenantId,
                         applicationRefreshToken,
@@ -110,9 +110,9 @@ class PostTenant : SubHandler {
                 }, { tenantEntry: Tenant ->
                     tenantEntry.applicationRefreshToken =
                         applicationRefreshToken
-                    tenantEntry.applicationAccessToken = applicationAccessToken.refreshAccessToken(tenantId)
+                    tenantEntry.applicationAccessToken = applicationAccessToken.getAccessAndRefreshToken(tenantId).component1()
                     tenantEntry.userRefreshToken = userRefreshToken
-                    tenantEntry.userAccessToken = userAccessToken.refreshAccessToken(tenantId)
+                    tenantEntry.userAccessToken = userAccessToken.getAccessAndRefreshToken(tenantId).component1()
                     if (presetQIds != null) {
                         tenantEntry.presetQIds = presetQIds.value
                     }

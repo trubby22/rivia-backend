@@ -24,6 +24,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.8.5")
     implementation("com.beust:klaxon:5.5")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
+    implementation("org.apache.httpcomponents:httpclient:4.5.13")
+    implementation("commons-io:commons-io:2.11.0")
 }
 
 tasks {
