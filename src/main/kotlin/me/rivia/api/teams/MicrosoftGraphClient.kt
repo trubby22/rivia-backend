@@ -20,7 +20,6 @@ enum class TokenType {
 class MicrosoftGraphClient(
     private val database: Database, private val tokenType: TokenType
 ) : TeamsClient {
-    private val client = UrlConnectionHttpClient.builder().build()
 
     companion object {
         private data class TokenResponse(
@@ -30,8 +29,17 @@ class MicrosoftGraphClient(
             @SerializedName("scope") val scope: String?,
             @SerializedName("refresh_token") val refreshToken: String?,
         )
-        val clientId = "9661a5c4-6c18-49b8-aad6-e3a4722c2515"
+
+        const val CLIENT_ID = "9661a5c4-6c18-49b8-aad6-e3a4722c2515"
+        const val APPLICATION_PERMISSIONS = "ChatMessage.Read.All"
+        const val DELEGATED_PERMISSIONS = "ChannelMessage.Send"
+        const val REDIRECT_URI = "https://vbc48le64j.execute-api.eu-west-2.amazonaws.com/production"
+        const val CLIENT_SECRET = "cap8Q~ESKP.5rpds2UeVfKw39.SB55YSmSwVmag8"
+        const val REFRESH_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
     }
+
+    private val client = UrlConnectionHttpClient.builder().build()
+    private val jsonParser = Gson()
 
     private fun getAccessToken(tenantId: String): String {
         val tenant: Tenant? = database.getEntry(
@@ -51,40 +59,39 @@ class MicrosoftGraphClient(
 
     private fun refreshAccessToken(tenantId: String): String? {
         val scope =
-            if (tokenType == TokenType.APPLICATION) "ChatMessage.Read.All" else "ChannelMessage.Send"
-        val redirectUri =
-            "https://vbc48le64j.execute-api.eu-west-2.amazonaws.com/production"
-        val clientSecret = "cap8Q~ESKP.5rpds2UeVfKw39.SB55YSmSwVmag8"
+            if (tokenType == TokenType.APPLICATION) APPLICATION_PERMISSIONS else DELEGATED_PERMISSIONS
+
+        val body = listOf(
+            "client_id" to CLIENT_ID,
+            "refresh_token" to getRefreshToken(tenantId)!!,
+            "redirect_uri" to REDIRECT_URI,
+            "grant_type" to "refresh_token",
+            "client_secret" to CLIENT_SECRET
+        ).joinToString("&") { (argName, argValue) ->
+            "$argName=$argValue"
+        }
 
         val sdkHttpRequest = SdkHttpRequest.builder().uri(
             URI.create(
-                "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+                REFRESH_TOKEN_URL
             )
-        ).putHeader("Content-Type", "application/x-www-form-urlencoded")
-            .method(SdkHttpMethod.POST)
-            .appendRawQueryParameter("client_id", clientId)
-            .appendRawQueryParameter("scope", scope).appendRawQueryParameter(
-                "refresh_token", getRefreshToken(tenantId)!!
-            ).appendRawQueryParameter("redirect_uri", redirectUri)
-            .appendRawQueryParameter("grant_type", "refresh_token")
-            .appendRawQueryParameter("client_secret", clientSecret).build()
+        ).putHeader("Content-Type", "application/x-www-form-urlencoded").method(SdkHttpMethod.POST)
+            .build()
         val response = client.prepareRequest(
             HttpExecuteRequest.builder().request(
                 sdkHttpRequest
-            ).build()
+            ).contentStreamProvider { body.byteInputStream() }.build()
         ).call()
 
         if (!response.httpResponse().isSuccessful) {
             return null
         }
         val jsonString = response.responseBody().get().readAllBytes().toString()
-        val tokenResponse = Gson().fromJson(
+        val tokenResponse = jsonParser.fromJson(
             jsonString, TokenResponse::class.java
         )
         setTokens(
-            tenantId,
-            tokenResponse.accessToken!!,
-            tokenResponse.refreshToken!!
+            tenantId, tokenResponse.accessToken!!, tokenResponse.refreshToken!!
         )
 
         return tokenResponse.accessToken
