@@ -1,6 +1,6 @@
 package me.rivia.api.handlers
 
-import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
 import me.rivia.api.Response
 import me.rivia.api.ResponseError
@@ -57,7 +57,7 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
         const val CERTIFICATE_ID = "myCertificate"
 
         private data class SubscriptionBody(
-            @SerializedName("change_type") val changeType: String? = null,
+            @SerializedName("changeType") val changeType: String? = null,
             @SerializedName("notificationUrl") val notificationUrl: String? = null,
             @SerializedName("resource") val resource: String? = null,
             @SerializedName("expirationDateTime") val expirationDateTime: OffsetDateTime? = null,
@@ -71,7 +71,9 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
         )
     }
 
-    private val jsonConverter = Gson()
+    private val jsonConverter = GsonBuilder()
+        .disableHtmlEscaping()
+        .create()
 
     override fun handleRequest(
         url: List<String>,
@@ -187,6 +189,8 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
                 encryptionCertificateId = CERTIFICATE_ID
             )
         )
+
+        throw Error(body)
 
         return graphAccessClient.sendRequest<SubscriptionResponse>(
             SUBSCRIPTION_URL,
