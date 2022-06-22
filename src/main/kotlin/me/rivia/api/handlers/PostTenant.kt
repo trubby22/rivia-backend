@@ -1,5 +1,7 @@
 package me.rivia.api.handlers
 
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import me.rivia.api.Response
 import me.rivia.api.ResponseError
 import me.rivia.api.database.*
@@ -9,10 +11,17 @@ import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
 import me.rivia.api.teams.TeamsClient
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
+import java.time.OffsetDateTime
 import me.rivia.api.handlers.responses.PresetQ as ResponsePresetQ
 
 class PostTenant : SubHandler {
-    private val postSubscription = PostSubscription()
+    companion object {
+        private data class SubscriptionResponse(
+            @SerializedName("id") val id: String
+        )
+    }
+
+    private val jsonConverter = Gson()
 
     override fun handleRequest(
         url: List<String>,
@@ -69,43 +78,52 @@ class PostTenant : SubHandler {
             }
         }
 
+        val subscriptionId = createSubscription(
+            graphAccessClient, applicationAccessToken, tenantId
+        ).id
+
         // Inserting the tenant entry
-        val tenantEntry: Tenant = if (applicationRefreshToken == null || userRefreshToken == null) {
+        val tenantEntry: Tenant = if (userRefreshToken == null) {
             database.updateEntry(
                 Table.TENANTS, tenantId!!
             ) { tenantEntry: Tenant ->
-                if (applicationRefreshToken != null) {
-                    tenantEntry.applicationRefreshToken = applicationRefreshToken
-                    tenantEntry.applicationAccessToken = TODO()
-                }
-                if (userRefreshToken != null) {
-                    tenantEntry.userRefreshToken = userRefreshToken
-                    tenantEntry.userAccessToken = TODO()
-                }
-                tenantEntry.presetQIds = presetQIds?.value ?: defaultPresetQIds.value
+                tenantEntry.applicationAccessToken =
+                    applicationAccessToken.refreshAccessToken(tenantId)
+                tenantEntry.presetQIds =
+                    presetQIds?.value ?: defaultPresetQIds.value
                 tenantEntry
             } ?: return Response(ResponseError.NOTENANT)
         } else {
             database.updateEntryWithDefault(Table.TENANTS, {
-                val applicationAccessToken = TODO()
-                val userAccessToken = TODO()
+                val applicationAccessToken =
+                    applicationAccessToken.refreshAccessToken(
+                        tenantId ?: throw Error(
+                            "Tenant id null"
+                        )
+                    )
+                val userAccessToken = userAccessToken.refreshAccessToken(
+                    tenantId, userRefreshToken
+                )
                 Tenant(
                     tenantId,
-                    applicationRefreshToken,
+                    subscriptionId,
                     applicationAccessToken,
                     userRefreshToken,
                     userAccessToken,
-                    if (presetQIds != null) {
-                        presetQIds.value
-                    } else {
-                        defaultPresetQIds.value
-                    }
+                    presetQIds?.value ?: defaultPresetQIds.value
                 )
             }, { tenantEntry: Tenant ->
-                tenantEntry.applicationRefreshToken = applicationRefreshToken
-                tenantEntry.applicationAccessToken = TODO()
+                tenantEntry.applicationAccessToken =
+                    applicationAccessToken.refreshAccessToken(
+                        tenantId ?: throw Error(
+                            "Tenant id null"
+                        )
+                    )
                 tenantEntry.userRefreshToken = userRefreshToken
-                tenantEntry.userAccessToken = TODO()
+                tenantEntry.userAccessToken =
+                    userAccessToken.refreshAccessToken(
+                        tenantId, userRefreshToken
+                    )
                 if (presetQIds != null) {
                     tenantEntry.presetQIds = presetQIds.value
                 }
@@ -115,10 +133,42 @@ class PostTenant : SubHandler {
 
         val result = Response(tenantEntry.presetQIds!!.map {
             ResponsePresetQ(
-                database.getEntry(Table.PRESETQS, it) ?: throw Error("presetQ not present")
+                database.getEntry(Table.PRESETQS, it)
+                    ?: throw Error("presetQ not present")
             )
         })
-        postSubscription.createSubscription(applicationAccessToken, tenantId)
         return result
+    }
+
+    private fun createSubscription(
+        graphAccessClient: MicrosoftGraphAccessClient,
+        applicationAccessToken: TeamsClient,
+        tenantId: String?
+    ): SubscriptionResponse {
+        val body = jsonConverter.toJson(
+            PostSubscription.Companion.SubscriptionBody(
+                changeType = PostSubscription.CHANGE_TYPE,
+                notificationUrl = PostSubscription.NOTIFICATION_URL,
+                resource = PostSubscription.RESOURCE,
+                expirationDateTime = OffsetDateTime.now().plusMinutes(59),
+                includeResourceData = true,
+                encryptionCertificate = PostSubscription.CERTIFICATE,
+                encryptionCertificateId = PostSubscription.CERTIFICATE_ID
+            )
+        )
+
+        return applicationAccessToken.tokenOperation(tenantId!!) { token: String ->
+            graphAccessClient.sendRequest(
+                url = PostSubscription.SUBSCRIPTION_URL_BETA,
+                headers = listOf(
+                    "Content-Type" to "application/json",
+                    "Authorization" to "Bearer $token"
+                ),
+                method = MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
+                body = body,
+                clazz = SubscriptionResponse::class,
+                queryArgs = listOf()
+            ) ?: throw Error("Create subscription request failed")
+        }
     }
 }

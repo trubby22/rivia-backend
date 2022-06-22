@@ -8,11 +8,9 @@ import me.rivia.api.database.Table
 import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.getAllEntries
 import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
-import me.rivia.api.graphhttp.MicrosoftGraphHttpClient
 import me.rivia.api.teams.TeamsClient
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
 import java.time.OffsetDateTime
 
 class PostSubscription : SubHandler {
@@ -60,7 +58,7 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
         """
         const val CERTIFICATE_ID = "myCertificate"
 
-        private data class SubscriptionBody(
+        data class SubscriptionBody(
             @SerializedName("change_type") val changeType: String? = null,
             @SerializedName("notificationUrl") val notificationUrl: String? = null,
             @SerializedName("resource") val resource: String? = null,
@@ -70,17 +68,11 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
             @SerializedName("encryptionCertificateId") val encryptionCertificateId: String? = null,
         )
 
-        private data class SubscriptionResponse(
-            @SerializedName("value") val value: Any?
-        )
-
         private data class RenewResponse(
             @SerializedName("expirationDateTime") val expirationDateTime: OffsetDateTime?
         )
     }
 
-    private val client = UrlConnectionHttpClient.builder().build()
-    private val msClient = MicrosoftGraphHttpClient()
     private val jsonConverter = Gson()
 
     override fun handleRequest(
@@ -95,49 +87,23 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
         graphAccessClient: MicrosoftGraphAccessClient,
         websocket: WebsocketClient
     ): Response {
-        val jsonString = jsonConverter.toJson(
+        val responses = jsonConverter.toJson(
             database.getAllEntries<Tenant>(Table.TENANTS).map { tenant ->
-                    renewSubscription(applicationAccessToken, tenant.tenantId)
+                    renewSubscription(
+                        applicationAccessToken,
+                        tenant.tenantId,
+                        graphAccessClient
+                    )
                 })
 
-        return Response(jsonString)
-    }
-
-    fun createSubscription(
-        applicationAccessToken: TeamsClient, tenantId: String?
-    ): String {
-        val body = jsonConverter.toJson(
-            SubscriptionBody(
-                changeType = CHANGE_TYPE,
-                notificationUrl = NOTIFICATION_URL,
-                resource = RESOURCE,
-                expirationDateTime = OffsetDateTime.now().plusMinutes(59),
-                includeResourceData = true,
-                encryptionCertificate = CERTIFICATE,
-                encryptionCertificateId = CERTIFICATE_ID
-            )
-        )
-
-        return applicationAccessToken.tokenOperation(tenantId!!) { token: String ->
-            jsonConverter.toJson(
-                msClient.sendRequest(
-                    url = SUBSCRIPTION_URL_BETA,
-                    headers = listOf(
-                        "Content-Type" to "application/json",
-                        "Authorization" to "Bearer $token"
-                    ),
-                    method = MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
-                    body = body,
-                    clazz = SubscriptionResponse::class,
-                    queryArgs = listOf()
-                )!!
-            )
-        }
+        return Response(responses)
     }
 
     private fun renewSubscription(
-        applicationAccessToken: TeamsClient, tenantId: String?
-    ): String {
+        applicationAccessToken: TeamsClient,
+        tenantId: String?,
+        graphAccessClient: MicrosoftGraphAccessClient,
+    ): RenewResponse {
         val body = jsonConverter.toJson(
             SubscriptionBody(
                 expirationDateTime = OffsetDateTime.now().plusMinutes(59)
@@ -145,19 +111,17 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
         )
 
         return applicationAccessToken.tokenOperation(tenantId!!) { token: String ->
-            jsonConverter.toJson(
-                msClient.sendRequest(
-                    url = "${SUBSCRIPTION_URL_V1}/${tenantId}",
-                    headers = listOf(
-                        "Content-Type" to "application/json",
-                        "Authorization" to "Bearer $token"
-                    ),
-                    method = MicrosoftGraphAccessClient.Companion.HttpMethod.PATCH,
-                    body = body,
-                    clazz = RenewResponse::class,
-                    queryArgs = listOf()
-                )!!
-            )
+            graphAccessClient.sendRequest(
+                url = "${SUBSCRIPTION_URL_V1}/${tenantId}",
+                headers = listOf(
+                    "Content-Type" to "application/json",
+                    "Authorization" to "Bearer $token"
+                ),
+                method = MicrosoftGraphAccessClient.Companion.HttpMethod.PATCH,
+                body = body,
+                clazz = RenewResponse::class,
+                queryArgs = listOf()
+            ) ?: throw Error("Renew subscription request failed")
         }
     }
 }
