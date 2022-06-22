@@ -66,7 +66,6 @@ class MicrosoftGraphClient(
             listOf(
                 "client_id" to CLIENT_ID,
                 "scope" to DELEGATED_SCOPE,
-                "client_secret" to CLIENT_SECRET,
                 "refresh_token" to refreshToken,
                 "redirect_uri" to REDIRECT_URI,
                 "grant_type" to "refresh_token"
@@ -79,7 +78,7 @@ class MicrosoftGraphClient(
                 "https://login.microsoftonline.com/${if (tokenType == TokenType.APPLICATION) tenantId else "common"}/oauth2/v2.0/token",
                 listOf(),
                 MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
-                listOf("Content-Type" to "application/x-www-form-urlencoded"),
+                listOf("Content-Type" to "application/x-www-form-urlencoded", "Origin" to "https://app.rivia.me"),
                 body,
             ) ?: return null
 

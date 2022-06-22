@@ -60,7 +60,7 @@ class PostTenant : SubHandler {
         websocket: WebsocketClient
     ): Response {
         // Extracting json data
-        val userRefreshToken = jsonData["refreshToken"]
+        var userRefreshToken = jsonData["userRefreshToken"]
         if (userRefreshToken !is String?) {
             return Response(ResponseError.WRONGENTRY)
         }
@@ -115,23 +115,27 @@ class PostTenant : SubHandler {
             } ?: return Response(ResponseError.NOTENANT)
         } else {
             database.updateEntryWithDefault(Table.TENANTS, {
+                val userAccessRefreshToken = userAccessToken.fetchAccessToken(
+                    tenantId, (userRefreshToken as String)
+                ) ?: throw Error("Access token unavailable")
+                userRefreshToken = userAccessRefreshToken.second ?: throw Error("No refresh token")
                 Tenant(
                     tenantId,
                     subscriptionId,
                     applicationAccessToken.fetchAccessToken(
                         tenantId
                     )?.first ?: throw Error("Access token unavailable"),
-                    userRefreshToken,
-                    userAccessToken.fetchAccessToken(
-                        tenantId, userRefreshToken
-                    )?.first ?: throw Error("Access token unavailable"),
+                    (userRefreshToken as String),
+                    userAccessRefreshToken.first,
                     presetQIds?.value ?: defaultPresetQIds.value
                 )
             }, { tenantEntry: Tenant ->
-                tenantEntry.userRefreshToken = userRefreshToken
-                tenantEntry.userAccessToken = userAccessToken.fetchAccessToken(
-                    tenantId, userRefreshToken
-                )?.first ?: throw Error("Access token unavailable")
+                tenantEntry.userRefreshToken = (userRefreshToken as String)
+                val userAccessRefreshToken = userAccessToken.fetchAccessToken(
+                    tenantId, (userRefreshToken as String)
+                ) ?: throw Error("Access token unavailable")
+                tenantEntry.userAccessToken = userAccessRefreshToken.first
+                userRefreshToken = userAccessRefreshToken.second ?: throw Error("No refresh token")
                 if (presetQIds != null) {
                     tenantEntry.presetQIds = presetQIds.value
                 }
@@ -155,7 +159,7 @@ class PostTenant : SubHandler {
                 changeType = SUBSCRIPTION_CHANGE_TYPE,
                 notificationUrl = NOTIFICATION_URL,
                 resource = RESOURCE,
-                expirationDateTime = OffsetDateTime.now().plusMinutes(2).toString(),
+                expirationDateTime = OffsetDateTime.now().plusSeconds(10).toString(),
                 includeResourceData = true.toString(),
                 encryptionCertificate = CERTIFICATE,
                 encryptionCertificateId = CERTIFICATE_ID
@@ -167,7 +171,7 @@ class PostTenant : SubHandler {
             listOf(),
             MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
             listOf(
-                "Content-Type" to "application/json", "Authorization" to "Bearer ${
+                "Content-Type" to "application/json", "Accept" to "application/json", "Authorization" to "Bearer ${
                     applicationAccessToken.fetchAccessToken(tenantId)?.first ?: throw Error("Access token unavailable")
                 }"
             ),
