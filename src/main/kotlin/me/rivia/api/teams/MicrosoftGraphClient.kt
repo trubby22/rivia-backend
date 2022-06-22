@@ -27,10 +27,10 @@ class MicrosoftGraphClient(
 
         const val CLIENT_ID = "491d67e2-00cf-46ce-87cc-7e315c09b59f"
         const val REDIRECT_URI =
-            "https://app.rivia.me"
+            "https://app.rivia.me/"
         const val CLIENT_SECRET = "xkI8Q~959yh1DI4qWU0BlepJe3TuhERoHgwyjcw-"
         const val APPLICATION_SCOPE = "https://graph.microsoft.com/.default"
-        const val DELEGATED_SCOPE = "ChannelMessage.Send"
+        const val DELEGATED_SCOPE = "ChannelMessage.Send%20offline_access"
     }
 
     private fun getAccessToken(tenantId: String): String {
@@ -66,6 +66,7 @@ class MicrosoftGraphClient(
             listOf(
                 "client_id" to CLIENT_ID,
                 "scope" to DELEGATED_SCOPE,
+                "client_secret" to CLIENT_SECRET,
                 "refresh_token" to refreshToken,
                 "redirect_uri" to REDIRECT_URI,
                 "grant_type" to "refresh_token"
@@ -78,7 +79,10 @@ class MicrosoftGraphClient(
                 "https://login.microsoftonline.com/${if (tokenType == TokenType.APPLICATION) tenantId else "common"}/oauth2/v2.0/token",
                 listOf(),
                 MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
-                listOf("Content-Type" to "application/x-www-form-urlencoded"),
+                if (tokenType == TokenType.APPLICATION) listOf("Content-Type" to "application/x-www-form-urlencoded") else listOf(
+                    "Content-Type" to "application/x-www-form-urlencoded",
+                    "Origin" to "https://app.rivia.me/"
+                ),
                 body,
             ) ?: return null
 

@@ -34,6 +34,7 @@ class Handler(
 
     init {
         // Frontend handlers
+        registerSubHandler(listOf("login"), ApiMethod.HTTP_POST, true, true, lazy { PostLogin() })
         registerSubHandler(listOf(), ApiMethod.HTTP_GET, false, false, lazy { GetTenant() })
         registerSubHandler(listOf(), ApiMethod.HTTP_POST, false, true, lazy { PostTenant() })
         registerSubHandler(

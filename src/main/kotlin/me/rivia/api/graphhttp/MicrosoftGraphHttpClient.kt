@@ -19,7 +19,7 @@ class MicrosoftGraphHttpClient : MicrosoftGraphAccessClient {
         queryArgs: List<Pair<String, List<String>>>,
         method: MicrosoftGraphAccessClient.Companion.HttpMethod,
         headers: List<Pair<String, String>>,
-        body: String,
+        body: String?,
         clazz: KClass<ResponseType>
     ): ResponseType? {
         var sdkHttpRequestBuilder = SdkHttpRequest.builder().uri(
@@ -34,10 +34,15 @@ class MicrosoftGraphHttpClient : MicrosoftGraphAccessClient {
             sdkHttpRequestBuilder = sdkHttpRequestBuilder.appendHeader(headerName, headerValue)
         }
 
+        var httpExecuteRequestBuilder = HttpExecuteRequest.builder().request(
+            sdkHttpRequestBuilder.build()
+        )
+        if (body != null) {
+            httpExecuteRequestBuilder = httpExecuteRequestBuilder.contentStreamProvider { body.byteInputStream() }
+        }
+
         val response = httpClient.prepareRequest(
-            HttpExecuteRequest.builder().request(
-                sdkHttpRequestBuilder.build()
-            ).contentStreamProvider { body.byteInputStream() }.build()
+            httpExecuteRequestBuilder.build()
         ).call()
         if (!response.httpResponse().isSuccessful) {
             throw Error(String(response.responseBody().get().readAllBytes()))

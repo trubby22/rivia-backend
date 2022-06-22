@@ -20,7 +20,7 @@ interface MicrosoftGraphAccessClient {
         queryArgs: List<Pair<String, List<String>>>,
         method: HttpMethod,
         headers: List<Pair<String, String>>,
-        body: String,
+        body: String?,
         clazz: KClass<ResponseType>
     ): ResponseType?
 }
@@ -30,5 +30,5 @@ inline fun <reified ResponseType : Any> MicrosoftGraphAccessClient.sendRequest(
     queryArgs: List<Pair<String, List<String>>>,
     method: MicrosoftGraphAccessClient.Companion.HttpMethod,
     headers: List<Pair<String, String>>,
-    body: String
+    body: String?
 ) = this.sendRequest(url, queryArgs, method, headers, body, ResponseType::class)
