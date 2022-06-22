@@ -15,6 +15,8 @@ import software.amazon.awssdk.http.HttpExecuteRequest
 import software.amazon.awssdk.http.SdkHttpMethod
 import software.amazon.awssdk.http.SdkHttpRequest
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
+import com.google.gson.JsonSyntaxException as WrongClassFormat
+import me.rivia.api.userstore.User as UserStoreClass
 import java.io.FileReader
 import java.io.IOException
 import java.net.URI
@@ -29,14 +31,14 @@ data class UserResponse(
 
 class DatabaseUserStore(private val database: Database, private val applicationTeamsClient: TeamsClient) : UserStore {
     private val client = UrlConnectionHttpClient.builder().build()
-    private val gson : Gson = Gson();
+    private val gson = Gson();
 
-    override fun getUser(tenantId: String, userId: String): me.rivia.api.userstore.User? {
+    override fun getUser(tenantId: String, userId: String): UserStoreClass? {
         // check if user is in database
-        val userEntry : User? = database.getEntry<User>(Table.USERS, tenantId + userId)
+        val userEntry = database.getEntry<User>(Table.USERS, tenantId + userId)
 
         if (userEntry != null) {
-            return me.rivia.api.userstore.User(
+            return UserStoreClass(
                 userEntry.tenantIdUserId!!, userEntry.name!!, userEntry.surname!!, userEntry.meetingIds!!
             )
         }
@@ -57,29 +59,26 @@ class DatabaseUserStore(private val database: Database, private val applicationT
             ).call()
 
             if (!response.httpResponse().isSuccessful) {
-                System.err.println("HTTP failure")
-                client.close()
-                "error"
+                null
             } else {
-                client.close()
                 val json = response.responseBody().get().readAllBytes().toString()
                 System.err.println(json)
                 json
             }
         }
-        if (json == "error") {
-            System.err.println("HTTP error or client not found");
-            return null
+        // assume access token is issue here
+        return try {
+            val userResponse: UserResponse = gson.fromJson(json, UserResponse::class.java)
+            val newUser = User(tenantId + userId, userResponse.displayName, userResponse.surname, listOf())
+            database.putEntry(Table.USERS, newUser);
+            UserStoreClass(
+                newUser.tenantIdUserId!!, newUser.name!!, newUser.surname!!, newUser.meetingIds!!
+            )
+        } catch (e : WrongClassFormat) {
+            // if id is not found usually
+            null;
         }
-        val userResponse : UserResponse = gson.fromJson(json, UserResponse::class.java)
 
-
-        // no meeting Ids when first adding user, will be updated by other code
-        val newUser = User(tenantId + userId, userResponse.displayName, userResponse.surname, listOf())
-        database.putEntry(Table.USERS, newUser);
-        return me.rivia.api.userstore.User(
-            newUser.tenantIdUserId!!, newUser.name!!, newUser.surname!!, newUser.meetingIds!!
-        )
 
     }
 }
