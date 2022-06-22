@@ -7,10 +7,12 @@ import me.rivia.api.ResponseError
 import me.rivia.api.database.*
 import me.rivia.api.database.entry.PresetQ
 import me.rivia.api.database.entry.Tenant
-import me.rivia.api.graphhttp.*
+import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
+import me.rivia.api.graphhttp.sendRequest
 import me.rivia.api.teams.TeamsClient
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
+import java.net.URLEncoder
 import java.time.OffsetDateTime
 import me.rivia.api.handlers.responses.PresetQ as ResponsePresetQ
 
@@ -60,8 +62,8 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
             @SerializedName("changeType") val changeType: String? = null,
             @SerializedName("notificationUrl") val notificationUrl: String? = null,
             @SerializedName("resource") val resource: String? = null,
-            @SerializedName("expirationDateTime") val expirationDateTime: OffsetDateTime? = null,
-            @SerializedName("includeResourceData") val includeResourceData: Boolean? = null,
+            @SerializedName("expirationDateTime") val expirationDateTime: String? = null,
+            @SerializedName("includeResourceData") val includeResourceData: String? = null,
             @SerializedName("encryptionCertificate") val encryptionCertificate: String? = null,
             @SerializedName("encryptionCertificateId") val encryptionCertificateId: String? = null,
         )
@@ -180,17 +182,17 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
     ): String {
         val body = jsonConverter.toJson(
             SubscriptionBody(
-                changeType = SUBSCRIPTION_CHANGE_TYPE,
-                notificationUrl = NOTIFICATION_URL,
-                resource = RESOURCE,
-                expirationDateTime = OffsetDateTime.now().plusMinutes(2),
-                includeResourceData = true,
-                encryptionCertificate = CERTIFICATE,
-                encryptionCertificateId = CERTIFICATE_ID
+                changeType = SUBSCRIPTION_CHANGE_TYPE.utf8(),
+                notificationUrl = NOTIFICATION_URL.utf8(),
+                resource = RESOURCE.utf8(),
+                expirationDateTime = OffsetDateTime.now().plusMinutes(2).utf8(),
+                includeResourceData = true.utf8(),
+                encryptionCertificate = CERTIFICATE.utf8(),
+                encryptionCertificateId = CERTIFICATE_ID.utf8()
             )
         )
 
-        throw Error(body)
+//        throw Error(body)
 
         return graphAccessClient.sendRequest<SubscriptionResponse>(
             SUBSCRIPTION_URL,
@@ -204,4 +206,6 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
             body
         )?.id ?: throw Error("Subscription failed")
     }
+
+    private fun Any.utf8(): String = URLEncoder.encode(this.toString(), "UTF-8")
 }
