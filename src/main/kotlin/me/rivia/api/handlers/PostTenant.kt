@@ -162,8 +162,6 @@ class PostTenant : SubHandler {
             )
         )
 
-        throw Error(body)
-
         return graphAccessClient.sendRequest<SubscriptionResponse>(
             SUBSCRIPTION_URL,
             listOf(),
