@@ -12,6 +12,7 @@ class WebsocketDisconnect : SubHandler {
         url: List<String>,
         tenantId: String?,
         userId: String?,
+        validationToken: String,
         jsonData: Map<String, Any?>,
         database: Database,
         userStore: UserStore,
@@ -19,7 +20,7 @@ class WebsocketDisconnect : SubHandler {
         applicationAccessToken: TeamsClient,
         graphAccessClient: MicrosoftGraphAccessClient,
         websocket: WebsocketClient
-    ): Response{
+    ): Response {
         websocket.unregisterWebsocket(url[1]);
         return Response()
     }

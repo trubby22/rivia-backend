@@ -17,6 +17,7 @@ class GetTenant : SubHandler {
         url: List<String>,
         tenantId: String?,
         userId: String?,
+        validationToken: String,
         jsonData: Map<String, Any?>,
         database: Database,
         userStore: UserStore,

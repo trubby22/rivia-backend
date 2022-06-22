@@ -98,6 +98,7 @@ YwscYwSS+/iHgc4phV6EWMDKvm8i4Y7L5sDcFdHGIHvmEL+1g+8kugsWq4fupw==
         url: List<String>,
         tenantId: String?,
         userId: String?,
+        validationToken: String,
         jsonData: Map<String, Any?>,
         database: Database,
         userStore: UserStore,
@@ -107,10 +108,10 @@ YwscYwSS+/iHgc4phV6EWMDKvm8i4Y7L5sDcFdHGIHvmEL+1g+8kugsWq4fupw==
         websocket: WebsocketClient
     ): Response {
         val fullUrl = url.joinToString()
-        if (fullUrl.contains("validationToken")) {
+        if (!validationToken.isEmpty()) {
 //            TODO("Specify content to be text/plain")
 //            TODO("Decode the token")
-            return Response(fullUrl.split("validationToken=")[1])
+            return Response(validationToken)
         }
 
         val value = (jsonData["value"] as List<*>)[0] as Map<String, Any?>

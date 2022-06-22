@@ -14,7 +14,6 @@ import me.rivia.api.userstore.DatabaseUserStore
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.ApiGatewayWebsocketClient
 import me.rivia.api.websocket.WebsocketClient
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import java.util.*
 
 class Handler(
@@ -159,6 +158,7 @@ class Handler(
                     path,
                     null,
                     null,
+                    event.validationToken!!,
                     jsonData,
                     database,
                     userStore,
@@ -176,6 +176,7 @@ class Handler(
                     path,
                     event.tenant!!,
                     null,
+                    event.validationToken!!,
                     jsonData,
                     database,
                     userStore,
@@ -192,6 +193,7 @@ class Handler(
                 path,
                 event.tenant!!,
                 event.user!!,
+                event.validationToken!!,
                 jsonData,
                 database,
                 userStore,
