@@ -5,17 +5,19 @@ import com.google.gson.annotations.SerializedName
 import me.rivia.api.Response
 import me.rivia.api.database.Database
 import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
+import me.rivia.api.graphhttp.MicrosoftGraphAccessClient.Companion.HttpMethod
+import me.rivia.api.graphhttp.sendRequest
 import me.rivia.api.teams.TeamsClient
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
-import software.amazon.awssdk.http.HttpExecuteRequest
-import software.amazon.awssdk.http.SdkHttpMethod
-import software.amazon.awssdk.http.SdkHttpRequest
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
-import java.net.URI
 
 class PostGraphEvent : SubHandler {
     companion object {
+        private data class MessageResponse(
+            @SerializedName("id") val id: String
+        )
+
         private data class ChannelMessage(
             @SerializedName("body") val body: MessageBody,
             @SerializedName("attachments") val attachments: List<Attachment>
@@ -104,6 +106,12 @@ YwscYwSS+/iHgc4phV6EWMDKvm8i4Y7L5sDcFdHGIHvmEL+1g+8kugsWq4fupw==
         graphAccessClient: MicrosoftGraphAccessClient,
         websocket: WebsocketClient
     ): Response {
+        val fullUrl = url.joinToString()
+        if (fullUrl.contains("validationToken")) {
+            TODO("Specify content to be text/plain")
+            return Response(fullUrl.split("validationToken=")[1])
+        }
+
         val value = (jsonData["value"] as List<*>)[0] as Map<String, Any?>
         val resource = value["resource"] as String
         val tenantId = value["tenantId"] as String
@@ -119,20 +127,26 @@ YwscYwSS+/iHgc4phV6EWMDKvm8i4Y7L5sDcFdHGIHvmEL+1g+8kugsWq4fupw==
             resource.split("/messages")[1].split("/replies")[0]
         val messageId = messageIdTemp.substring(2, messageIdTemp.length - 2)
 
-        val jsonData = sendChannelMessage(
-            userAccessToken, tenantId, teamId, channelId, messageId
+        sendChannelMessage(
+            graphAccessClient,
+            userAccessToken,
+            tenantId,
+            teamId,
+            channelId,
+            messageId
         )
 
-        return Response(jsonData)
+        return Response()
     }
 
     private fun sendChannelMessage(
+        graphAccessClient: MicrosoftGraphAccessClient,
         userAccessToken: TeamsClient,
         tenantId: String,
         teamId: String,
         channelId: String,
         messageId: String,
-    ): String {
+    ) {
         val messageBody = MessageBody(
             contentType = "html",
             content = "Please review the meeting. <attachment id=\"${ATTACHMENT_ID}\"></attachment>"
@@ -149,20 +163,17 @@ YwscYwSS+/iHgc4phV6EWMDKvm8i4Y7L5sDcFdHGIHvmEL+1g+8kugsWq4fupw==
             )
         )
 
-        return userAccessToken.tokenOperation(tenantId) { token: String ->
-            val response = client.prepareRequest(
-                HttpExecuteRequest.builder().request(
-                    SdkHttpRequest.builder().uri(
-                        URI.create(
-                            "https://graph.microsoft.com/v1.0/teams/${teamId}/channels/${channelId}/messages/${messageId}/replies"
-                        )
-                    ).putHeader("Content-Type", "application/json").putHeader(
-                        "Authorization", "Bearer $token"
-                    ).method(SdkHttpMethod.POST).build()
-                ).contentStreamProvider { body.byteInputStream() }.build()
-            ).call()
-            if (response.httpResponse().isSuccessful) response.responseBody()
-                .get().readAllBytes().toString() else null
+        userAccessToken.tokenOperation(tenantId) { token: String ->
+            graphAccessClient.sendRequest<MessageResponse>(
+                "https://graph.microsoft.com/v1.0/teams/${teamId}/channels/${channelId}/messages/${messageId}/replies",
+                listOf(),
+                HttpMethod.POST,
+                listOf(
+                    "Content-Type" to "application/json",
+                    "Authorization" to "Bearer $token"
+                ),
+                body
+            )
         }
     }
 }
