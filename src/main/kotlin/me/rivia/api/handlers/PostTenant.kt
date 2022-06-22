@@ -5,6 +5,7 @@ import me.rivia.api.ResponseError
 import me.rivia.api.database.*
 import me.rivia.api.database.entry.PresetQ
 import me.rivia.api.database.entry.Tenant
+import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
 import me.rivia.api.teams.TeamsClient
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
@@ -22,6 +23,7 @@ class PostTenant : SubHandler {
         userStore: UserStore,
         userAccessToken: TeamsClient,
         applicationAccessToken: TeamsClient,
+        graphAccessClient: MicrosoftGraphAccessClient,
         websocket: WebsocketClient
     ): Response {
         // Extracting json data

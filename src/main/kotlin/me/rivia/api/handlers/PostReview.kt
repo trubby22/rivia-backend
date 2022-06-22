@@ -4,6 +4,7 @@ import me.rivia.api.Response
 import me.rivia.api.ResponseError
 import me.rivia.api.database.*
 import me.rivia.api.database.entry.*
+import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
 import me.rivia.api.handlers.responses.MeetingId
 import me.rivia.api.teams.TeamsClient
 import me.rivia.api.userstore.UserStore
@@ -20,6 +21,7 @@ class PostReview : SubHandler {
         userStore: UserStore,
         userAccessToken: TeamsClient,
         applicationAccessToken: TeamsClient,
+        graphAccessClient: MicrosoftGraphAccessClient,
         websocket: WebsocketClient
     ): Response {
         // Extracting json data

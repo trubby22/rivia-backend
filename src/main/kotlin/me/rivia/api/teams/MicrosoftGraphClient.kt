@@ -7,6 +7,7 @@ import me.rivia.api.database.Table
 import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.getEntry
 import me.rivia.api.database.updateEntry
+import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
 import software.amazon.awssdk.http.HttpExecuteRequest
 import software.amazon.awssdk.http.SdkHttpMethod
 import software.amazon.awssdk.http.SdkHttpRequest
@@ -18,7 +19,9 @@ enum class TokenType {
 }
 
 class MicrosoftGraphClient(
-    private val database: Database, private val tokenType: TokenType
+    private val database: Database,
+    private val microsoftGraphAccessClient: MicrosoftGraphAccessClient,
+    private val tokenType: TokenType
 ) : TeamsClient {
 
     companion object {

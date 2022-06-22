@@ -1,9 +1,6 @@
 package me.rivia.api.userstore
 
 import com.google.gson.Gson
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
-import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 import me.rivia.api.database.Database
 import me.rivia.api.database.Table
@@ -11,6 +8,7 @@ import me.rivia.api.database.entry.userId
 import me.rivia.api.database.entry.User as DatabaseUser
 import me.rivia.api.database.getEntry
 import me.rivia.api.database.putEntry
+import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
 import me.rivia.api.teams.TeamsClient
 import software.amazon.awssdk.http.HttpExecuteRequest
 import software.amazon.awssdk.http.SdkHttpMethod
@@ -25,7 +23,11 @@ data class UserResponse(
     @SerializedName("surname") val surname: String,
 )
 
-class DatabaseUserStore(private val database: Database, private val applicationTeamsClient: TeamsClient) : UserStore {
+class DatabaseUserStore(
+    private val database: Database,
+    private val microsoftGraphAccessClient: MicrosoftGraphAccessClient,
+    private val applicationTeamsClient: TeamsClient
+) : UserStore {
     private val client = UrlConnectionHttpClient.builder().build()
     private val gson = Gson();
 
@@ -42,7 +44,11 @@ class DatabaseUserStore(private val database: Database, private val applicationT
                     (
                     SdkHttpRequest.builder().uri(
                         URI.create(
-                            "https://graph.microsoft.com/v1.0/users/${userId}?\$select=${UserResponse::class.declaredMemberProperties.joinToString(","){it.name}}"
+                            "https://graph.microsoft.com/v1.0/users/${userId}?\$select=${
+                                UserResponse::class.declaredMemberProperties.joinToString(
+                                    ","
+                                ) { it.name }
+                            }"
                         )
                     ).putHeader
                         ("Content-Type", "application/json")
@@ -51,7 +57,8 @@ class DatabaseUserStore(private val database: Database, private val applicationT
                 ).build()
             ).call()
 
-            if (response.httpResponse().isSuccessful) response.responseBody().get().readAllBytes().toString() else null
+            if (response.httpResponse().isSuccessful) response.responseBody().get().readAllBytes()
+                .toString() else null
         }
 
         val userResponse: UserResponse = gson.fromJson(json, UserResponse::class.java)
@@ -61,9 +68,6 @@ class DatabaseUserStore(private val database: Database, private val applicationT
             newUser.userId!!, newUser.name!!, newUser.surname!!, newUser.meetingIds!!
         )
     }
-}
-fun main(args : Array<String>) {
-
 }
 
 

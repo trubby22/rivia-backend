@@ -1,6 +1,5 @@
 package me.rivia.api.database
 
-import java.security.KeyStore.Entry
 import kotlin.reflect.KClass
 
 interface Database {

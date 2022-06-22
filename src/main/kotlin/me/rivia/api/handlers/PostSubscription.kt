@@ -7,6 +7,7 @@ import me.rivia.api.database.Database
 import me.rivia.api.database.Table
 import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.getAllEntries
+import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
 import me.rivia.api.teams.TeamsClient
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
@@ -18,9 +19,6 @@ import java.net.URI
 import java.time.OffsetDateTime
 
 class PostSubscription : SubHandler {
-    private val client = UrlConnectionHttpClient.builder().build()
-    private val jsonConverter = Gson()
-
     companion object {
         const val CHANGE_TYPE = "created"
         const val NOTIFICATION_URL =
@@ -72,6 +70,9 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
         )
     }
 
+    private val client = UrlConnectionHttpClient.builder().build()
+    private val jsonConverter = Gson()
+
     override fun handleRequest(
         url: List<String>,
         tenantId: String?,
@@ -81,6 +82,7 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
         userStore: UserStore,
         userAccessToken: TeamsClient,
         applicationAccessToken: TeamsClient,
+        graphAccessClient: MicrosoftGraphAccessClient,
         websocket: WebsocketClient
     ): Response {
         val jsonString = jsonConverter.toJson(

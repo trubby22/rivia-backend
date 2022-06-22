@@ -4,6 +4,8 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import me.rivia.api.database.Database
 import me.rivia.api.database.DynamoDatabase
+import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
+import me.rivia.api.graphhttp.MicrosoftGraphHttpClient
 import me.rivia.api.handlers.*
 import me.rivia.api.teams.MicrosoftGraphClient
 import me.rivia.api.teams.TeamsClient
@@ -17,6 +19,7 @@ import java.util.*
 
 class Handler(
     private val database: Database,
+    private val graphAccessClient: MicrosoftGraphAccessClient,
     private val userStore: UserStore,
     private val userTeamsClient: TeamsClient,
     private val applicationTeamsClient: TeamsClient,
@@ -91,22 +94,24 @@ class Handler(
     }
 
     private constructor(
-        database: Database, userTeamsClient: TeamsClient, applicationTeamsClient: TeamsClient
+        database: Database, graphAccessClient: MicrosoftGraphAccessClient, userTeamsClient: TeamsClient, applicationTeamsClient: TeamsClient
     ) : this(
         database,
-        DatabaseUserStore(database, applicationTeamsClient),
+        graphAccessClient,
+        DatabaseUserStore(database, graphAccessClient, applicationTeamsClient),
         userTeamsClient,
         applicationTeamsClient,
         ApiGatewayWebsocketClient(database)
     )
 
-    private constructor(database: Database) : this(
+    private constructor(database: Database, graphAccessClient: MicrosoftGraphAccessClient) : this(
         database,
-        MicrosoftGraphClient(database, TokenType.USER),
-        MicrosoftGraphClient(database, TokenType.APPLICATION)
+        graphAccessClient,
+        MicrosoftGraphClient(database, graphAccessClient, TokenType.USER),
+        MicrosoftGraphClient(database, graphAccessClient, TokenType.APPLICATION)
     )
 
-    constructor() : this(DynamoDatabase())
+    constructor() : this(DynamoDatabase(), MicrosoftGraphHttpClient())
 
     fun registerSubHandler(
         url: List<String?>,
@@ -159,6 +164,7 @@ class Handler(
                     userStore,
                     userTeamsClient,
                     applicationTeamsClient,
+                    graphAccessClient,
                     websocket
                 )
             }
@@ -175,6 +181,7 @@ class Handler(
                     userStore,
                     userTeamsClient,
                     applicationTeamsClient,
+                    graphAccessClient,
                     websocket
                 )
             }
@@ -190,6 +197,7 @@ class Handler(
                 userStore,
                 userTeamsClient,
                 applicationTeamsClient,
+                graphAccessClient,
                 websocket
             )
         } catch (e: Error) {

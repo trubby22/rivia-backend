@@ -4,6 +4,7 @@ import me.rivia.api.Response
 import me.rivia.api.ResponseError
 import me.rivia.api.database.*
 import me.rivia.api.database.entry.Usage
+import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
 import me.rivia.api.teams.TeamsClient
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
@@ -18,6 +19,7 @@ class PostTiming : SubHandler {
         userStore: UserStore,
         userAccessToken: TeamsClient,
         applicationAccessToken: TeamsClient,
+        graphAccessClient: MicrosoftGraphAccessClient,
         websocket: WebsocketClient
     ): Response {
         val timings = (jsonData["timings"] as? List<*>)?.checkListType<Double>() ?: return Response(ResponseError.WRONGENTRY)
