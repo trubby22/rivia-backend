@@ -8,13 +8,9 @@ import me.rivia.api.database.entry.userId
 import me.rivia.api.database.entry.User as DatabaseUser
 import me.rivia.api.database.getEntry
 import me.rivia.api.database.putEntry
-import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
+import me.rivia.api.graphhttp.*
+import me.rivia.api.graphhttp.MicrosoftGraphAccessClient.Companion.HttpMethod
 import me.rivia.api.teams.TeamsClient
-import software.amazon.awssdk.http.HttpExecuteRequest
-import software.amazon.awssdk.http.SdkHttpMethod
-import software.amazon.awssdk.http.SdkHttpRequest
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
-import java.net.URI
 import kotlin.reflect.full.declaredMemberProperties
 
 
@@ -28,9 +24,6 @@ class DatabaseUserStore(
     private val microsoftGraphAccessClient: MicrosoftGraphAccessClient,
     private val applicationTeamsClient: TeamsClient
 ) : UserStore {
-    private val client = UrlConnectionHttpClient.builder().build()
-    private val gson = Gson();
-
     override fun getUser(tenantId: String, userId: String): User? {
         val userEntry = database.getEntry<DatabaseUser>(Table.USERS, tenantId + userId)
         if (userEntry != null) {
@@ -38,30 +31,15 @@ class DatabaseUserStore(
                 userEntry.userId!!, userEntry.name!!, userEntry.surname!!, userEntry.meetingIds!!
             )
         }
-        val json = applicationTeamsClient.tokenOperation(tenantId) { accessToken: String ->
-            val response = client.prepareRequest(
-                HttpExecuteRequest.builder().request
-                    (
-                    SdkHttpRequest.builder().uri(
-                        URI.create(
-                            "https://graph.microsoft.com/v1.0/users/${userId}?\$select=${
-                                UserResponse::class.declaredMemberProperties.joinToString(
-                                    ","
-                                ) { it.name }
-                            }"
-                        )
-                    ).putHeader
-                        ("Content-Type", "application/json")
-                        .putHeader("Authorization", "Bearer $accessToken").method
-                            (SdkHttpMethod.GET).build()
-                ).build()
-            ).call()
-
-            if (response.httpResponse().isSuccessful) response.responseBody().get().readAllBytes()
-                .toString() else null
+        val userResponse = applicationTeamsClient.tokenOperation(tenantId) { accessToken: String ->
+            microsoftGraphAccessClient.sendRequest<UserResponse>(
+                "https://graph.microsoft.com/v1.0/users/${userId}",
+                listOf("\$select" to UserResponse::class.declaredMemberProperties.map { it.name }),
+                HttpMethod.GET,
+                listOf("Content-Type" to "application/json"),
+                ""
+            )
         }
-
-        val userResponse: UserResponse = gson.fromJson(json, UserResponse::class.java)
         val newUser = DatabaseUser(userId, userResponse.givenName, userResponse.surname, listOf())
         database.putEntry(Table.USERS, newUser);
         return User(
