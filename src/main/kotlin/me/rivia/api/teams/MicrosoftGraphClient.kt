@@ -25,10 +25,10 @@ class MicrosoftGraphClient(
             @SerializedName("refresh_token") val refreshToken: String?,
         )
 
-        const val CLIENT_ID = "9661a5c4-6c18-49b8-aad6-e3a4722c2515"
+        const val CLIENT_ID = "491d67e2-00cf-46ce-87cc-7e315c09b59f"
         const val REDIRECT_URI =
             "https://vbc48le64j.execute-api.eu-west-2.amazonaws.com/production"
-        const val CLIENT_SECRET = "cap8Q~ESKP.5rpds2UeVfKw39.SB55YSmSwVmag8"
+        const val CLIENT_SECRET = "xkI8Q~959yh1DI4qWU0BlepJe3TuhERoHgwyjcw-"
         const val APPLICATION_SCOPE = "https://graph.microsoft.com/beta/subscriptions/.default"
         const val DELEGATED_SCOPE = "ChannelMessage.Send"
     }

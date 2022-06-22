@@ -108,7 +108,8 @@ YwscYwSS+/iHgc4phV6EWMDKvm8i4Y7L5sDcFdHGIHvmEL+1g+8kugsWq4fupw==
     ): Response {
         val fullUrl = url.joinToString()
         if (fullUrl.contains("validationToken")) {
-            TODO("Specify content to be text/plain")
+//            TODO("Specify content to be text/plain")
+//            TODO("Decode the token")
             return Response(fullUrl.split("validationToken=")[1])
         }
 
