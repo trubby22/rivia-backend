@@ -1,6 +1,5 @@
 package me.rivia.api.teams
 
-import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import me.rivia.api.database.Database
 import me.rivia.api.database.Table
@@ -8,11 +7,6 @@ import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.getEntry
 import me.rivia.api.database.updateEntry
 import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
-import software.amazon.awssdk.http.HttpExecuteRequest
-import software.amazon.awssdk.http.SdkHttpMethod
-import software.amazon.awssdk.http.SdkHttpRequest
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
-import java.net.URI
 
 enum class TokenType {
     APPLICATION, USER,
@@ -34,15 +28,12 @@ class MicrosoftGraphClient(
         )
 
         const val CLIENT_ID = "9661a5c4-6c18-49b8-aad6-e3a4722c2515"
-        const val APPLICATION_PERMISSIONS = "ChatMessage.Read.All"
-        const val DELEGATED_PERMISSIONS = "ChannelMessage.Send"
-        const val REDIRECT_URI = "https://vbc48le64j.execute-api.eu-west-2.amazonaws.com/production"
+        const val REDIRECT_URI =
+            "https://vbc48le64j.execute-api.eu-west-2.amazonaws.com/production"
         const val CLIENT_SECRET = "cap8Q~ESKP.5rpds2UeVfKw39.SB55YSmSwVmag8"
-        const val REFRESH_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+        const val REFRESH_TOKEN_URL =
+            "https://login.microsoftonline.com/common/oauth2/v2.0/token"
     }
-
-    private val client = UrlConnectionHttpClient.builder().build()
-    private val jsonParser = Gson()
 
     private fun getAccessToken(tenantId: String): String {
         val tenant: Tenant? = database.getEntry(
@@ -52,20 +43,19 @@ class MicrosoftGraphClient(
         else tenant!!.applicationAccessToken!!
     }
 
-    private fun getRefreshToken(tenantId: String): String? {
+    private fun getUserRefreshToken(tenantId: String): String? {
         val tenant: Tenant? = database.getEntry(
             Table.TENANTS, tenantId
         )
-        return if (tokenType == TokenType.USER) tenant!!.userRefreshToken
-        else tenant!!.applicationRefreshToken
+        return tenant!!.userRefreshToken
     }
 
     private fun refreshAccessToken(tenantId: String): String? {
-        val scope =
-            if (tokenType == TokenType.APPLICATION) APPLICATION_PERMISSIONS else DELEGATED_PERMISSIONS
+        val refreshToken = if (tokenType == TokenType.APPLICATION) null
+        else getUserRefreshToken(tenantId)!!
         val body = listOf(
             "client_id" to CLIENT_ID,
-            "refresh_token" to getRefreshToken(tenantId)!!,
+            "refresh_token" to refreshToken,
             "redirect_uri" to REDIRECT_URI,
             "grant_type" to "refresh_token",
             "client_secret" to CLIENT_SECRET
@@ -73,27 +63,23 @@ class MicrosoftGraphClient(
             "$argName=$argValue"
         }
 
-        val sdkHttpRequest = SdkHttpRequest.builder().uri(
-            URI.create(
-                REFRESH_TOKEN_URL
+        val tokenResponse = microsoftGraphAccessClient.sendRequest(
+            url = REFRESH_TOKEN_URL,
+            headers = listOf("Content-Type" to "application/x-www-form-urlencoded"),
+            method = MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
+            body = body,
+            clazz = TokenResponse::class,
+            queryArgs = listOf()
+        )!!
+        if (tokenType == TokenType.USER) {
+            setUserTokens(
+                tenantId,
+                tokenResponse.accessToken!!,
+                tokenResponse.refreshToken!!
             )
-        ).putHeader("Content-Type", "application/x-www-form-urlencoded").method(SdkHttpMethod.POST)
-            .build()
-        val response = client.prepareRequest(
-            HttpExecuteRequest.builder().request(
-                sdkHttpRequest
-            ).contentStreamProvider { body.byteInputStream() }.build()
-        ).call()
-        if (!response.httpResponse().isSuccessful) {
-            return null
+        } else {
+            setApplicationToken(tenantId, tokenResponse.accessToken!!)
         }
-        val jsonString = response.responseBody().get().readAllBytes().toString()
-        val tokenResponse = jsonParser.fromJson(
-            jsonString, TokenResponse::class.java
-        )
-        setTokens(
-            tenantId, tokenResponse.accessToken!!, tokenResponse.refreshToken!!
-        )
 
         return tokenResponse.accessToken
     }
@@ -112,7 +98,9 @@ class MicrosoftGraphClient(
         return result
     }
 
-    private fun setUserTokens(tenantId: String, accessToken: String, refreshToken: String) {
+    private fun setUserTokens(
+        tenantId: String, accessToken: String, refreshToken: String
+    ) {
         database.updateEntry(
             Table.TENANTS, tenantId
         ) { tenantEntry: Tenant ->

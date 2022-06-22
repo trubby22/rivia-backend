@@ -8,14 +8,11 @@ import me.rivia.api.database.Table
 import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.getAllEntries
 import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
+import me.rivia.api.graphhttp.MicrosoftGraphHttpClient
 import me.rivia.api.teams.TeamsClient
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
-import software.amazon.awssdk.http.HttpExecuteRequest
-import software.amazon.awssdk.http.SdkHttpMethod
-import software.amazon.awssdk.http.SdkHttpRequest
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
-import java.net.URI
 import java.time.OffsetDateTime
 
 class PostSubscription : SubHandler {
@@ -23,6 +20,10 @@ class PostSubscription : SubHandler {
         const val CHANGE_TYPE = "created"
         const val NOTIFICATION_URL =
             "https://vbc48le64j.execute-api.eu-west-2.amazonaws.com/production/graphEvent"
+        const val SUBSCRIPTION_URL_V1 =
+            "https://graph.microsoft.com/v1.0/subscriptions"
+        const val SUBSCRIPTION_URL_BETA =
+            "https://graph.microsoft.com/beta/subscriptions"
         const val RESOURCE = "/teams/getAllMessages"
         const val CERTIFICATE = """
             MIIFyzCCA7OgAwIBAgIUa+1Fd0PjMGEcdl1Jl4pFd3VlW/owDQYJKoZIhvcNAQEL
@@ -68,9 +69,18 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
             @SerializedName("encryptionCertificate") val encryptionCertificate: String? = null,
             @SerializedName("encryptionCertificateId") val encryptionCertificateId: String? = null,
         )
+
+        private data class SubscriptionResponse(
+            @SerializedName("value") val value: Any?
+        )
+
+        private data class RenewResponse(
+            @SerializedName("expirationDateTime") val expirationDateTime: OffsetDateTime?
+        )
     }
 
     private val client = UrlConnectionHttpClient.builder().build()
+    private val msClient = MicrosoftGraphHttpClient()
     private val jsonConverter = Gson()
 
     override fun handleRequest(
@@ -87,8 +97,8 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
     ): Response {
         val jsonString = jsonConverter.toJson(
             database.getAllEntries<Tenant>(Table.TENANTS).map { tenant ->
-                renewSubscription(applicationAccessToken, tenant.tenantId)
-            })
+                    renewSubscription(applicationAccessToken, tenant.tenantId)
+                })
 
         return Response(jsonString)
     }
@@ -109,19 +119,19 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
         )
 
         return applicationAccessToken.tokenOperation(tenantId!!) { token: String ->
-            val response = client.prepareRequest(
-                HttpExecuteRequest.builder().request(
-                    SdkHttpRequest.builder().uri(
-                        URI.create(
-                            "https://graph.microsoft.com/beta/subscriptions"
-                        )
-                    ).putHeader("Content-Type", "application/json").putHeader(
-                        "Authorization", "Bearer $token"
-                    ).method(SdkHttpMethod.POST).build()
-                ).contentStreamProvider { body.byteInputStream() }.build()
-            ).call()
-            if (response.httpResponse().isSuccessful) response.responseBody()
-                .get().readAllBytes().toString() else null
+            jsonConverter.toJson(
+                msClient.sendRequest(
+                    url = SUBSCRIPTION_URL_BETA,
+                    headers = listOf(
+                        "Content-Type" to "application/json",
+                        "Authorization" to "Bearer $token"
+                    ),
+                    method = MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
+                    body = body,
+                    clazz = SubscriptionResponse::class,
+                    queryArgs = listOf()
+                )!!
+            )
         }
     }
 
@@ -135,19 +145,19 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
         )
 
         return applicationAccessToken.tokenOperation(tenantId!!) { token: String ->
-            val response = client.prepareRequest(
-                HttpExecuteRequest.builder().request(
-                    SdkHttpRequest.builder().uri(
-                        URI.create(
-                            "https://graph.microsoft.com/v1.0/subscriptions/${tenantId}"
-                        )
-                    ).putHeader("Content-Type", "application/json")
-                        .putHeader("Authorization", "Bearer $token")
-                        .method(SdkHttpMethod.PATCH).build()
-                ).contentStreamProvider { body.byteInputStream() }.build()
-            ).call()
-            if (response.httpResponse().isSuccessful) response.responseBody()
-                .get().readAllBytes().toString() else null
+            jsonConverter.toJson(
+                msClient.sendRequest(
+                    url = "${SUBSCRIPTION_URL_V1}/${tenantId}",
+                    headers = listOf(
+                        "Content-Type" to "application/json",
+                        "Authorization" to "Bearer $token"
+                    ),
+                    method = MicrosoftGraphAccessClient.Companion.HttpMethod.PATCH,
+                    body = body,
+                    clazz = RenewResponse::class,
+                    queryArgs = listOf()
+                )!!
+            )
         }
     }
 }
