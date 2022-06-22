@@ -29,8 +29,8 @@ class MicrosoftGraphClient(
         const val REDIRECT_URI =
             "https://vbc48le64j.execute-api.eu-west-2.amazonaws.com/production"
         const val CLIENT_SECRET = "cap8Q~ESKP.5rpds2UeVfKw39.SB55YSmSwVmag8"
-        const val APPLICATION_PERMISSIONS = "ChatMessage.Read.All/.default"
-        const val DELEGATED_PERMISSIONS = "ChannelMessage.Send"
+        const val APPLICATION_SCOPE = "https://graph.microsoft.com/beta/subscriptions/.default"
+        const val DELEGATED_SCOPE = "ChannelMessage.Send"
     }
 
     private fun getAccessToken(tenantId: String): String {
@@ -58,14 +58,14 @@ class MicrosoftGraphClient(
         val body = if (tokenType == TokenType.APPLICATION) {
             listOf(
                 "client_id" to CLIENT_ID,
-                "scope" to APPLICATION_PERMISSIONS,
+                "scope" to APPLICATION_SCOPE,
                 "client_secret" to CLIENT_SECRET,
                 "grant_type" to "client_credentials"
             )
         } else {
             listOf(
                 "client_id" to CLIENT_ID,
-                "scope" to DELEGATED_PERMISSIONS,
+                "scope" to DELEGATED_SCOPE,
                 "client_secret" to CLIENT_SECRET,
                 "refresh_token" to refreshToken,
                 "redirect_uri" to REDIRECT_URI,
