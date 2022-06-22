@@ -11,6 +11,8 @@ import me.rivia.api.websocket.WebsocketClient
 import me.rivia.api.handlers.responses.PresetQ as ResponsePresetQ
 
 class PostTenant : SubHandler {
+    private val postSubscription = PostSubscription()
+
     override fun handleRequest(
         url: List<String>,
         tenantId: String?,
@@ -109,10 +111,12 @@ class PostTenant : SubHandler {
             })
         }
 
-        return Response(tenantEntry.presetQIds!!.map {
+        val result = Response(tenantEntry.presetQIds!!.map {
             ResponsePresetQ(
                 database.getEntry(Table.PRESETQS, it) ?: throw Error("presetQ not present")
             )
         })
+        postSubscription.createSubscription(applicationAccessToken, tenantId)
+        return result
     }
 }
