@@ -111,21 +111,22 @@ class MicrosoftGraphClient(
         return result
     }
 
-    private fun setTokens(
-        tenantId: String, accessToken: String, refreshToken: String
-    ): Boolean {
-        val tenant = database.updateEntry(
+    private fun setUserTokens(tenantId: String, accessToken: String, refreshToken: String) {
+        database.updateEntry(
             Table.TENANTS, tenantId
         ) { tenantEntry: Tenant ->
-            if (tokenType == TokenType.USER) {
-                tenantEntry.userAccessToken = accessToken
-                tenantEntry.userRefreshToken = refreshToken
-            } else {
-                tenantEntry.applicationAccessToken = accessToken
-                tenantEntry.userRefreshToken = refreshToken
-            }
+            tenantEntry.userAccessToken = accessToken
+            tenantEntry.userRefreshToken = refreshToken
             tenantEntry
-        }
-        return tenant != null
+        } ?: throw Error("Tenant does not exist")
+    }
+
+    private fun setApplicationToken(tenantId: String, accessToken: String) {
+        database.updateEntry(
+            Table.TENANTS, tenantId
+        ) { tenantEntry: Tenant ->
+            tenantEntry.applicationAccessToken = accessToken
+            tenantEntry
+        } ?: throw Error("Tenant does not exist")
     }
 }

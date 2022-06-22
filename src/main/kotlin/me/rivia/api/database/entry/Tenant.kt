@@ -9,11 +9,10 @@ data class Tenant(
     @get:DynamoDbPartitionKey
     var tenantId: String?,
     var subscriptionId: String?,
-    var applicationRefreshToken: String?,
     var applicationAccessToken: String?,
-    var refreshToken: String?,
-    var accessToken: String?,
+    var userRefreshToken: String?,
+    var userAccessToken: String?,
     var presetQIds: List<String>?,
 ) {
-    constructor() : this(null,null , null,null,null, null, null)
+    constructor() : this(null,null , null,null,null, null)
 }

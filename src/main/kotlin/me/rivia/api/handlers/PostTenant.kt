@@ -23,11 +23,7 @@ class PostTenant : SubHandler {
         websocket: WebsocketClient
     ): Response {
         // Extracting json data
-        val applicationRefreshToken = jsonData["adminRefreshToken"]
-        if (applicationRefreshToken !is String?) {
-            return Response(ResponseError.WRONGENTRY)
-        }
-        val userRefreshToken = jsonData["userRefreshToken"]
+        val userRefreshToken = jsonData["refreshToken"]
         if (userRefreshToken !is String?) {
             return Response(ResponseError.WRONGENTRY)
         }
