@@ -27,9 +27,9 @@ class MicrosoftGraphClient(
 
         const val CLIENT_ID = "491d67e2-00cf-46ce-87cc-7e315c09b59f"
         const val REDIRECT_URI =
-            "https://vbc48le64j.execute-api.eu-west-2.amazonaws.com/production"
+            "https://app.rivia.me"
         const val CLIENT_SECRET = "xkI8Q~959yh1DI4qWU0BlepJe3TuhERoHgwyjcw-"
-        const val APPLICATION_SCOPE = "https://graph.microsoft.com/beta/subscriptions/.default"
+        const val APPLICATION_SCOPE = "https://graph.microsoft.com/.default"
         const val DELEGATED_SCOPE = "ChannelMessage.Send"
     }
 
@@ -51,7 +51,7 @@ class MicrosoftGraphClient(
     override fun fetchAccessToken(
         tenantId: String,
         userRefreshToken: String?,
-    ): Pair<String, String>? {
+    ): Pair<String, String?>? {
         val refreshToken = if (tokenType == TokenType.APPLICATION) null
         else userRefreshToken ?: getUserRefreshToken(tenantId)
 
@@ -83,7 +83,7 @@ class MicrosoftGraphClient(
                 body,
             ) ?: return null
 
-        return Pair(tokenResponse.accessToken!!, tokenResponse.refreshToken!!)
+        return Pair(tokenResponse.accessToken!!, tokenResponse.refreshToken)
     }
 
     private fun refreshAccessToken(
@@ -94,7 +94,7 @@ class MicrosoftGraphClient(
             setUserTokens(
                 tenantId,
                 accessToken,
-                refreshToken
+                refreshToken ?: throw Error("No refresh token")
             )
         } else {
             setApplicationToken(tenantId, accessToken)

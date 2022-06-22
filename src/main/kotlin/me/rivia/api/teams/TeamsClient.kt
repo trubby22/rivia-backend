@@ -6,7 +6,7 @@ interface TeamsClient {
     fun fetchAccessToken(
         tenantId: String,
         userRefreshToken: String? = null,
-    ): Pair<String, String>?
+    ): Pair<String, String?>?
 
     fun conditionalTokenOperation(
         tenantId: String, apiCall: (String) -> Boolean
