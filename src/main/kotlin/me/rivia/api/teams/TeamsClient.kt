@@ -9,8 +9,7 @@ interface TeamsClient {
     ): String?
 
     fun conditionalTokenOperation(
-        tenantId: String,
-        apiCall: (String) -> Boolean
+        tenantId: String, apiCall: (String) -> Boolean
     ) = tokenOperation(tenantId) {
         if (apiCall(it)) {
             true
