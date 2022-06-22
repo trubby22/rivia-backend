@@ -60,7 +60,6 @@ class MicrosoftGraphClient(
     private fun refreshAccessToken(tenantId: String): String? {
         val scope =
             if (tokenType == TokenType.APPLICATION) APPLICATION_PERMISSIONS else DELEGATED_PERMISSIONS
-
         val body = listOf(
             "client_id" to CLIENT_ID,
             "refresh_token" to getRefreshToken(tenantId)!!,
@@ -82,7 +81,6 @@ class MicrosoftGraphClient(
                 sdkHttpRequest
             ).contentStreamProvider { body.byteInputStream() }.build()
         ).call()
-
         if (!response.httpResponse().isSuccessful) {
             return null
         }
