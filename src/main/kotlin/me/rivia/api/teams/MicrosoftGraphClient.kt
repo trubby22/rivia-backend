@@ -6,7 +6,7 @@ import me.rivia.api.database.Table
 import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.getEntry
 import me.rivia.api.database.updateEntry
-import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
+import me.rivia.api.graphhttp.*
 
 enum class TokenType {
     APPLICATION, USER,
@@ -21,18 +21,14 @@ class MicrosoftGraphClient(
     companion object {
         private data class TokenResponse(
             @SerializedName("access_token") val accessToken: String?,
-            @SerializedName("token_type") val tokenType: String?,
-            @SerializedName("expires_in") val expiresIn: Int?,
-            @SerializedName("scope") val scope: String?,
             @SerializedName("refresh_token") val refreshToken: String?,
         )
 
         const val CLIENT_ID = "9661a5c4-6c18-49b8-aad6-e3a4722c2515"
-        const val REDIRECT_URI =
-            "https://vbc48le64j.execute-api.eu-west-2.amazonaws.com/production"
+        const val REDIRECT_URI = "https://vbc48le64j.execute-api.eu-west-2.amazonaws.com/production"
         const val CLIENT_SECRET = "cap8Q~ESKP.5rpds2UeVfKw39.SB55YSmSwVmag8"
-        const val REFRESH_TOKEN_URL =
-            "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+        const val APPLICATION_PERMISSIONS = "ChatMessage.Read.All"
+        const val DELEGATED_PERMISSIONS = "ChannelMessage.Send"
     }
 
     private fun getAccessToken(tenantId: String): String {
@@ -53,29 +49,37 @@ class MicrosoftGraphClient(
     private fun refreshAccessToken(tenantId: String): String? {
         val refreshToken = if (tokenType == TokenType.APPLICATION) null
         else getUserRefreshToken(tenantId)!!
-        val body = listOf(
-            "client_id" to CLIENT_ID,
-            "refresh_token" to refreshToken,
-            "redirect_uri" to REDIRECT_URI,
-            "grant_type" to "refresh_token",
-            "client_secret" to CLIENT_SECRET
-        ).joinToString("&") { (argName, argValue) ->
+
+        val body = if (tokenType == TokenType.APPLICATION) {
+            listOf(
+                "client_id" to CLIENT_ID,
+                "scope" to APPLICATION_PERMISSIONS,
+                "client_secret" to CLIENT_SECRET,
+                "grant_type" to "client_credentials"
+            )
+        } else {
+            listOf(
+                "client_id" to CLIENT_ID,
+                "scope" to DELEGATED_PERMISSIONS,
+                "client_secret" to CLIENT_SECRET,
+                "refresh_token" to refreshToken,
+                "redirect_uri" to REDIRECT_URI,
+                "grant_type" to "refresh_token"
+            )
+        }.joinToString("&") { (argName, argValue) ->
             "$argName=$argValue"
         }
+        val tokenResponse = microsoftGraphAccessClient.sendRequest<TokenResponse>(
+            "https://login.microsoftonline.com/${if (tokenType == TokenType.APPLICATION) tenantId else "common"}/oauth2/v2.0/token",
+            listOf(),
+            MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
+            listOf("Content-Type" to "application/x-www-form-urlencoded"),
+            body,
+        ) ?: return null
 
-        val tokenResponse = microsoftGraphAccessClient.sendRequest(
-            url = REFRESH_TOKEN_URL,
-            headers = listOf("Content-Type" to "application/x-www-form-urlencoded"),
-            method = MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
-            body = body,
-            clazz = TokenResponse::class,
-            queryArgs = listOf()
-        )!!
         if (tokenType == TokenType.USER) {
             setUserTokens(
-                tenantId,
-                tokenResponse.accessToken!!,
-                tokenResponse.refreshToken!!
+                tenantId, tokenResponse.accessToken!!, tokenResponse.refreshToken!!
             )
         } else {
             setApplicationToken(tenantId, tokenResponse.accessToken!!)
