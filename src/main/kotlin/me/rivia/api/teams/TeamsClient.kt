@@ -3,10 +3,10 @@ package me.rivia.api.teams
 interface TeamsClient {
 
     fun <T : Any> tokenOperation(tenantId: String, apiCall: (String) -> T?): T
-    fun refreshAccessToken(
+    fun fetchAccessToken(
         tenantId: String,
         userRefreshToken: String? = null,
-    ): String?
+    ): Pair<String, String>?
 
     fun conditionalTokenOperation(
         tenantId: String, apiCall: (String) -> Boolean

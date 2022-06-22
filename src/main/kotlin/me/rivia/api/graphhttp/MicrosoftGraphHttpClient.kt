@@ -40,11 +40,11 @@ class MicrosoftGraphHttpClient : MicrosoftGraphAccessClient {
             ).contentStreamProvider { body.byteInputStream() }.build()
         ).call()
         if (!response.httpResponse().isSuccessful) {
+            throw Error(String(response.responseBody().get().readAllBytes()))
             return null
         }
-        val jsonString = response.responseBody().get().readAllBytes().toString()
         return jsonParser.fromJson(
-            jsonString, clazz.java
+            String(response.responseBody().get().readAllBytes()), clazz.java
         )
     }
 }

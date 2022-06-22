@@ -130,11 +130,11 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
 
         // Inserting the tenant entry
         val subscriptionId = createSubscription(
-            graphAccessClient, applicationAccessToken, tenantId
+            graphAccessClient, tenantId!!, applicationAccessToken
         )
         val tenantEntry: Tenant = if (userRefreshToken == null) {
             database.updateEntry(
-                Table.TENANTS, tenantId!!
+                Table.TENANTS, tenantId
             ) { tenantEntry: Tenant ->
                 tenantEntry.presetQIds = presetQIds?.value ?: defaultPresetQIds.value
                 tenantEntry
@@ -142,17 +142,22 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
         } else {
             database.updateEntryWithDefault(Table.TENANTS, {
                 Tenant(
-                    tenantId, subscriptionId, applicationAccessToken.refreshAccessToken(
-                        tenantId!!
-                    ), userRefreshToken, userAccessToken.refreshAccessToken(
+                    tenantId,
+                    subscriptionId,
+                    applicationAccessToken.fetchAccessToken(
+                        tenantId
+                    )?.first ?: throw Error("Access token unavailable"),
+                    userRefreshToken,
+                    userAccessToken.fetchAccessToken(
                         tenantId, userRefreshToken
-                    ), presetQIds?.value ?: defaultPresetQIds.value
+                    )?.first ?: throw Error("Access token unavailable"),
+                    presetQIds?.value ?: defaultPresetQIds.value
                 )
             }, { tenantEntry: Tenant ->
                 tenantEntry.userRefreshToken = userRefreshToken
-                tenantEntry.userAccessToken = userAccessToken.refreshAccessToken(
-                    tenantId!!, userRefreshToken
-                )
+                tenantEntry.userAccessToken = userAccessToken.fetchAccessToken(
+                    tenantId, userRefreshToken
+                )?.first ?: throw Error("Access token unavailable")
                 if (presetQIds != null) {
                     tenantEntry.presetQIds = presetQIds.value
                 }
@@ -168,31 +173,31 @@ L0eCTlPnb5BU5sKJWRsaahXirqCjHx8hOlWaypqbODcRKkSS4haLBDBzYS1gBaQ=
 
     private fun createSubscription(
         graphAccessClient: MicrosoftGraphAccessClient,
+        tenantId: String,
         applicationAccessToken: TeamsClient,
-        tenantId: String?
     ): String {
         val body = jsonConverter.toJson(
             SubscriptionBody(
                 changeType = SUBSCRIPTION_CHANGE_TYPE,
                 notificationUrl = NOTIFICATION_URL,
                 resource = RESOURCE,
-                expirationDateTime = OffsetDateTime.now().plusMinutes(59),
+                expirationDateTime = OffsetDateTime.now().plusMinutes(2),
                 includeResourceData = true,
                 encryptionCertificate = CERTIFICATE,
                 encryptionCertificateId = CERTIFICATE_ID
             )
         )
 
-        return applicationAccessToken.tokenOperation(tenantId!!) { token: String ->
-            graphAccessClient.sendRequest<SubscriptionResponse>(
-                SUBSCRIPTION_URL,
-                listOf(),
-                MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
-                listOf(
-                    "Content-Type" to "application/json", "Authorization" to "Bearer $token"
-                ),
-                body
-            )?.id
-        }
+        return graphAccessClient.sendRequest<SubscriptionResponse>(
+            SUBSCRIPTION_URL,
+            listOf(),
+            MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
+            listOf(
+                "Content-Type" to "application/json", "Authorization" to "Bearer ${
+                    applicationAccessToken.fetchAccessToken(tenantId)?.first ?: throw Error("Access token unavailable")
+                }"
+            ),
+            body
+        )?.id ?: throw Error("Subscription failed")
     }
 }

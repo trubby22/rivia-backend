@@ -29,32 +29,31 @@ class MicrosoftGraphClient(
         const val REDIRECT_URI =
             "https://vbc48le64j.execute-api.eu-west-2.amazonaws.com/production"
         const val CLIENT_SECRET = "cap8Q~ESKP.5rpds2UeVfKw39.SB55YSmSwVmag8"
-        const val APPLICATION_PERMISSIONS = "ChatMessage.Read.All"
+        const val APPLICATION_PERMISSIONS = "ChatMessage.Read.All/.default"
         const val DELEGATED_PERMISSIONS = "ChannelMessage.Send"
     }
 
     private fun getAccessToken(tenantId: String): String {
-        val tenant: Tenant? = database.getEntry(
+        val tenant = database.getEntry<Tenant>(
             Table.TENANTS, tenantId
-        )
-        return if (tokenType == TokenType.USER) tenant!!.userAccessToken!!
-        else tenant!!.applicationAccessToken!!
+        ) ?: throw Error("Tenant does not exist")
+        return if (tokenType == TokenType.USER) tenant.userAccessToken!!
+        else tenant.applicationAccessToken!!
     }
 
-    private fun getUserRefreshToken(tenantId: String): String? {
-        val tenant: Tenant? = database.getEntry(
+    private fun getUserRefreshToken(tenantId: String): String {
+        val tenant = database.getEntry<Tenant>(
             Table.TENANTS, tenantId
-        )
-        return tenant!!.userRefreshToken
+        ) ?: throw Error("Tenant does not exist")
+        return tenant.userRefreshToken!!
     }
 
-    override fun refreshAccessToken(
+    override fun fetchAccessToken(
         tenantId: String,
         userRefreshToken: String?,
-    ): String? {
+    ): Pair<String, String>? {
         val refreshToken = if (tokenType == TokenType.APPLICATION) null
         else userRefreshToken ?: getUserRefreshToken(tenantId)
-        ?: throw Error("User refresh token null")
 
         val body = if (tokenType == TokenType.APPLICATION) {
             listOf(
@@ -84,17 +83,23 @@ class MicrosoftGraphClient(
                 body,
             ) ?: return null
 
+        return Pair(tokenResponse.accessToken!!, tokenResponse.refreshToken!!)
+    }
+
+    private fun refreshAccessToken(
+        tenantId: String,
+    ): String? {
+        val (accessToken, refreshToken) = fetchAccessToken(tenantId) ?: return null
         if (tokenType == TokenType.USER) {
             setUserTokens(
                 tenantId,
-                tokenResponse.accessToken!!,
-                tokenResponse.refreshToken!!
+                accessToken,
+                refreshToken
             )
         } else {
-            setApplicationToken(tenantId, tokenResponse.accessToken!!)
+            setApplicationToken(tenantId, accessToken)
         }
-
-        return tokenResponse.accessToken
+        return accessToken
     }
 
     override fun <T : Any> tokenOperation(

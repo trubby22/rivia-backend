@@ -6,11 +6,11 @@ data class Trie<N : Any, L>(val children: MutableMap<N, Trie<N, L>> = HashMap(),
 
     operator fun set(key: List<N?>, value: L) = setRecursive(key.listIterator(), value)
 
-    private fun getRecursive(key: ListIterator<N?>): Trie<N, L>? =
+    private fun getRecursive(key: ListIterator<N?>, lvl: Int = 0): Trie<N, L>? =
         if (!key.hasNext()) {
             this
         } else {
-            (children[key.next()] ?: alternative)?.getRecursive(key)
+            (children[key.next()] ?: alternative)?.getRecursive(key, lvl + 1)
         }
 
     private fun setRecursive(key: ListIterator<N?>, value: L) {

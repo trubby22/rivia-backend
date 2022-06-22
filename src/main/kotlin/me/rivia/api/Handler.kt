@@ -26,7 +26,7 @@ class Handler(
     private val websocket: WebsocketClient
 ) : RequestHandler<Event, Response> {
     companion object {
-        fun getPath(path: String): List<String> = path.split('/')
+        fun getPath(path: String): List<String> = if (path.isEmpty()) listOf() else path.split('/')
 
     }
 
