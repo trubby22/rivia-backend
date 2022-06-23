@@ -38,34 +38,6 @@ class PostLogin : SubHandler {
         private data class TenantIdFetchWrapper(
             @SerializedName("value") val value: List<TenantIdFetchBody>? = null,
         )
-
-        // subscription stuff
-        const val SUBSCRIPTION_CHANGE_TYPE = "created"
-        const val NOTIFICATION_URL =
-            "https://api.rivia.me/graphEvent"
-        const val SUBSCRIPTION_URL = "https://graph.microsoft.com/beta/subscriptions"
-        const val RESOURCE = "teams/getAllMessages"
-        const val CERTIFICATE =
-            "MIIDSTCCAjGgAwIBAgIIDGx0eZU4388wDQYJKoZIhvcNAQELBQAwUzELMAkGA1UEBhMCeHkxDDAKBgNVBAgTA3h5ejEMMAoGA1UEBxMDeHl6MQwwCgYDVQQKEwN4eXoxDDAKBgNVBAsTA3h5ejEMMAoGA1UEAxMDeHl6MB4XDTIyMDYxMjEzMDM0MloXDTIzMDYxMjEzMDM0MlowUzELMAkGA1UEBhMCeHkxDDAKBgNVBAgTA3h5ejEMMAoGA1UEBxMDeHl6MQwwCgYDVQQKEwN4eXoxDDAKBgNVBAsTA3h5ejEMMAoGA1UEAxMDeHl6MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqkgoLz4BOqbvlEE13yb6JHXMwHmoqw+bJJsNxOoaL2pSWzx4MX7BYbEzV6ZVix1OBEIUKbJAJYYiRQm9elZp5pf77w7xD3PusWOZDEy8s3gvkY1G309qPdYAUS9IarlYKjdc2Dsh3E3+zgQYQWNDdpJWUnJcTxpLpOSmql9nupZKTfRP6VEOBOybnnNJtPmLCLWVqwo5J7urVcuNPcgX7soD3LYdz+mCZZK49xHs0pI/70uEBgdIljp2FItEEYhV1f1UjkGp0pqrE0GHRYxIBmAgyixMUU7romiYBnyCQVP2mYpgD2xH0hVcQ3fEagSG7V5OId7w4ViFx7y7l54lMQIDAQABoyEwHzAdBgNVHQ4EFgQUvcrPGqsLYkkYoTukVMXhIfNjAjEwDQYJKoZIhvcNAQELBQADggEBAGxbWnicAUaHV8hXmy8nQee3wAL7g5rCMwScQCjZxWFTA16c+X0QKWisAoWzRYNGp2t4aPiCiWyuh5tjRiURzVadT+37cMkce6UY74IcYUf8/0zeYI4ut3bEvsJg6pJq9Ak9L6a/KcOm41zK7ehujbUcabMSBd8nQhAiD+1KSkVz8XH7gHAT9EU/CR6Ig43nqbRxyyaVjJLJItdDylMteqdSULRL+5obWK5FgkHmEN40iQaYtcxU0b7apHPRhbB10OX58arEJ405FaSNy0aB8RyAEBKMOR7wz6Nh6THK4U6qDmHf4o4zEd7S7yjHZdPTWxyOS1TW8m5WKJWas+85utA="
-        const val CERTIFICATE_ID = "myCertificate"
-
-        private data class SubscriptionBody(
-            @SerializedName("changeType") val changeType: String? = null,
-            @SerializedName("notificationUrl") val notificationUrl: String? = null,
-            @SerializedName("resource") val resource: String? = null,
-            @SerializedName("expirationDateTime") val expirationDateTime: String? = null,
-            @SerializedName("includeResourceData") val includeResourceData: String? = null,
-            @SerializedName("encryptionCertificate") val encryptionCertificate: String? = null,
-            @SerializedName("encryptionCertificateId") val encryptionCertificateId: String? = null,
-        )
-
-        private data class SubscriptionResponse(
-            @SerializedName("id") val id: String? = null
-        )
-
-        private data class SubscriptionList(
-            @SerializedName("value") val value: List<SubscriptionResponse>? = null
-        )
     }
 
     private val jsonConverter = GsonBuilder()
@@ -86,7 +58,7 @@ class PostLogin : SubHandler {
         websocket: WebsocketClient
     ): Response {
         // Redeeming the token
-        var authorizationCode =
+        val authorizationCode =
             jsonData["authorizationCode"] as? String ?: Response(ResponseError.WRONGENTRY)
 
         val tokenRedeemBody = listOf(
@@ -139,16 +111,12 @@ class PostLogin : SubHandler {
 
         // Inserting the tenant entry
         if (database.getEntry<Tenant>(Table.TENANTS, tenantId!!) == null) {
-            val subscriptionId = createSubscription(
-                graphAccessClient, tenantId, applicationAccessToken
-            )
             val (newUserAccessToken, newUserRefreshToken) = userAccessToken.fetchAccessToken(
                 tenantId,
                 userRefreshToken
             ) ?: throw Error("Access token unavailable")
             database.putEntry(Table.TENANTS, Tenant(
                 tenantId,
-                subscriptionId,
                 applicationAccessToken.fetchAccessToken(tenantId)?.first
                     ?: throw Error("Access token unavailable"),
                 newUserRefreshToken,
@@ -159,37 +127,5 @@ class PostLogin : SubHandler {
             ))
         }
         return Response(mapOf("tenantId" to tenantId, "userId" to userId))
-    }
-
-    private fun createSubscription(
-        graphAccessClient: MicrosoftGraphAccessClient,
-        tenantId: String,
-        applicationAccessToken: TeamsClient,
-    ): String {
-        val body = jsonConverter.toJson(
-            SubscriptionBody(
-                changeType = SUBSCRIPTION_CHANGE_TYPE,
-                notificationUrl = NOTIFICATION_URL,
-                resource = RESOURCE,
-                expirationDateTime = OffsetDateTime.now().plusMinutes(5).toString(),
-                includeResourceData = true.toString(),
-                encryptionCertificate = CERTIFICATE,
-                encryptionCertificateId = CERTIFICATE_ID
-            )
-        )
-
-        return graphAccessClient.sendRequest<SubscriptionResponse>(
-            SUBSCRIPTION_URL,
-            listOf(),
-            MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
-            listOf(
-                "Content-Type" to "application/json",
-                "Accept" to "application/json",
-                "Authorization" to "Bearer ${
-                    applicationAccessToken.fetchAccessToken(tenantId)?.first ?: throw Error("Access token unavailable")
-                }"
-            ),
-            body
-        )?.id ?: throw Error("Subscription failed")
     }
 }

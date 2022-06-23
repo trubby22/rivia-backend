@@ -39,6 +39,12 @@ class Handler(
         registerSubHandler(listOf(), ApiMethod.HTTP_POST, false, true, lazy { PostTenant() })
         registerSubHandler(
             listOf("meetings"),
+            ApiMethod.HTTP_POST,
+            false,
+            true,
+            lazy { PostMeeting() })
+        registerSubHandler(
+            listOf("meetings"),
             ApiMethod.HTTP_GET,
             false,
             false,
@@ -68,20 +74,6 @@ class Handler(
             false,
             lazy { PostTiming() })
 
-        // Teams integration handlers
-        registerSubHandler(
-            listOf("subscription"),
-            ApiMethod.HTTP_POST,
-            true,
-            true,
-            lazy { PostSubscription() })
-        registerSubHandler(
-            listOf("graphEvent"),
-            ApiMethod.HTTP_POST,
-            true,
-            true,
-            lazy { PostGraphEvent() })
-
         // Websocket handlers
         registerSubHandler(listOf("websockets", null),
             ApiMethod.WEBSOCKET_MESSAGE,
@@ -94,7 +86,10 @@ class Handler(
     }
 
     private constructor(
-        database: Database, graphAccessClient: MicrosoftGraphAccessClient, userTeamsClient: TeamsClient, applicationTeamsClient: TeamsClient
+        database: Database,
+        graphAccessClient: MicrosoftGraphAccessClient,
+        userTeamsClient: TeamsClient,
+        applicationTeamsClient: TeamsClient
     ) : this(
         database,
         graphAccessClient,
