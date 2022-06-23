@@ -46,9 +46,8 @@ class PostLogin : SubHandler {
         const val SUBSCRIPTION_URL = "https://graph.microsoft.com/beta/subscriptions"
         const val RESOURCE = "teams/getAllMessages"
         const val CERTIFICATE =
-            "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"
+            "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"
         const val CERTIFICATE_ID = "myCertificate"
-
 
         private data class SubscriptionBody(
             @SerializedName("changeType") val changeType: String? = null,
@@ -61,7 +60,11 @@ class PostLogin : SubHandler {
         )
 
         private data class SubscriptionResponse(
-            @SerializedName("id") val id: String
+            @SerializedName("id") val id: String? = null
+        )
+
+        private data class SubscriptionList(
+            @SerializedName("value") val value: List<SubscriptionResponse>? = null
         )
     }
 
@@ -168,7 +171,7 @@ class PostLogin : SubHandler {
                 changeType = SUBSCRIPTION_CHANGE_TYPE,
                 notificationUrl = NOTIFICATION_URL,
                 resource = RESOURCE,
-                expirationDateTime = OffsetDateTime.now().plusMinutes(59).toString(),
+                expirationDateTime = OffsetDateTime.now().plusMinutes(5).toString(),
                 includeResourceData = true.toString(),
                 encryptionCertificate = CERTIFICATE,
                 encryptionCertificateId = CERTIFICATE_ID

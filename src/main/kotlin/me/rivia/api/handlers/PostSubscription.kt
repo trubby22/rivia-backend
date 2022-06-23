@@ -59,11 +59,11 @@ class PostSubscription : SubHandler {
     ) {
         val body = jsonConverter.toJson(
             RenewBody(
-                expirationDateTime = OffsetDateTime.now().plusMinutes(59).toString()
+                expirationDateTime = OffsetDateTime.now().plusMinutes(5).toString()
             )
         )
 
-        applicationAccessToken.tokenOperation(tenantId!!) { token: String ->
+        applicationAccessToken.tokenOperation(tenantId) { token: String ->
             graphAccessClient.sendRequest<RenewResponse>(
                 "https://graph.microsoft.com/beta/subscriptions/${subscriptionId}",
                 listOf(),

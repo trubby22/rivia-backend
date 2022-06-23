@@ -73,7 +73,7 @@ class PostGraphEvent : SubHandler {
         private const val RIVIA_URL = "https://app.rivia.me"
         private const val RIVIA_NAME = "app.rivia.me"
         private const val PRIVATE_KEY =
-            "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"
+            "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"
     }
 
     private val jsonConverter = Gson()
@@ -113,12 +113,26 @@ class PostGraphEvent : SubHandler {
 
         websocket.sendEvent(
             { _, _ -> true },
-            "$value, $resource, $tenantId, $teamId, $channelId"
+            encryptedData
+        )
+        websocket.sendEvent(
+            { _, _ -> true },
+            dataKey
         )
 
-        throw Error("Got here")
 
-        val decryptedResourceData = decryptData(dataKey, encryptedData)
+        val decryptedResourceData = try {
+            decryptData(dataKey, encryptedData)
+        } catch (e: Throwable) {
+            websocket.sendEvent(
+                { _, _ -> true },
+                "${e::class} ${e.message} ${e.stackTrace.asList()}"
+            )
+            throw Error("There")
+        }
+
+        websocket.sendEvent({ _, _ -> true }, decryptedResourceData.toString())
+        throw Error("Here")
 
         if (decryptedResourceData.eventDetail?.odataType?.contains("callEndedEventMessageDetail") == true) {
 
@@ -194,7 +208,7 @@ class PostGraphEvent : SubHandler {
     ): DecryptedResourceData {
         val decodedKey: ByteArray = Base64.getDecoder().decode(PRIVATE_KEY)
         val asymmetricKey: SecretKey =
-            SecretKeySpec(decodedKey, 0, decodedKey.size, "AES")
+            SecretKeySpec(decodedKey, 0, decodedKey.size, "RSA")
         val encryptedSymmetricKey: ByteArray =
             ApacheBase64.decodeBase64(dataKey)
         val cipher: Cipher =
