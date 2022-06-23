@@ -80,8 +80,8 @@ class PostGraphEvent : SubHandler {
 
     override fun handleRequest(
         url: List<String>,
-        tenantId: String?,
-        userId: String?,
+        _tenantId: String?,
+        _userId: String?,
         validationToken: String,
         jsonData: Map<String, Any?>,
         database: Database,
@@ -101,26 +101,23 @@ class PostGraphEvent : SubHandler {
         val encryptedContent = value["encryptedContent"] as Map<String, Any?>
         val encryptedData = encryptedContent["data"] as String
         val dataKey = encryptedContent["dataKey"] as String
-        val teamIdTemp: String =
-            resource.split("teams")[1].split("/channels")[0]
+        val teamIdTemp: String = resource.split("teams")[1].split("/channels")[0]
         val teamId = teamIdTemp.substring(2, teamIdTemp.length - 2)
-        val channelIdTemp: String =
-            resource.split("/channels")[1].split("/messages")[0]
+        val channelIdTemp: String = resource.split("/channels")[1].split("/messages")[0]
         val channelId = channelIdTemp.substring(2, channelIdTemp.length - 2)
-        val messageIdTemp: String =
-            resource.split("/messages")[1].split("/replies")[0]
+        val messageIdTemp: String = resource.split("/messages")[1].split("/replies")[0]
         val messageId = messageIdTemp.substring(2, messageIdTemp.length - 2)
 
+        websocket.sendEvent({ _, _ -> true }, "$value, $resource, $tenantId, $teamId, $channelId")
+
+        throw Error("Got here")
+
         val decodedKey: ByteArray = Base64.getDecoder().decode(PRIVATE_KEY)
-        val asymmetricKey: SecretKey =
-            SecretKeySpec(decodedKey, 0, decodedKey.size, "AES")
-        val encryptedSymmetricKey: ByteArray =
-            ApacheBase64.decodeBase64(dataKey)
-        val cipher: Cipher =
-            Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding")
+        val asymmetricKey: SecretKey = SecretKeySpec(decodedKey, 0, decodedKey.size, "AES")
+        val encryptedSymmetricKey: ByteArray = ApacheBase64.decodeBase64(dataKey)
+        val cipher: Cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding")
         cipher.init(Cipher.DECRYPT_MODE, asymmetricKey)
-        val decryptedSymmetricKey: ByteArray =
-            cipher.doFinal(encryptedSymmetricKey)
+        val decryptedSymmetricKey: ByteArray = cipher.doFinal(encryptedSymmetricKey)
         val skey: SecretKey = SecretKeySpec(decryptedSymmetricKey, "AES")
         val ivspec = IvParameterSpec(decryptedSymmetricKey.copyOf(16))
         val cipher2 = Cipher.getInstance("AES/CBC/PKCS5PADDING")
@@ -137,69 +134,55 @@ class PostGraphEvent : SubHandler {
             Table.TENANTS, tenantId
         )?.presetQIds ?: throw Error("Preset questions is null")
         val meetingId = decryptedResourceData.id
-        val participants =
-            decryptedResourceData.eventDetail?.callParticipants?.map { it.user.id }
-                ?: throw Error("Participants list null")
+        val participants = decryptedResourceData.eventDetail?.callParticipants?.map { it.user.id }
+            ?: throw Error("Participants list null")
 
 
-        do {
-            val meeting = Meeting(
-                meetingId,
-                tenantId,
-                decryptedResourceData.eventDetail.initiator.user.id,
-                participants,
-                decryptedResourceData.subject ?: "Teams meeting",
-                endTimeTemp.minus(duration).toEpochSecond().toInt(),
-                endTimeTemp.toEpochSecond().toInt(),
-                0,
-                presetQs,
-                listOf(),
-                listOf(),
-            )
-        } while (!database.putEntry(
-                Table.MEETINGS, meeting
-            )
-        )
-        do {
-            val responseSubmission = ResponseSubmission(
-                tenantId, userId ?: throw Error("userId is null"), meetingId
-            )
-        } while (!database.putEntry(
-                Table.RESPONSESUBMISSIONS, responseSubmission
-            )
-        )
-        presetQs.forEach {
-            do {
-                val responsePresetQ = ResponsePresetQ(it, meetingId, 0, 0)
-            } while (database.putEntry(
-                    Table.RESPONSEPRESETQS, responsePresetQ
-                )
-            )
-        }
-        participants.forEach {
-            do {
-                val responseDataUser = ResponseDataUser(
-                    tenantId,
-                    it,
+        if (!database.putEntry(
+                Table.MEETINGS, Meeting(
                     meetingId,
+                    tenantId,
+                    decryptedResourceData.eventDetail.initiator.user.id,
+                    participants,
+                    decryptedResourceData.subject ?: "Teams meeting",
+                    endTimeTemp.minus(duration).toEpochSecond().toInt(),
+                    endTimeTemp.toEpochSecond().toInt(),
                     0,
-                    0,
-                    0,
-                    0,
-                )
-            } while (database.putEntry(
-                    Table.RESPONSEDATAUSERS, responseDataUser
+                    presetQs,
+                    listOf(),
+                    listOf(),
                 )
             )
+        ) {
+            throw Error("Meeting already exists in the database")
+        }
+        for (presetQ in presetQs) {
+            if (!database.putEntry(
+                    Table.RESPONSEPRESETQS, ResponsePresetQ(presetQ, meetingId, 0, 0)
+                )
+            ) {
+                throw Error("ResponsePresetQ already in the database")
+            }
+        }
+        for (participantId in participants) {
+            if (!database.putEntry(
+                    Table.RESPONSEDATAUSERS, ResponseDataUser(
+                        tenantId,
+                        participantId,
+                        meetingId,
+                        0,
+                        0,
+                        0,
+                        0,
+                    )
+                )
+            ) {
+                throw Error("ResponseDataUser already in the database")
+            }
         }
 
         sendChannelMessage(
-            graphAccessClient,
-            userAccessToken,
-            tenantId,
-            teamId,
-            channelId,
-            messageId
+            graphAccessClient, userAccessToken, tenantId, teamId, channelId, messageId
         )
 
         return Response()
@@ -218,10 +201,7 @@ class PostGraphEvent : SubHandler {
             content = "Please review the meeting. <attachment id=\"${ATTACHMENT_ID}\"></attachment>"
         )
         val attachment = Attachment(
-            id = ATTACHMENT_ID,
-            contentType = "reference",
-            contentUrl = RIVIA_URL,
-            name = RIVIA_NAME
+            id = ATTACHMENT_ID, contentType = "reference", contentUrl = RIVIA_URL, name = RIVIA_NAME
         )
         val body = jsonConverter.toJson(
             Message(
@@ -235,8 +215,7 @@ class PostGraphEvent : SubHandler {
                 listOf(),
                 HttpMethod.POST,
                 listOf(
-                    "Content-Type" to "application/json",
-                    "Authorization" to "Bearer $token"
+                    "Content-Type" to "application/json", "Authorization" to "Bearer $token"
                 ),
                 body
             )
