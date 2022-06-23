@@ -79,10 +79,7 @@ class MicrosoftGraphClient(
                 "https://login.microsoftonline.com/${if (tokenType == TokenType.APPLICATION) tenantId else "common"}/oauth2/v2.0/token",
                 listOf(),
                 MicrosoftGraphAccessClient.Companion.HttpMethod.POST,
-                if (tokenType == TokenType.APPLICATION) listOf("Content-Type" to "application/x-www-form-urlencoded") else listOf(
-                    "Content-Type" to "application/x-www-form-urlencoded",
-                    "Origin" to "https://app.rivia.me/"
-                ),
+                listOf("Content-Type" to "application/x-www-form-urlencoded"),
                 body,
             ) ?: return null
 

@@ -135,14 +135,15 @@ class PostLogin : SubHandler {
         val userId = userIdResponse.id
 
         // Inserting the tenant entry
-        val subscriptionId = createSubscription(
-            graphAccessClient, tenantId!!, applicationAccessToken
-        )
-        val (newUserAccessToken, newUserRefreshToken) = userAccessToken.fetchAccessToken(
-            tenantId,
-            userRefreshToken
-        ) ?: throw Error("Access token unavailable")
-        if (!database.putEntry(Table.TENANTS, Tenant(
+        if (database.getEntry<Tenant>(Table.TENANTS, tenantId!!) == null) {
+            val subscriptionId = createSubscription(
+                graphAccessClient, tenantId, applicationAccessToken
+            )
+            val (newUserAccessToken, newUserRefreshToken) = userAccessToken.fetchAccessToken(
+                tenantId,
+                userRefreshToken
+            ) ?: throw Error("Access token unavailable")
+            database.putEntry(Table.TENANTS, Tenant(
                 tenantId,
                 subscriptionId,
                 applicationAccessToken.fetchAccessToken(tenantId)?.first
@@ -153,8 +154,6 @@ class PostLogin : SubHandler {
                     it.isdefault!!
                 }.map { it.presetQId!! }
             ))
-        ) {
-            return Response(ResponseError.NOTENANT)
         }
         return Response(mapOf("tenantId" to tenantId, "userId" to userId))
     }
@@ -169,7 +168,7 @@ class PostLogin : SubHandler {
                 changeType = SUBSCRIPTION_CHANGE_TYPE,
                 notificationUrl = NOTIFICATION_URL,
                 resource = RESOURCE,
-                expirationDateTime = OffsetDateTime.now().plusSeconds(10).toString(),
+                expirationDateTime = OffsetDateTime.now().plusMinutes(59).toString(),
                 includeResourceData = true.toString(),
                 encryptionCertificate = CERTIFICATE,
                 encryptionCertificateId = CERTIFICATE_ID

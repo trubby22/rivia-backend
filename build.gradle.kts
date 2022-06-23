@@ -17,6 +17,7 @@ dependencies {
     implementation("software.amazon.awssdk:url-connection-client:2.17.214")
     implementation(platform("com.amazonaws:aws-java-sdk-bom:1.12.234"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("software.amazon.awssdk:apache-client:2.17.214")
     implementation("software.amazon.awssdk:dynamodb-enhanced:2.17.214")
     implementation("software.amazon.awssdk:apigatewaymanagementapi:2.17.214")
     implementation("com.amazonaws:aws-lambda-java-core:1.2.1")

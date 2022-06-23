@@ -1,17 +1,16 @@
 package me.rivia.api.graphhttp
 
 import com.google.gson.Gson
-import me.rivia.api.teams.MicrosoftGraphClient
 import software.amazon.awssdk.http.HttpExecuteRequest
 import software.amazon.awssdk.http.SdkHttpClient
 import software.amazon.awssdk.http.SdkHttpMethod
 import software.amazon.awssdk.http.SdkHttpRequest
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
+import software.amazon.awssdk.http.apache.ApacheHttpClient
 import java.net.URI
 import kotlin.reflect.KClass
 
 class MicrosoftGraphHttpClient : MicrosoftGraphAccessClient {
-    val httpClient: SdkHttpClient = UrlConnectionHttpClient.builder().build()
+    val httpClient: SdkHttpClient = ApacheHttpClient.builder().build()
     val jsonParser = Gson()
 
     override fun <ResponseType : Any> sendRequest(

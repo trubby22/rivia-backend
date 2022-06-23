@@ -36,11 +36,12 @@ class DatabaseUserStore(
                 "https://graph.microsoft.com/v1.0/users/${userId}",
                 listOf("\$select" to UserResponse::class.declaredMemberProperties.map { it.name }),
                 HttpMethod.GET,
-                listOf("Content-Type" to "application/json"),
-                ""
+                listOf("Authorization" to "Bearer ${accessToken}",
+                    "Accept" to "application/json"),
+                null
             )
         }
-        val newUser = DatabaseUser(userId, userResponse.givenName, userResponse.surname, listOf())
+        val newUser = DatabaseUser(tenantId, userId, userResponse.givenName, userResponse.surname, listOf())
         database.putEntry(Table.USERS, newUser);
         return User(
             newUser.userId!!, newUser.name!!, newUser.surname!!, newUser.meetingIds!!

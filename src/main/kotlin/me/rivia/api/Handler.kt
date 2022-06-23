@@ -147,6 +147,8 @@ class Handler(
                 event.path ?: throw Error("Path field empty")
             )
 
+            val validationToken = event.validationToken ?: ""
+
             val (withoutTenant, withoutUser, handler) = pathMappings[path]?.get(
                 ApiMethod.valueOf(
                     "${event.api!!.type!!}_${event.api!!.method!!}".uppercase()
@@ -159,7 +161,7 @@ class Handler(
                     path,
                     null,
                     null,
-                    event.validationToken!!,
+                    validationToken,
                     jsonData,
                     database,
                     userStore,
@@ -177,7 +179,7 @@ class Handler(
                     path,
                     event.tenant!!,
                     null,
-                    event.validationToken!!,
+                    validationToken,
                     jsonData,
                     database,
                     userStore,
@@ -194,7 +196,7 @@ class Handler(
                 path,
                 event.tenant!!,
                 event.user!!,
-                event.validationToken!!,
+                validationToken,
                 jsonData,
                 database,
                 userStore,

@@ -16,11 +16,11 @@ import java.time.OffsetDateTime
 class PostSubscription : SubHandler {
     companion object {
         private data class RenewBody(
-            @SerializedName("expirationDateTime") val expirationDateTime: OffsetDateTime? = null,
+            @SerializedName("expirationDateTime") val expirationDateTime: String? = null,
         )
 
         private data class RenewResponse(
-            @SerializedName("expirationDateTime") val expirationDateTime: OffsetDateTime?
+            @SerializedName("expirationDateTime") val expirationDateTime: String?
         )
     }
 
@@ -59,7 +59,7 @@ class PostSubscription : SubHandler {
     ) {
         val body = jsonConverter.toJson(
             RenewBody(
-                expirationDateTime = OffsetDateTime.now().plusMinutes(59)
+                expirationDateTime = OffsetDateTime.now().plusMinutes(59).toString()
             )
         )
 
