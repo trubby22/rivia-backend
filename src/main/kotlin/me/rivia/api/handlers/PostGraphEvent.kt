@@ -4,6 +4,10 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import me.rivia.api.Response
 import me.rivia.api.database.Database
+import me.rivia.api.database.Table
+import me.rivia.api.database.entry.*
+import me.rivia.api.database.getEntry
+import me.rivia.api.database.putEntry
 import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
 import me.rivia.api.graphhttp.MicrosoftGraphAccessClient.Companion.HttpMethod
 import me.rivia.api.graphhttp.sendRequest
@@ -25,7 +29,8 @@ class PostGraphEvent : SubHandler {
         private data class DecryptedResourceData(
             @SerializedName("id") val id: String,
             @SerializedName("createdDateTime") val createdDateTime: OffsetDateTime,
-            @SerializedName("eventDetail") val eventDetail: EventDetail
+            @SerializedName("eventDetail") val eventDetail: EventDetail?,
+            @SerializedName("subject") val subject: String?
         )
 
         private data class EventDetail(
@@ -123,13 +128,70 @@ class PostGraphEvent : SubHandler {
         val decryptedResourceString =
             String(cipher2.doFinal(ApacheBase64.decodeBase64(encryptedData)))
         val decryptedResourceData = jsonConverter.fromJson(
-                decryptedResourceString,
-                DecryptedResourceData::class.java
+            decryptedResourceString, DecryptedResourceData::class.java
+        )
+
+        val endTimeTemp = decryptedResourceData.createdDateTime
+        val duration = decryptedResourceData.eventDetail?.callDuration
+        val presetQs = database.getEntry<Tenant>(
+            Table.TENANTS, tenantId
+        )?.presetQIds ?: throw Error("Preset questions is null")
+        val meetingId = decryptedResourceData.id
+        val participants =
+            decryptedResourceData.eventDetail?.callParticipants?.map { it.user.id }
+                ?: throw Error("Participants list null")
+
+
+        do {
+            val meeting = Meeting(
+                meetingId,
+                tenantId,
+                decryptedResourceData.eventDetail.initiator.user.id,
+                participants,
+                decryptedResourceData.subject ?: "Teams meeting",
+                endTimeTemp.minus(duration).toEpochSecond().toInt(),
+                endTimeTemp.toEpochSecond().toInt(),
+                0,
+                presetQs,
+                listOf(),
+                listOf(),
             )
-
-        val endTime = decryptedResourceData.createdDateTime
-        val duration = decryptedResourceData.eventDetail.callDuration
-
+        } while (!database.putEntry(
+                Table.MEETINGS, meeting
+            )
+        )
+        do {
+            val responseSubmission = ResponseSubmission(
+                tenantId, userId ?: throw Error("userId is null"), meetingId
+            )
+        } while (!database.putEntry(
+                Table.RESPONSESUBMISSIONS, responseSubmission
+            )
+        )
+        presetQs.forEach {
+            do {
+                val responsePresetQ = ResponsePresetQ(it, meetingId, 0, 0)
+            } while (database.putEntry(
+                    Table.RESPONSEPRESETQS, responsePresetQ
+                )
+            )
+        }
+        participants.forEach {
+            do {
+                val responseDataUser = ResponseDataUser(
+                    tenantId,
+                    it,
+                    meetingId,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            } while (database.putEntry(
+                    Table.RESPONSEDATAUSERS, responseDataUser
+                )
+            )
+        }
 
         sendChannelMessage(
             graphAccessClient,
