@@ -6,7 +6,9 @@ import software.amazon.awssdk.http.SdkHttpClient
 import software.amazon.awssdk.http.SdkHttpMethod
 import software.amazon.awssdk.http.SdkHttpRequest
 import software.amazon.awssdk.http.apache.ApacheHttpClient
+import java.io.IOException
 import java.net.URI
+import java.nio.charset.StandardCharsets
 import kotlin.reflect.KClass
 
 class MicrosoftGraphHttpClient : MicrosoftGraphAccessClient {
@@ -43,6 +45,30 @@ class MicrosoftGraphHttpClient : MicrosoftGraphAccessClient {
         val response = httpClient.prepareRequest(
             httpExecuteRequestBuilder.build()
         ).call()
+//        BEGINNNING OF NEW STUFF
+        val statusCode = response.httpResponse().statusCode()
+        var bytes: ByteArray? = null
+        try {
+            bytes =
+                response.responseBody().orElseThrow().delegate().readAllBytes()
+        } catch (e: NoSuchElementException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        var responseBody: String? = null
+        if (bytes != null) {
+            responseBody = String(
+                bytes,
+                StandardCharsets.UTF_8
+            )
+        }
+        if (!response.httpResponse().isSuccessful) {
+            throw Error(statusCode.toString() + responseBody)
+        }
+        println(statusCode)
+        println(responseBody)
+//        END OF NEW STUFF
         if (!response.httpResponse().isSuccessful) {
             return null
         }
