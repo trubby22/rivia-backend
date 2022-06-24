@@ -7,6 +7,7 @@ import me.rivia.api.ResponseError
 import me.rivia.api.database.*
 import me.rivia.api.database.entry.PresetQ
 import me.rivia.api.database.entry.Tenant
+import me.rivia.api.encryption.CertificateStoreService
 import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
 import me.rivia.api.graphhttp.sendRequest
 import me.rivia.api.teams.MicrosoftGraphClient
@@ -45,9 +46,6 @@ class PostLogin : SubHandler {
             "https://api.rivia.me/graphEvent"
         const val SUBSCRIPTION_URL = "https://graph.microsoft.com/beta/subscriptions"
         const val RESOURCE = "teams/getAllMessages"
-        const val CERTIFICATE =
-            "MIIDSTCCAjGgAwIBAgIIDGx0eZU4388wDQYJKoZIhvcNAQELBQAwUzELMAkGA1UEBhMCeHkxDDAKBgNVBAgTA3h5ejEMMAoGA1UEBxMDeHl6MQwwCgYDVQQKEwN4eXoxDDAKBgNVBAsTA3h5ejEMMAoGA1UEAxMDeHl6MB4XDTIyMDYxMjEzMDM0MloXDTIzMDYxMjEzMDM0MlowUzELMAkGA1UEBhMCeHkxDDAKBgNVBAgTA3h5ejEMMAoGA1UEBxMDeHl6MQwwCgYDVQQKEwN4eXoxDDAKBgNVBAsTA3h5ejEMMAoGA1UEAxMDeHl6MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqkgoLz4BOqbvlEE13yb6JHXMwHmoqw+bJJsNxOoaL2pSWzx4MX7BYbEzV6ZVix1OBEIUKbJAJYYiRQm9elZp5pf77w7xD3PusWOZDEy8s3gvkY1G309qPdYAUS9IarlYKjdc2Dsh3E3+zgQYQWNDdpJWUnJcTxpLpOSmql9nupZKTfRP6VEOBOybnnNJtPmLCLWVqwo5J7urVcuNPcgX7soD3LYdz+mCZZK49xHs0pI/70uEBgdIljp2FItEEYhV1f1UjkGp0pqrE0GHRYxIBmAgyixMUU7romiYBnyCQVP2mYpgD2xH0hVcQ3fEagSG7V5OId7w4ViFx7y7l54lMQIDAQABoyEwHzAdBgNVHQ4EFgQUvcrPGqsLYkkYoTukVMXhIfNjAjEwDQYJKoZIhvcNAQELBQADggEBAGxbWnicAUaHV8hXmy8nQee3wAL7g5rCMwScQCjZxWFTA16c+X0QKWisAoWzRYNGp2t4aPiCiWyuh5tjRiURzVadT+37cMkce6UY74IcYUf8/0zeYI4ut3bEvsJg6pJq9Ak9L6a/KcOm41zK7ehujbUcabMSBd8nQhAiD+1KSkVz8XH7gHAT9EU/CR6Ig43nqbRxyyaVjJLJItdDylMteqdSULRL+5obWK5FgkHmEN40iQaYtcxU0b7apHPRhbB10OX58arEJ405FaSNy0aB8RyAEBKMOR7wz6Nh6THK4U6qDmHf4o4zEd7S7yjHZdPTWxyOS1TW8m5WKJWas+85utA="
-        const val CERTIFICATE_ID = "myCertificate"
 
         private data class SubscriptionBody(
             @SerializedName("changeType") val changeType: String? = null,
@@ -71,6 +69,8 @@ class PostLogin : SubHandler {
     private val jsonConverter = GsonBuilder()
         .disableHtmlEscaping()
         .create()
+
+    private val certificateStore = CertificateStoreService()
 
     override fun handleRequest(
         url: List<String>,
@@ -173,8 +173,8 @@ class PostLogin : SubHandler {
                 resource = RESOURCE,
                 expirationDateTime = OffsetDateTime.now().plusMinutes(5).toString(),
                 includeResourceData = true.toString(),
-                encryptionCertificate = CERTIFICATE,
-                encryptionCertificateId = CERTIFICATE_ID
+                encryptionCertificate = certificateStore.base64EncodedCertificate,
+                encryptionCertificateId = certificateStore.certificateId
             )
         )
 
