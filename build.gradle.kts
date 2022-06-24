@@ -26,6 +26,8 @@ dependencies {
     implementation("com.beust:klaxon:5.5")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
     implementation("org.apache.httpcomponents:httpclient:4.5.13")
+    implementation("org.apache.tomcat:tomcat-util:8.5.23")
+    implementation("org.bouncycastle:bcpkix-jdk14:1.71")
 }
 
 tasks {
