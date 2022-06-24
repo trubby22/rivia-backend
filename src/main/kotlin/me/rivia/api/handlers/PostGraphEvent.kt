@@ -23,14 +23,14 @@ class PostGraphEvent : SubHandler {
     companion object {
         data class DecryptedResourceData(
             @SerializedName("id") val id: String,
-            @SerializedName("createdDateTime") val createdDateTime: OffsetDateTime,
+            @SerializedName("createdDateTime") val createdDateTime: String,
             @SerializedName("eventDetail") val eventDetail: EventDetail?,
             @SerializedName("subject") val subject: String?
         )
 
         data class EventDetail(
             @SerializedName("@odata.type") val odataType: String,
-            @SerializedName("callDuration") val callDuration: Duration,
+            @SerializedName("callDuration") val callDuration: String,
             @SerializedName("callParticipants") val callParticipants: List<Participant>,
             @SerializedName("initiator") val initiator: Participant
         )
@@ -114,9 +114,7 @@ class PostGraphEvent : SubHandler {
 //        )
 
         val decryptedResourceData = decryptData(
-            dataKey,
-            encryptedData,
-            dataSignature
+            dataKey, encryptedData, dataSignature
         )
 
 //        val decryptedResourceData = try {
@@ -130,11 +128,14 @@ class PostGraphEvent : SubHandler {
 
 //        websocket.sendEvent({ _, _ -> true }, decryptedResourceData.toString())
 
-        if (decryptedResourceData?.eventDetail?.odataType?.contains
-                ("callEndedEventMessageDetail") == true) {
+        if (decryptedResourceData?.eventDetail?.odataType?.contains("callEndedEventMessageDetail") == true) {
 
-            val endTimeTemp = decryptedResourceData.createdDateTime
-            val duration = decryptedResourceData.eventDetail.callDuration
+            val endTimeTemp = OffsetDateTime.parse(
+                decryptedResourceData.createdDateTime
+            )
+            val duration = Duration.parse(
+                decryptedResourceData.eventDetail.callDuration
+            )
             val presetQs = database.getEntry<Tenant>(
                 Table.TENANTS, tenantId
             )?.presetQIds ?: throw Error("Preset questions is null")
@@ -207,12 +208,11 @@ class PostGraphEvent : SubHandler {
     ): DecryptedResourceData? {
         val decryptedKey = certificateStore.getEncryptionKey(dataKey)
         return if (certificateStore.isDataSignatureValid(
-                decryptedKey,
-                data,
-                dataSignature)) {
+                decryptedKey, data, dataSignature
+            )
+        ) {
             val decryptedData = certificateStore.getDecryptedData(
-                decryptedKey,
-                data
+                decryptedKey, data
             )
             println(decryptedData)
             jsonConverter.fromJson(
@@ -264,5 +264,13 @@ class PostGraphEvent : SubHandler {
 
 fun main() {
     val client = PostGraphEvent()
-//    client.decryptData()
+
+    println(
+        client.decryptData(
+            "JMqzOVSXLQ2yAORXipEUC+CWCaULZLMnoRuRDaKc6xB3PQGLJXBSzAwjEyVcjdO42tgBrbkI39L9/bD1puSqWw6m21XaJ93QWdAGT8pMTLWeYCxoYHmps/kkXJjECAuRdD7QdikII8v97zHAL4ywbWx+M2uqtWn2NtN5LmwZNBG1Yl7nBwPFfByPjiW2ZPAbvWcwfaCcdW+XFWY7aqVFysGpNo1iauIR+2LenNX8k3YUgxQMaJ8UerLPIZ4B80qKg0/t4QffkfOaWPLmbz2EI98pV4qC+u/yvXstUCYpbvXD+4N2qp9ACJwl7m62qGD3Epi4u4v991Qty0Td2veYwg==",
+            "JBgGlTEu0K7ihJ8A1GWDmmxDs6UR4Dh2GAu2WiTeIk5XiQnYto7rTOkHr0q9cA5918oZPGp4cdIj8RjKK0v0jowOJauCU/3Pp0zAv3bdGBLGPaX1695ck2aPq3o72nhjDZrcawgLx4Vc34irstA4+i86RaxP8Lb2PEOXIZnIPc4ne/XYADuYm1isRKJNSqAPc5MC0YzGyOvK8Vitw1JDJeD09ssvW6PFgSvd/Hs3IsRNZuiAk5eAm0tClriZF9CNwMKLLdO6ij/ZjCM0lK7+KZ0kKunbTzp/n0avVcFiIZ0LBi0xR1WjV97dWEgx00Tp2ept0Ep+/CpByGndcYx2MQBsxJYNQVNPnFEKqij1UGAbeS1eVg6Mlf2g8E6jBBpNYVN5dA+8a3748lPCS0ExcAhci9eFg28yFy/4qGa7kfl5ke1sgr54K0SGg6xwsX+OBe0v7gVPiqaFyttDJ5EgTH/FJ81HiNScjieLDjJK68fKcwVVTZ+hVoXkS1Mpx3vzSi56QQ9BE+5HEojHTsAja3iOjoe6hgkFEkL7I8g3bo0hpQrmLPEgil5VZzyRyE6IWoozlGcIh4CoGVL4W92SrefrUC2Cu5dB967/fXp3tKQpmKuLYdR6EnnWHpD6au1nmrXXE20eFnO5H8sC6a4m/9nTAcijwyRcQZ90ZslGw18OZi87C+TEaoryQ80PDLLXoRhRrvMhrZ1N/cbPv3ui6PvXqj3NFcVwN8hTvaQts9QFN03bOj1QH+7bdpM0v4YYbtDFSupoexFiLMsXT2OSbvA7EJ2wBvswnm8k8gPhfJxwBAH4dIuYP4niWKuOkIITvbA0CDZr31Lm0etJfs8lZf5M4bYxJdha/l8wkqsZaQSk5lleh3hepQvG1bqcN86EPvbRybeqH8L9aRbpzfZm7ShlKdIG0B6bxO4SVdnJSWnHtJcPMNTOREd2+eLR9V3mvtskY4kDI+yIYJDxyXwmlU4QMDd+4vy1aE/hX0GgD+68LtxW4qcU4LAv8olO+DPfR80oMja9z5O1l+01HfGyyFAVWtlyy+iXhnhDhSTFLpuYqnzZRzSRBGKLEcLlB/RUlq1XMWkynhCd80cyyaqDZvwDC3+6vQWB9dhICOnxhD1Z6Qpf+iTm1gtPuuTCORNUM/Lz5zUrCDqiULJUwmfC5gwvWjUpcddab28fKvI1FYfpewoJNKqySWsECsISb8MjuIkkWY3nneq/Jhkh82bTLunMFosEkYHUk3G/gVy3M/QTIupgg3dKNwtG6TdXWJfKcPxie0ooEAs8RYzg7/hxUx6sqJj45XrMt2V5qVXja42Y9uqxtsa2BeBu8fqDgrBmSVD1kSAFNRVRBqAEr3/r4d1nJXg41bcOXi3dx8kehOymAXOKl2Xg6jeT76I9N+FUfwYOdxbUekKb3XqYbq/uMQP4sm8BKUhQM7IVDYvuGdhladMWdH/UVtfcjiBhsJoGx02jzkE8tpTFXQNU8Qw+hReplA6YVj0jYJUH72sgvbyUyqbc2qNmtIPMNjyJiR2ot6ObjuJDFDhJjStflNfgbu9tOnyYlnbNoxB+kR5Qd+f88uNPSgBSjLkon0tPGeyBAr6coJerGPHO6uuPHPoLTEzSvV38JXj5U6UDyxl5PhqCo34UQ28GVP5K9vik+he2AWo80Ui/yMuiP/dkdnqHE/FOen7U4S76yQ59M0QCvQfHyoMj/ZIShoTd4hTlLiK41NG8zV5agsnOFhx/OpzujUAveFrrkyqqqEHxhed98AFM8XdhZFmFajsDGpIrx8WcsCmbkZE/QGD0NfBM5OOcRA3APzgYUy2bbeNj9FWsEEk=",
+            "YftUugAwQq31hPSedLC6Sqfg9MibAfjRGE9rd23YQPE=",
+        )
+    )
+
 }
