@@ -23,14 +23,15 @@ class PostTiming : SubHandler {
         graphAccessClient: MicrosoftGraphAccessClient,
         websocket: WebsocketClient
     ): Response {
-        val timings = (jsonData["timings"] as? List<*>)?.checkListType<Double>() ?: return Response(ResponseError.WRONGENTRY)
+        val timings = (jsonData["timings"] as? List<*>) ?: return Response(ResponseError.WRONGENTRY)
+        val mappedTimings = timings.map { if (it is Double) it else if (it is Int) it.toDouble() else return Response(ResponseError.WRONGENTRY) }
         lateinit var usageEntry: Usage
         do {
             usageEntry = Usage(
                 generateUid(),
                 tenantId!!,
                 userId!!,
-                timings
+                mappedTimings
             )
         } while (!database.putEntry(Table.USAGES, usageEntry))
         return Response()

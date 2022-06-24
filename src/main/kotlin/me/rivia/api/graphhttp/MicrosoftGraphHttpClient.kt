@@ -44,9 +44,7 @@ class MicrosoftGraphHttpClient : MicrosoftGraphAccessClient {
             httpExecuteRequestBuilder.build()
         ).call()
         if (!response.httpResponse().isSuccessful) {
-            if (body != null) {
-                throw Error(String(response.responseBody().get().readAllBytes()))
-            }
+            throw Error(String(response.responseBody().get().readAllBytes()))
             return null
         }
         return jsonParser.fromJson(

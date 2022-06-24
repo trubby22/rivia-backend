@@ -7,6 +7,7 @@ import me.rivia.api.database.entry.Meeting
 import me.rivia.api.database.entry.Tenant
 import me.rivia.api.database.*
 import me.rivia.api.graphhttp.MicrosoftGraphAccessClient
+import me.rivia.api.handlers.responses.MeetingId
 import me.rivia.api.teams.TeamsClient
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
@@ -38,9 +39,9 @@ class PostMeeting : SubHandler {
             ResponseError.NOTENANT
         )
 
-        lateinit var meeting: Meeting
+        lateinit var meetingEntry: Meeting
         do {
-            meeting = Meeting(
+            meetingEntry = Meeting(
                 generateUid(),
                 tenantId,
                 organizerId,
@@ -53,11 +54,12 @@ class PostMeeting : SubHandler {
                 listOf(),
                 listOf()
             )
-        } while (!database.putEntry(Table.MEETINGS, meeting))
+        } while (!database.putEntry(Table.MEETINGS, meetingEntry))
 
         for (presetQId in tenantEntry.presetQIds!!) {
             if (!database.putEntry(
-                    Table.RESPONSEPRESETQS, ResponsePresetQ(presetQId, meeting.meetingId!!, 0, 0)
+                    Table.RESPONSEPRESETQS,
+                    ResponsePresetQ(presetQId, meetingEntry.meetingId!!, 0, 0)
                 )
             ) {
                 throw Error("Entry already present")
@@ -66,18 +68,23 @@ class PostMeeting : SubHandler {
         for (userId in userIds) {
             userStore.getUser(tenantId, userId)
             if (database.updateEntry<User>(Table.USERS, User.constructKey(tenantId, userId)) {
-                    it.meetingIds = it.meetingIds!! + listOf(meeting.meetingId!!)
+                    it.meetingIds = it.meetingIds!! + listOf(meetingEntry.meetingId!!)
                     it
                 } == null) {
                 throw Error("User removed")
             }
             if (!database.putEntry(
-                    Table.USERS, ResponseDataUser(tenantId, userId, meeting.meetingId!!, 0, 0, 0, 0)
+                    Table.RESPONSEDATAUSERS,
+                    ResponseDataUser(tenantId, userId, meetingEntry.meetingId!!, 0, 0, 0, 0)
                 )
             ) {
                 throw Error("Entry already present")
             }
         }
-        return Response(meeting.meetingId)
+        websocket.sendEvent(
+            { otherTenantId, otherUserId -> otherTenantId == tenantId && otherUserId in meetingEntry.userIds!! },
+            MeetingId.fetch(database, userStore, meetingEntry.meetingId!!)!!.second
+        )
+        return Response(meetingEntry.meetingId)
     }
 }

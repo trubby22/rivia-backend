@@ -25,7 +25,7 @@ class DatabaseUserStore(
     private val applicationTeamsClient: TeamsClient
 ) : UserStore {
     override fun getUser(tenantId: String, userId: String): User? {
-        val userEntry = database.getEntry<DatabaseUser>(Table.USERS, tenantId + userId)
+        val userEntry = database.getEntry<DatabaseUser>(Table.USERS, DatabaseUser.constructKey(tenantId, userId))
         if (userEntry != null) {
             return User(
                 userEntry.userId!!, userEntry.name!!, userEntry.surname!!, userEntry.meetingIds!!

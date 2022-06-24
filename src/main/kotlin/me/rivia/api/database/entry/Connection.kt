@@ -10,7 +10,7 @@ data class Connection(@get:DynamoDbPartitionKey var tenantIdUserId: String?, var
 }
 
 var Connection.tenantId
-    get() = this.tenantIdUserId?.split(' ')?.get(1)
+    get() = this.tenantIdUserId?.split(' ')?.get(0)
     set(tenantId) {
         this.tenantIdUserId = "$tenantId $userId"
     }

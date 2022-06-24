@@ -23,16 +23,16 @@ class PostRating : SubHandler {
         graphAccessClient: MicrosoftGraphAccessClient,
         websocket: WebsocketClient
     ): Response {
-        val like = jsonData["like"] as? Double ?: return Response(ResponseError.WRONGENTRY)
-        val use = jsonData["use"] as? Double ?: return Response(ResponseError.WRONGENTRY)
+        val like = if (jsonData["like"] is Double || jsonData["like"] is Int) jsonData["like"] else return Response(ResponseError.WRONGENTRY)
+        val use = if (jsonData["use"] is Double || jsonData["use"] is Int) jsonData["use"] else return Response(ResponseError.WRONGENTRY)
         lateinit var opinionEntry: Opinion
         do {
             opinionEntry = Opinion(
                 generateUid(),
                 tenantId!!,
                 userId!!,
-                like,
-                use
+                if (like is Int) like.toDouble() else like as Double,
+                if (use is Int) use.toDouble() else use as Double
             )
         } while (!database.putEntry(Table.OPINIONS, opinionEntry))
         return Response()

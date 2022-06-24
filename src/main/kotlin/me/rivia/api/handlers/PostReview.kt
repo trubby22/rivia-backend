@@ -83,7 +83,7 @@ class PostReview : SubHandler {
                     Table.RESPONSEPRESETQS,
                     ResponsePresetQ(presetQId, meetingId, null, null).presetQIdMeetingId!!
                 ) {
-                    it.numSelected = it.numSelected!! + 1
+                    it.numSubmitted = it.numSubmitted!! + 1
                     it
                 } ?: throw Error("ResponsePresetQ not present")
             }
@@ -93,14 +93,14 @@ class PostReview : SubHandler {
                     Table.RESPONSEPRESETQS,
                     ResponsePresetQ(presetQId as String, meetingId, null, null).presetQIdMeetingId!!
                 ) {
-                    it.numSubmitted = it.numSubmitted!! + 1
+                    it.numSelected = it.numSelected!! + 1
                     it
                 } ?: throw Error("ResponsePresetQ not present")
             }
         }
         for (neededId in needed) {
             database.updateEntry<ResponseDataUser>(
-                Table.RESPONSEDATAUSERS, ResponseDataUser.constructKey(tenantId, userId, meetingId)
+                Table.RESPONSEDATAUSERS, ResponseDataUser.constructKey(tenantId, neededId, meetingId)
             ) {
                 it.needed = it.needed!! + 1
                 it
@@ -108,7 +108,7 @@ class PostReview : SubHandler {
         }
         for (notNeededId in notNeeded) {
             database.updateEntry<ResponseDataUser>(
-                Table.RESPONSEDATAUSERS, ResponseDataUser.constructKey(tenantId, userId, meetingId)
+                Table.RESPONSEDATAUSERS, ResponseDataUser.constructKey(tenantId, notNeededId, meetingId)
             ) {
                 it.notNeeded = it.notNeeded!! + 1
                 it
@@ -116,7 +116,7 @@ class PostReview : SubHandler {
         }
         for (preparedId in prepared) {
             database.updateEntry<ResponseDataUser>(
-                Table.RESPONSEDATAUSERS, ResponseDataUser.constructKey(tenantId, userId, meetingId)
+                Table.RESPONSEDATAUSERS, ResponseDataUser.constructKey(tenantId, preparedId, meetingId)
             ) {
                 it.prepared = it.prepared!! + 1
                 it
@@ -124,13 +124,16 @@ class PostReview : SubHandler {
         }
         for (notPreparedId in notPrepared) {
             database.updateEntry<ResponseDataUser>(
-                Table.RESPONSEDATAUSERS, ResponseDataUser.constructKey(tenantId, userId, meetingId)
+                Table.RESPONSEDATAUSERS, ResponseDataUser.constructKey(tenantId, notPreparedId, meetingId)
             ) {
                 it.notPrepared = it.notPrepared!! + 1
                 it
             } ?: throw Error("ResponseParticipant not present")
         }
-        websocket.sendEvent({_, _ -> true}, MeetingId.fetch(database, userStore, meetingId)!!.second)
+        websocket.sendEvent({ otherTenantId, otherUserId -> otherTenantId == tenantId && otherUserId in meetingEntry.userIds!! },
+            (MeetingId.fetch(database, userStore, meetingId)
+                ?: throw Error("Meeting has been deleted")).second
+        )
         return Response(null)
     }
 }
