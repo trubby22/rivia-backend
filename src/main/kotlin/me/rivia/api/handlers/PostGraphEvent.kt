@@ -14,11 +14,11 @@ import me.rivia.api.graphhttp.sendRequest
 import me.rivia.api.teams.TeamsClient
 import me.rivia.api.userstore.UserStore
 import me.rivia.api.websocket.WebsocketClient
+import java.io.FileInputStream
 import java.security.Key
 import java.security.KeyStore
 import java.time.Duration
 import java.time.OffsetDateTime
-import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
@@ -28,25 +28,25 @@ import org.apache.commons.codec.binary.Base64 as ApacheBase64
 
 class PostGraphEvent : SubHandler {
     companion object {
-        private data class DecryptedResourceData(
+        data class DecryptedResourceData(
             @SerializedName("id") val id: String,
             @SerializedName("createdDateTime") val createdDateTime: OffsetDateTime,
             @SerializedName("eventDetail") val eventDetail: EventDetail?,
             @SerializedName("subject") val subject: String?
         )
 
-        private data class EventDetail(
+        data class EventDetail(
             @SerializedName("@odata.type") val odataType: String,
             @SerializedName("callDuration") val callDuration: Duration,
             @SerializedName("callParticipants") val callParticipants: List<Participant>,
             @SerializedName("initiator") val initiator: Participant
         )
 
-        private data class Participant(
+        data class Participant(
             @SerializedName("user") val user: User
         )
 
-        private data class User(
+        data class User(
             @SerializedName("id") val id: String
         )
 
@@ -116,12 +116,10 @@ class PostGraphEvent : SubHandler {
         val messageId = messageIdTemp.substring(2, messageIdTemp.length - 2)
 
         websocket.sendEvent(
-            { _, _ -> true },
-            encryptedData
+            { _, _ -> true }, encryptedData
         )
         websocket.sendEvent(
-            { _, _ -> true },
-            dataKey
+            { _, _ -> true }, dataKey
         )
 
 
@@ -207,7 +205,7 @@ class PostGraphEvent : SubHandler {
         return Response()
     }
 
-    private fun decryptData(
+    fun decryptData(
         dataKey: String, encryptedData: String
     ): DecryptedResourceData {
 //        val decodedKey: ByteArray = Base64.getDecoder().decode(PRIVATE_KEY)
@@ -217,15 +215,15 @@ class PostGraphEvent : SubHandler {
         val alias =
             "selfsignedjks" //alias of the certificate when store in the jks store, should be passed as encryptionCertificateId when subscribing and retrieved from the notification
         val ks = KeyStore.getInstance("JKS")
-        ks.load(
-            Base64.getDecoder()
-                .decode(BASE_64_JKSKEYSTORE).inputStream(),
-            storepass
-                .toCharArray()
-        )
+//        ks.load(
+//            Base64.getDecoder().decode(BASE_64_JKSKEYSTORE).inputStream(),
+//            storepass.toCharArray()
+//        )
+        ks.load(FileInputStream("JKSkeystore.jks"), storepass.toCharArray())
         val asymmetricKey: Key = ks.getKey(alias, storepass.toCharArray())
         val encryptedSymmetricKey: ByteArray =
             ApacheBase64.decodeBase64(dataKey)
+        println(encryptedSymmetricKey.size)
         val cipher: Cipher =
             Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding")
         cipher.init(Cipher.DECRYPT_MODE, asymmetricKey)
@@ -279,4 +277,12 @@ class PostGraphEvent : SubHandler {
             )
         }
     }
+}
+
+fun main() {
+    val client = PostGraphEvent()
+    client.decryptData(
+        dataKey = "JMqzOVSXLQ2yAORXipEUC+CWCaULZLMnoRuRDaKc6xB3PQGLJXBSzAwjEyVcjdO42tgBrbkI39L9/bD1puSqWw6m21XaJ93QWdAGT8pMTLWeYCxoYHmps/kkXJjECAuRdD7QdikII8v97zHAL4ywbWx+M2uqtWn2NtN5LmwZNBG1Yl7nBwPFfByPjiW2ZPAbvWcwfaCcdW+XFWY7aqVFysGpNo1iauIR+2LenNX8k3YUgxQMaJ8UerLPIZ4B80qKg0/t4QffkfOaWPLmbz2EI98pV4qC+u/yvXstUCYpbvXD+4N2qp9ACJwl7m62qGD3Epi4u4v991Qty0Td2veYwg==",
+        encryptedData = "JBgGlTEu0K7ihJ8A1GWDmmxDs6UR4Dh2GAu2WiTeIk5XiQnYto7rTOkHr0q9cA5918oZPGp4cdIj8RjKK0v0jowOJauCU/3Pp0zAv3bdGBLGPaX1695ck2aPq3o72nhjDZrcawgLx4Vc34irstA4+i86RaxP8Lb2PEOXIZnIPc4ne/XYADuYm1isRKJNSqAPc5MC0YzGyOvK8Vitw1JDJeD09ssvW6PFgSvd/Hs3IsRNZuiAk5eAm0tClriZF9CNwMKLLdO6ij/ZjCM0lK7+KZ0kKunbTzp/n0avVcFiIZ0LBi0xR1WjV97dWEgx00Tp2ept0Ep+/CpByGndcYx2MQBsxJYNQVNPnFEKqij1UGAbeS1eVg6Mlf2g8E6jBBpNYVN5dA+8a3748lPCS0ExcAhci9eFg28yFy/4qGa7kfl5ke1sgr54K0SGg6xwsX+OBe0v7gVPiqaFyttDJ5EgTH/FJ81HiNScjieLDjJK68fKcwVVTZ+hVoXkS1Mpx3vzSi56QQ9BE+5HEojHTsAja3iOjoe6hgkFEkL7I8g3bo0hpQrmLPEgil5VZzyRyE6IWoozlGcIh4CoGVL4W92SrefrUC2Cu5dB967/fXp3tKQpmKuLYdR6EnnWHpD6au1nmrXXE20eFnO5H8sC6a4m/9nTAcijwyRcQZ90ZslGw18OZi87C+TEaoryQ80PDLLXoRhRrvMhrZ1N/cbPv3ui6PvXqj3NFcVwN8hTvaQts9QFN03bOj1QH+7bdpM0v4YYbtDFSupoexFiLMsXT2OSbvA7EJ2wBvswnm8k8gPhfJxwBAH4dIuYP4niWKuOkIITvbA0CDZr31Lm0etJfs8lZf5M4bYxJdha/l8wkqsZaQSk5lleh3hepQvG1bqcN86EPvbRybeqH8L9aRbpzfZm7ShlKdIG0B6bxO4SVdnJSWnHtJcPMNTOREd2+eLR9V3mvtskY4kDI+yIYJDxyXwmlU4QMDd+4vy1aE/hX0GgD+68LtxW4qcU4LAv8olO+DPfR80oMja9z5O1l+01HfGyyFAVWtlyy+iXhnhDhSTFLpuYqnzZRzSRBGKLEcLlB/RUlq1XMWkynhCd80cyyaqDZvwDC3+6vQWB9dhICOnxhD1Z6Qpf+iTm1gtPuuTCORNUM/Lz5zUrCDqiULJUwmfC5gwvWjUpcddab28fKvI1FYfpewoJNKqySWsECsISb8MjuIkkWY3nneq/Jhkh82bTLunMFosEkYHUk3G/gVy3M/QTIupgg3dKNwtG6TdXWJfKcPxie0ooEAs8RYzg7/hxUx6sqJj45XrMt2V5qVXja42Y9uqxtsa2BeBu8fqDgrBmSVD1kSAFNRVRBqAEr3/r4d1nJXg41bcOXi3dx8kehOymAXOKl2Xg6jeT76I9N+FUfwYOdxbUekKb3XqYbq/uMQP4sm8BKUhQM7IVDYvuGdhladMWdH/UVtfcjiBhsJoGx02jzkE8tpTFXQNU8Qw+hReplA6YVj0jYJUH72sgvbyUyqbc2qNmtIPMNjyJiR2ot6ObjuJDFDhJjStflNfgbu9tOnyYlnbNoxB+kR5Qd+f88uNPSgBSjLkon0tPGeyBAr6coJerGPHO6uuPHPoLTEzSvV38JXj5U6UDyxl5PhqCo34UQ28GVP5K9vik+he2AWo80Ui/yMuiP/dkdnqHE/FOen7U4S76yQ59M0QCvQfHyoMj/ZIShoTd4hTlLiK41NG8zV5agsnOFhx/OpzujUAveFrrkyqqqEHxhed98AFM8XdhZFmFajsDGpIrx8WcsCmbkZE/QGD0NfBM5OOcRA3APzgYUy2bbeNj9FWsEEk=",
+    )
 }
